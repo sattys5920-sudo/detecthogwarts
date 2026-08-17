@@ -1,13 +1,4 @@
-import {
-  addDoc,
-  collection,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  serverTimestamp,
-  where,
-} from 'firebase/firestore';
+import { addDoc, collection, getDocs, limit, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './config';
 
 export interface LeaderboardEntry {
@@ -57,12 +48,9 @@ export async function submitResult(entry: NewEntry): Promise<void> {
 
 export async function fetchLeaderboard(topN = 10): Promise<LeaderboardEntry[]> {
   if (isFirebaseConfigured && db) {
-    const q = query(
-      collection(db, COLLECTION_NAME),
-      where('solved', '==', true),
-      orderBy('elapsedSeconds', 'asc'),
-      limit(topN),
-    );
+    // Only solved runs are ever written (see submitResult), so a plain
+    // orderBy is enough here and avoids needing a composite index.
+    const q = query(collection(db, COLLECTION_NAME), orderBy('elapsedSeconds', 'asc'), limit(topN));
     const snapshot = await getDocs(q);
     return snapshot.docs.map((docSnap) => {
       const data = docSnap.data();

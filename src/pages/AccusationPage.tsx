@@ -31,20 +31,25 @@ export default function AccusationPage() {
   async function finalizeResult(solved: boolean) {
     setSubmitting(true);
     game.finishGame();
-    const house = HOUSES.find((h) => h.id === game.houseId);
-    try {
-      await submitResult({
-        nickname: game.nickname,
-        house: house?.name ?? game.houseId,
-        elapsedSeconds: game.elapsedSeconds,
-        solved,
-      });
-    } catch (err) {
-      console.error('리더보드 기록 저장에 실패했습니다.', err);
-    } finally {
-      setSubmitting(false);
-      navigate('/result', { state: { solved } });
+
+    // Only solved runs go on the leaderboard — keeps the query to a plain
+    // orderBy (see fetchLeaderboard) without needing a composite index.
+    if (solved) {
+      const house = HOUSES.find((h) => h.id === game.houseId);
+      try {
+        await submitResult({
+          nickname: game.nickname,
+          house: house?.name ?? game.houseId,
+          elapsedSeconds: game.elapsedSeconds,
+          solved,
+        });
+      } catch (err) {
+        console.error('리더보드 기록 저장에 실패했습니다.', err);
+      }
     }
+
+    setSubmitting(false);
+    navigate('/result', { state: { solved } });
   }
 
   function handleSubmit() {

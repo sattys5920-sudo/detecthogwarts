@@ -1,0 +1,83 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Cinzel Decorative', 'Gowun Batang', serif;
+  --font-serif: 'Gowun Batang', serif;
+  --font-sans: 'Noto Sans KR', system-ui, sans-serif;
+
+  --color-arcane-950: #0b0a17;
+  --color-arcane-900: #12102566;
+  --color-arcane-900: #121025;
+  --color-arcane-800: #1b1836;
+  --color-arcane-700: #262047;
+  --color-arcane-600: #362d63;
+  --color-arcane-500: #4a3d84;
+
+  --color-gold-400: #f2d38a;
+  --color-gold-300: #f6e2b3;
+  --color-gold-500: #d9ab4f;
+  --color-gold-600: #b8863a;
+
+  --color-parchment-100: #f6efe0;
+  --color-parchment-200: #ece0c5;
+
+  --color-ember-500: #c9603a;
+  --color-emerald-500: #3f9c74;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 15% -10%, rgba(74, 61, 132, 0.35), transparent 45%),
+    radial-gradient(circle at 100% 0%, rgba(217, 171, 79, 0.12), transparent 40%),
+    var(--color-arcane-950);
+  color: var(--color-parchment-100);
+  font-family: var(--font-sans);
+  min-height: 100svh;
+}
+
+::selection {
+  background: var(--color-gold-500);
+  color: var(--color-arcane-950);
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+.font-serif-kr {
+  font-family: var(--font-serif);
+}
+
+/* subtle parchment texture edge for cards */
+.rune-border {
+  border-image-slice: 1;
+  border-width: 1px;
+  border-image-source: linear-gradient(135deg, var(--color-gold-500), transparent 40%, var(--color-gold-500));
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  55% {
+    opacity: 0.9;
+  }
+}
+
+.animate-flicker {
+  animation: flicker 4s ease-in-out infinite;
+}

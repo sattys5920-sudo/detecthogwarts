@@ -1,0 +1,24 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 리더보드: 누구나 읽을 수 있고, 형식이 올바른 결과만 새로 추가할 수 있습니다.
+    // 기존 기록의 수정/삭제는 클라이언트에서 허용하지 않습니다.
+    match /leaderboard/{entryId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasAll(
+          ['nickname', 'house', 'elapsedSeconds', 'solved', 'createdAt']
+        )
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() > 0
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.house is string
+        && request.resource.data.elapsedSeconds is number
+        && request.resource.data.elapsedSeconds >= 0
+        && request.resource.data.solved is bool;
+
+      allow update, delete: if false;
+    }
+  }
+}

@@ -1,33 +1,60 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import Layout from './components/Layout';
+import AppShell from './components/AppShell';
 import { GameProvider } from './context/GameContext';
-import AccusationPage from './pages/AccusationPage';
-import HomePage from './pages/HomePage';
-import InvestigatePage from './pages/InvestigatePage';
-import LeaderboardPage from './pages/LeaderboardPage';
-import LocationPage from './pages/LocationPage';
-import NotebookPage from './pages/NotebookPage';
-import ProloguePage from './pages/ProloguePage';
-import ResultPage from './pages/ResultPage';
-import SuspectPage from './pages/SuspectPage';
+import ExplorePage from './pages/ExplorePage';
+import HallPage from './pages/HallPage';
+import HousePage from './pages/HousePage';
+import LoadingPage from './pages/LoadingPage';
+import MainPage from './pages/MainPage';
+import ProfilePage from './pages/ProfilePage';
 
 export default function App() {
   return (
     <GameProvider>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/prologue" element={<ProloguePage />} />
-          <Route path="/investigate" element={<InvestigatePage />} />
-          <Route path="/investigate/:locationId" element={<LocationPage />} />
-          <Route path="/suspects/:suspectId" element={<SuspectPage />} />
-          <Route path="/notebook" element={<NotebookPage />} />
-          <Route path="/accusation" element={<AccusationPage />} />
-          <Route path="/result" element={<ResultPage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
+      <Routes>
+        <Route path="/" element={<LoadingPage />} />
+        <Route
+          path="/main"
+          element={
+            <AppShell>
+              <MainPage />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/house"
+          element={
+            <AppShell>
+              <HousePage />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/hall"
+          element={
+            <AppShell>
+              <HallPage />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/explore"
+          element={
+            <AppShell>
+              <ExplorePage />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <AppShell>
+              <ProfilePage />
+            </AppShell>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </GameProvider>
   );
 }

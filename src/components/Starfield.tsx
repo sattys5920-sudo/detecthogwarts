@@ -7,7 +7,7 @@ interface Star {
   delay: string;
 }
 
-export default function Starfield({ count = 60 }: { count?: number }) {
+export default function Starfield({ count = 50 }: { count?: number }) {
   const stars = useMemo<Star[]>(
     () =>
       Array.from({ length: count }, () => ({

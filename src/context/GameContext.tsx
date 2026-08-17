@@ -1,111 +1,63 @@
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { HOUSES } from '../data/story';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
-interface GameState {
+interface PlayerState {
   nickname: string;
-  houseId: string;
-  discoveredClueIds: string[];
-  askedDialogueIds: string[];
-  startedAt: number | null;
-  finishedAt: number | null;
+  houseId: string | null;
+  joinedAt: number | null;
 }
 
-const STORAGE_KEY = 'arcanum-mystery-progress';
+const STORAGE_KEY = 'arcanum-player';
 
-const emptyState: GameState = {
+const emptyState: PlayerState = {
   nickname: '',
-  houseId: HOUSES[0].id,
-  discoveredClueIds: [],
-  askedDialogueIds: [],
-  startedAt: null,
-  finishedAt: null,
+  houseId: null,
+  joinedAt: null,
 };
 
-function loadState(): GameState {
+function loadState(): PlayerState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return emptyState;
-    return { ...emptyState, ...(JSON.parse(raw) as Partial<GameState>) };
+    return { ...emptyState, ...(JSON.parse(raw) as Partial<PlayerState>) };
   } catch {
     return emptyState;
   }
 }
 
-interface GameContextValue extends GameState {
-  isStarted: boolean;
-  startGame: (nickname: string, houseId: string) => void;
-  discoverClue: (clueId: string) => void;
-  markDialogueAsked: (dialogueId: string) => void;
-  finishGame: () => void;
-  resetGame: () => void;
-  elapsedSeconds: number;
+interface GameContextValue extends PlayerState {
+  hasEntered: boolean;
+  enterApp: (nickname: string) => void;
+  setHouse: (houseId: string) => void;
+  resetPlayer: () => void;
 }
 
 const GameContext = createContext<GameContextValue | undefined>(undefined);
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<GameState>(loadState);
-  const [now, setNow] = useState(() => Date.now());
+  const [state, setState] = useState<PlayerState>(loadState);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
-  useEffect(() => {
-    if (!state.startedAt || state.finishedAt) return;
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, [state.startedAt, state.finishedAt]);
-
-  const startGame = useCallback((nickname: string, houseId: string) => {
-    setState({
-      ...emptyState,
-      nickname,
-      houseId,
-      startedAt: Date.now(),
-    });
-    setNow(Date.now());
+  const enterApp = useCallback((nickname: string) => {
+    setState((prev) => ({ ...prev, nickname, joinedAt: prev.joinedAt ?? Date.now() }));
   }, []);
 
-  const discoverClue = useCallback((clueId: string) => {
-    setState((prev) =>
-      prev.discoveredClueIds.includes(clueId)
-        ? prev
-        : { ...prev, discoveredClueIds: [...prev.discoveredClueIds, clueId] },
-    );
+  const setHouse = useCallback((houseId: string) => {
+    setState((prev) => ({ ...prev, houseId }));
   }, []);
 
-  const markDialogueAsked = useCallback((dialogueId: string) => {
-    setState((prev) =>
-      prev.askedDialogueIds.includes(dialogueId)
-        ? prev
-        : { ...prev, askedDialogueIds: [...prev.askedDialogueIds, dialogueId] },
-    );
-  }, []);
-
-  const finishGame = useCallback(() => {
-    setState((prev) => (prev.finishedAt ? prev : { ...prev, finishedAt: Date.now() }));
-  }, []);
-
-  const resetGame = useCallback(() => {
+  const resetPlayer = useCallback(() => {
     setState(emptyState);
   }, []);
 
-  const elapsedSeconds = useMemo(() => {
-    if (!state.startedAt) return 0;
-    const end = state.finishedAt ?? now;
-    return Math.max(0, Math.floor((end - state.startedAt) / 1000));
-  }, [state.startedAt, state.finishedAt, now]);
-
   const value: GameContextValue = {
     ...state,
-    isStarted: state.startedAt !== null,
-    startGame,
-    discoverClue,
-    markDialogueAsked,
-    finishGame,
-    resetGame,
-    elapsedSeconds,
+    hasEntered: state.nickname !== '',
+    enterApp,
+    setHouse,
+    resetPlayer,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

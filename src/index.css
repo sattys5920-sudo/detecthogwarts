@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-display: 'Nanum Brush Script', 'Nanum Myeongjo', serif;
+  --font-display: 'East Sea Dokdo', 'Nanum Myeongjo', serif;
   --font-serif: 'Nanum Myeongjo', serif;
   --font-sans: 'Noto Sans KR', system-ui, sans-serif;
 

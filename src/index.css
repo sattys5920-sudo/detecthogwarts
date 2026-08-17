@@ -1,8 +1,8 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-display: 'Cinzel Decorative', 'Gowun Batang', serif;
-  --font-serif: 'Gowun Batang', serif;
+  --font-display: 'Song Myung', 'Nanum Myeongjo', serif;
+  --font-serif: 'Nanum Myeongjo', serif;
   --font-sans: 'Noto Sans KR', system-ui, sans-serif;
 
   /* aged parchment paper */

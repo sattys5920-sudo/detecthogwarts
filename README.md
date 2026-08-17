@@ -36,16 +36,20 @@ npm run dev
 
 ## 구조
 
-- `src/pages/LoadingPage.tsx` — 시작 화면 (이름 입력 후 입장)
-- `src/pages/{Main,House,Hall,Explore,Profile}Page.tsx` — 하단 탭 5개 화면
+디자인은 "잉크와 종이" 콘셉트입니다 — 크림색 파치먼트 배경에 검정·핏빛·인디고 세 가지 잉크색으로만 정보를 구분하고, 큰 제목엔 고딕(UnifrakturCook), 본문엔 굵은 산세리프를 씁니다.
+
+- `src/pages/LoadingPage.tsx` — 시작 화면 (레터헤드 스타일 타이틀 + 이름 입력)
+- `src/pages/{Notices,Class,House,Quest,Shop,Profile}Page.tsx` — 하단 탭 6개 화면 (공지/수업/기숙사/임무/상점/프로필)
 - `src/components/AppShell.tsx`, `BottomTabBar.tsx` — 탭 화면 레이아웃 + 하단 탭바
-- `src/components/SceneBanner.tsx` — 탭별 상단 배너
+- `src/components/Letterhead.tsx` — 탭별 상단 레터헤드 헤더
+- `src/components/InkBlot.tsx`, `SvgDefs.tsx` — feTurbulence 기반 잉크 얼룩 효과
+- `src/components/ChatLog.tsx`, `Composer.tsx` — 임무(GM 조사)·기숙사(룸메이트) 채팅 UI — 지금은 정적 미리보기이며 실시간 기능은 아직 연결되지 않았습니다
 - `src/data/school.ts` — 학교/기숙사 데이터
 - `src/context/GameContext.tsx` — 플레이어 상태 (이름, 기숙사, localStorage에 저장)
 - `src/firebase/` — Firebase 초기화 및 리더보드 read/write (아직 어느 탭에도 연결 안 됨)
 - `firestore.rules` — 리더보드 컬렉션 보안 규칙
 
-각 탭의 실제 콘텐츠(메인 소식, 강당 랭킹, 탐험 콘텐츠 등)는 아직 자리만 잡아둔 상태이며 앞으로 하나씩 채워나갈 예정입니다.
+수업/상점 탭과 실제 채팅·임무 진행 기능은 아직 자리만 잡아둔 상태이며 앞으로 하나씩 채워나갈 예정입니다.
 
 ## 스크립트
 

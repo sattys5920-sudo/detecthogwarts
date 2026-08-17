@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
-import Flourish from '../components/Flourish';
-import Footprints from '../components/Footprints';
 import InkBlot from '../components/InkBlot';
 import PaperTexture from '../components/PaperTexture';
 import { useGame } from '../context/GameContext';
@@ -26,36 +24,29 @@ export default function LoadingPage() {
       return;
     }
     game.enterApp(trimmed);
-    navigate('/main');
+    navigate('/notices');
   }
 
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center gap-8 px-6 text-center">
       <PaperTexture />
-      <Footprints />
+      <InkBlot className="pointer-events-none absolute -top-4 -right-10 h-32 w-44 text-ink-black/90" />
 
-      <div>
-        <div className="relative mx-auto flex h-44 w-full max-w-[300px] items-center justify-center">
-          <InkBlot className="absolute inset-0 h-full w-full" />
-          <h1 className="relative font-stamp text-6xl text-paper-50">HWCF</h1>
-        </div>
-
-        <div className="mt-3 flex items-center justify-center gap-2 text-ink-500/50">
-          <Flourish className="h-5 w-12" />
-          <h2 className="font-display text-xl text-ink-900">{SCHOOL_NAME}</h2>
-          <Flourish className="h-5 w-12" flip />
-        </div>
+      <div className="relative max-w-xs">
+        <p className="font-mono text-xs tracking-[0.15em] text-seal-600">CASE FILES</p>
+        <h1 className="font-gothic mt-1 text-5xl leading-none text-ink-black">HWCF</h1>
+        <p className="mt-2 font-serif-kr text-lg font-bold text-ink-900">{SCHOOL_NAME}</p>
         <p className="mt-2 font-serif-kr text-sm text-ink-700/70">
           입학을 환영합니다. 이름을 알려주시면 문이 열립니다.
         </p>
       </div>
 
       {game.hasEntered ? (
-        <Card className="w-full max-w-xs rotate-[-0.6deg]">
+        <Card className="relative w-full max-w-xs">
           <p className="font-serif-kr text-sm text-ink-700/80">
             다시 오셨군요, <span className="font-semibold text-seal-600">{game.nickname}</span>님.
           </p>
-          <Button className="mt-4 w-full" onClick={() => navigate('/main')}>
+          <Button className="mt-4 w-full" onClick={() => navigate('/notices')}>
             계속하기
           </Button>
           <button
@@ -67,7 +58,7 @@ export default function LoadingPage() {
           </button>
         </Card>
       ) : (
-        <Card className="w-full max-w-xs rotate-[-0.6deg] text-left">
+        <Card className="relative w-full max-w-xs text-left">
           <label className="block font-serif-kr text-sm text-ink-700/80">
             이름
             <input

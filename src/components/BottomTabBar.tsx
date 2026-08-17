@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
 
 const TABS = [
-  { to: '/main', label: '메인', icon: '🏰' },
-  { to: '/house', label: '기숙사', icon: '🛡️' },
-  { to: '/hall', label: '강당', icon: '🕯️' },
-  { to: '/explore', label: '탐험', icon: '🧭' },
-  { to: '/profile', label: '프로필', icon: '🎫' },
+  { to: '/notices', label: '공지' },
+  { to: '/class', label: '수업' },
+  { to: '/house', label: '기숙사' },
+  { to: '/quest', label: '임무' },
+  { to: '/shop', label: '상점' },
+  { to: '/profile', label: '프로필' },
 ];
 
 export default function BottomTabBar() {
@@ -20,16 +21,14 @@ export default function BottomTabBar() {
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
-              `flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-serif-kr transition-colors ${
-                isActive ? 'text-seal-600' : 'text-ink-500/50'
+              `relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold transition-colors ${
+                isActive ? 'text-ink-red' : 'text-ink-500/50'
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <span className={`text-lg transition-transform ${isActive ? 'scale-110' : ''}`}>
-                  {tab.icon}
-                </span>
+                {isActive && <span className="absolute top-0 h-[2px] w-5 rounded-full bg-ink-red" />}
                 <span>{tab.label}</span>
               </>
             )}

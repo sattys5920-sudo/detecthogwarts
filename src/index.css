@@ -2,8 +2,7 @@
 
 @theme {
   --font-display: 'East Sea Dokdo', 'Nanum Myeongjo', serif;
-  --font-title-en: 'Cinzel', serif;
-  --font-stamp: 'Anton', sans-serif;
+  --font-gothic: 'UnifrakturCook', 'Nanum Myeongjo', serif;
   --font-serif: 'Noto Sans KR', system-ui, sans-serif;
   --font-sans: 'Noto Sans KR', system-ui, sans-serif;
 
@@ -34,6 +33,11 @@
 
   --color-ember-500: #8a2a35;
   --color-emerald-500: #3f6b4a;
+
+  /* ink categories: official / mission / admin */
+  --color-ink-black: #17130f;
+  --color-ink-red: #7a1f1f;
+  --color-ink-indigo: #29314f;
 }
 
 html,
@@ -65,14 +69,8 @@ body {
   font-weight: 400;
 }
 
-.font-title-en {
-  font-family: var(--font-title-en);
-  letter-spacing: 0.12em;
-}
-
-.font-stamp {
-  font-family: var(--font-stamp);
-  letter-spacing: 0.08em;
+.font-gothic {
+  font-family: var(--font-gothic);
 }
 
 /* aged-paper grain, layered as a fixed full-screen overlay */

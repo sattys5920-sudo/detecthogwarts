@@ -5,24 +5,33 @@
   --font-serif: 'Gowun Batang', serif;
   --font-sans: 'Noto Sans KR', system-ui, sans-serif;
 
-  --color-arcane-950: #0b0a17;
-  --color-arcane-900: #12102566;
-  --color-arcane-900: #121025;
-  --color-arcane-800: #1b1836;
-  --color-arcane-700: #262047;
-  --color-arcane-600: #362d63;
-  --color-arcane-500: #4a3d84;
+  /* aged parchment paper */
+  --color-paper-50: #faf3e0;
+  --color-paper-100: #f2e6c4;
+  --color-paper-200: #e6d3a2;
+  --color-paper-300: #d4bb80;
+  --color-paper-400: #c2a468;
 
-  --color-gold-400: #f2d38a;
-  --color-gold-300: #f6e2b3;
-  --color-gold-500: #d9ab4f;
-  --color-gold-600: #b8863a;
+  /* ink / sepia text */
+  --color-ink-900: #2a1c12;
+  --color-ink-700: #4a3620;
+  --color-ink-500: #6e5638;
 
-  --color-parchment-100: #f6efe0;
-  --color-parchment-200: #ece0c5;
+  /* wax seal maroon */
+  --color-seal-700: #4a1420;
+  --color-seal-600: #6b1d2a;
+  --color-seal-500: #8a2a35;
 
-  --color-ember-500: #c9603a;
-  --color-emerald-500: #3f9c74;
+  --color-gold-400: #b8863a;
+  --color-gold-300: #cfa050;
+  --color-gold-500: #9c7530;
+  --color-gold-600: #7d5d26;
+
+  --color-parchment-100: #f2e6c4;
+  --color-parchment-200: #e6d3a2;
+
+  --color-ember-500: #8a2a35;
+  --color-emerald-500: #3f6b4a;
 }
 
 html,
@@ -32,18 +41,15 @@ body,
 }
 
 body {
-  background:
-    radial-gradient(circle at 15% -10%, rgba(74, 61, 132, 0.35), transparent 45%),
-    radial-gradient(circle at 100% 0%, rgba(217, 171, 79, 0.12), transparent 40%),
-    var(--color-arcane-950);
-  color: var(--color-parchment-100);
+  background: var(--color-paper-100);
+  color: var(--color-ink-900);
   font-family: var(--font-sans);
   min-height: 100svh;
 }
 
 ::selection {
-  background: var(--color-gold-500);
-  color: var(--color-arcane-950);
+  background: var(--color-seal-500);
+  color: var(--color-paper-50);
 }
 
 .font-display {
@@ -55,29 +61,25 @@ body {
   font-family: var(--font-serif);
 }
 
-/* subtle parchment texture edge for cards */
-.rune-border {
-  border-image-slice: 1;
-  border-width: 1px;
-  border-image-source: linear-gradient(135deg, var(--color-gold-500), transparent 40%, var(--color-gold-500));
+/* aged-paper grain, layered as a fixed full-screen overlay */
+.paper-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
 }
 
-@keyframes flicker {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  45% {
-    opacity: 0.85;
-  }
-  50% {
-    opacity: 0.6;
-  }
-  55% {
-    opacity: 0.9;
-  }
+.paper-stains {
+  background-image:
+    radial-gradient(ellipse 220px 140px at 8% 12%, rgba(140, 105, 55, 0.16), transparent 60%),
+    radial-gradient(ellipse 260px 180px at 95% 8%, rgba(140, 105, 55, 0.14), transparent 60%),
+    radial-gradient(ellipse 300px 200px at 90% 95%, rgba(120, 85, 45, 0.15), transparent 60%),
+    radial-gradient(ellipse 240px 160px at 5% 90%, rgba(120, 85, 45, 0.13), transparent 60%);
 }
 
-.animate-flicker {
-  animation: flicker 4s ease-in-out infinite;
+/* scroll-ribbon banner shape */
+.ribbon {
+  clip-path: polygon(0% 15%, 4% 0%, 96% 0%, 100% 15%, 100% 85%, 96% 100%, 4% 100%, 0% 85%);
+}
+
+.deckle-edge {
+  border-radius: 6px 14px 8px 16px / 14px 8px 16px 6px;
 }

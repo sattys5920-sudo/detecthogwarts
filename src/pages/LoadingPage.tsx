@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
-import Starfield from '../components/Starfield';
+import Flourish from '../components/Flourish';
+import Footprints from '../components/Footprints';
+import PaperTexture from '../components/PaperTexture';
 import { useGame } from '../context/GameContext';
 import { SCHOOL_NAME } from '../data/school';
 
@@ -28,27 +30,34 @@ export default function LoadingPage() {
 
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center gap-8 px-6 text-center">
-      <Starfield count={70} />
+      <PaperTexture />
+      <Footprints />
 
       <div>
-        <span className="text-4xl">✦</span>
-        <h1 className="font-display mt-3 text-3xl text-parchment-100">{SCHOOL_NAME}</h1>
-        <p className="mt-2 font-serif-kr text-sm text-parchment-200/70">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-seal-600 bg-gradient-to-b from-seal-500 to-seal-700 text-2xl text-paper-50 shadow-[0_2px_10px_rgba(74,20,32,0.35)]">
+          ✦
+        </div>
+        <div className="mt-3 flex items-center justify-center gap-2 text-ink-500/50">
+          <Flourish className="h-5 w-12" />
+          <h1 className="font-display text-2xl text-ink-900">{SCHOOL_NAME}</h1>
+          <Flourish className="h-5 w-12" flip />
+        </div>
+        <p className="mt-2 font-serif-kr text-sm text-ink-700/70">
           입학을 환영합니다. 이름을 알려주시면 문이 열립니다.
         </p>
       </div>
 
       {game.hasEntered ? (
         <Card className="w-full max-w-xs">
-          <p className="font-serif-kr text-sm text-parchment-200/70">
-            다시 오셨군요, <span className="font-semibold text-gold-300">{game.nickname}</span>님.
+          <p className="font-serif-kr text-sm text-ink-700/80">
+            다시 오셨군요, <span className="font-semibold text-seal-600">{game.nickname}</span>님.
           </p>
           <Button className="mt-4 w-full" onClick={() => navigate('/main')}>
             계속하기
           </Button>
           <button
             type="button"
-            className="mt-3 text-xs text-parchment-200/40 underline-offset-2 hover:text-parchment-200/70 hover:underline"
+            className="mt-3 text-xs text-ink-500/50 underline-offset-2 hover:text-ink-700 hover:underline"
             onClick={game.resetPlayer}
           >
             다른 이름으로 시작하기
@@ -56,7 +65,7 @@ export default function LoadingPage() {
         </Card>
       ) : (
         <Card className="w-full max-w-xs text-left">
-          <label className="block font-serif-kr text-sm text-parchment-200/80">
+          <label className="block font-serif-kr text-sm text-ink-700/80">
             이름
             <input
               value={nickname}
@@ -67,10 +76,10 @@ export default function LoadingPage() {
               onKeyDown={(e) => e.key === 'Enter' && handleEnter()}
               placeholder="이름을 입력하세요"
               maxLength={12}
-              className="mt-1.5 w-full rounded-lg border border-white/10 bg-arcane-950/60 px-3 py-2 text-parchment-100 outline-none focus:border-gold-400"
+              className="mt-1.5 w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-3 py-2 text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
             />
           </label>
-          {error && <p className="mt-2 text-xs text-ember-500">{error}</p>}
+          {error && <p className="mt-2 text-xs text-seal-600">{error}</p>}
           <Button className="mt-4 w-full" onClick={handleEnter}>
             입장하기
           </Button>

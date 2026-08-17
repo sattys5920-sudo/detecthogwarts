@@ -11,7 +11,7 @@ const TABS = [
 export default function BottomTabBar() {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-arcane-950/95 backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-700/15 bg-paper-100/95 backdrop-blur"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="mx-auto flex max-w-md items-stretch justify-between px-1">
@@ -21,7 +21,7 @@ export default function BottomTabBar() {
             to={tab.to}
             className={({ isActive }) =>
               `flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-serif-kr transition-colors ${
-                isActive ? 'text-gold-300' : 'text-parchment-200/50'
+                isActive ? 'text-seal-600' : 'text-ink-500/50'
               }`
             }
           >

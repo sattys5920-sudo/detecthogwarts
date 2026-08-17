@@ -6,34 +6,49 @@ interface Step {
   scale: number;
 }
 
+function buildTrail(count: number, startTop: number, endTop: number, baseLeft: number, wave: number): Step[] {
+  const steps: Step[] = [];
+  for (let i = 0; i < count; i++) {
+    const t = i / (count - 1);
+    const top = startTop + (endTop - startTop) * t;
+    const wobble = Math.sin(t * Math.PI * 2.4) * wave;
+    const left = baseLeft + wobble + (i % 2 === 0 ? -4 : 4);
+    const tangent = Math.cos(t * Math.PI * 2.4) * wave;
+    steps.push({
+      top: `${top}%`,
+      left: `${left}%`,
+      rotate: -78 + tangent * 1.4,
+      flip: i % 2 === 0,
+      scale: 0.85 + (i % 3) * 0.07,
+    });
+  }
+  return steps;
+}
+
 const STEPS: Step[] = [
-  { top: '6%', left: '10%', rotate: -8, flip: false, scale: 1 },
-  { top: '13%', left: '18%', rotate: -4, flip: true, scale: 0.95 },
-  { top: '21%', left: '11%', rotate: -10, flip: false, scale: 1.05 },
-  { top: '29%', left: '19%', rotate: -6, flip: true, scale: 0.9 },
-  { top: '78%', left: '82%', rotate: 172, flip: false, scale: 1 },
-  { top: '86%', left: '74%', rotate: 176, flip: true, scale: 0.95 },
-  { top: '93%', left: '81%', rotate: 170, flip: false, scale: 1.05 },
+  ...buildTrail(6, 2, 32, 12, 6),
+  ...buildTrail(6, 68, 98, 84, 6).map((s) => ({ ...s, rotate: s.rotate + 180 })),
 ];
 
 function Footprint({ flip }: { flip: boolean }) {
   return (
     <svg
       viewBox="0 0 24 40"
-      width="18"
-      height="30"
+      width="17"
+      height="28"
       style={{ transform: flip ? 'scaleX(-1)' : undefined }}
       aria-hidden="true"
     >
-      <ellipse cx="12" cy="26" rx="8" ry="13" fill="currentColor" />
-      <ellipse cx="10" cy="7" rx="4.5" ry="6" fill="currentColor" />
+      <ellipse cx="12" cy="26" rx="7.5" ry="12.5" fill="currentColor" />
+      <ellipse cx="9.5" cy="7" rx="4.2" ry="5.6" fill="currentColor" />
+      <ellipse cx="16" cy="9" rx="2" ry="2.6" fill="currentColor" />
     </svg>
   );
 }
 
 export default function Footprints() {
   return (
-    <div className="pointer-events-none absolute inset-0 text-ink-700/15" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-0 text-ink-700/[0.13]" aria-hidden="true">
       {STEPS.map((step, i) => (
         <div
           key={i}

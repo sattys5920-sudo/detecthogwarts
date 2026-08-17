@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
+import Crest from '../components/Crest';
 import Flourish from '../components/Flourish';
 import Footprints from '../components/Footprints';
 import PaperTexture from '../components/PaperTexture';
@@ -34,9 +35,7 @@ export default function LoadingPage() {
       <Footprints />
 
       <div>
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-seal-600 bg-gradient-to-b from-seal-500 to-seal-700 text-2xl text-paper-50 shadow-[0_2px_10px_rgba(74,20,32,0.35)]">
-          ✦
-        </div>
+        <Crest size={72} />
         <div className="mt-3 flex items-center justify-center gap-2 text-ink-500/50">
           <Flourish className="h-5 w-12" />
           <h1 className="font-display text-2xl text-ink-900">{SCHOOL_NAME}</h1>
@@ -48,7 +47,7 @@ export default function LoadingPage() {
       </div>
 
       {game.hasEntered ? (
-        <Card className="w-full max-w-xs">
+        <Card className="w-full max-w-xs rotate-[-0.6deg]">
           <p className="font-serif-kr text-sm text-ink-700/80">
             다시 오셨군요, <span className="font-semibold text-seal-600">{game.nickname}</span>님.
           </p>
@@ -64,7 +63,7 @@ export default function LoadingPage() {
           </button>
         </Card>
       ) : (
-        <Card className="w-full max-w-xs text-left">
+        <Card className="w-full max-w-xs rotate-[-0.6deg] text-left">
           <label className="block font-serif-kr text-sm text-ink-700/80">
             이름
             <input

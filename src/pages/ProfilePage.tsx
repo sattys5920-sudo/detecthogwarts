@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
+import Crest from '../components/Crest';
 import SceneBanner from '../components/SceneBanner';
 import { useGame } from '../context/GameContext';
 import { HOUSES } from '../data/school';
@@ -20,7 +21,7 @@ export default function ProfilePage() {
     <div className="flex flex-col gap-5">
       <SceneBanner title="프로필" subtitle="나의 신분증" accent="#4a1420" icon="🎫" />
 
-      <Card className="relative overflow-hidden">
+      <Card className="relative overflow-hidden rotate-[-0.6deg]">
         <div className="flex items-center justify-between">
           <div>
             <p className="font-serif-kr text-xs uppercase tracking-wide text-ink-500/60">
@@ -28,9 +29,7 @@ export default function ProfilePage() {
             </p>
             <p className="font-display mt-1 text-xl text-ink-900">{game.nickname || '이름 없음'}</p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-seal-600 bg-gradient-to-b from-seal-500 to-seal-700 text-sm text-paper-50 shadow-[0_1px_6px_rgba(74,20,32,0.3)]">
-            ✦
-          </div>
+          <Crest size={40} />
         </div>
         <div className="mt-4 flex items-center justify-between border-t border-dashed border-ink-700/20 pt-3 text-sm">
           <span className="font-serif-kr font-semibold" style={{ color: house?.color ?? '#6e5638' }}>

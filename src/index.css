@@ -3,11 +3,11 @@
 @theme {
   --font-display: 'East Sea Dokdo', 'Nanum Myeongjo', serif;
   --font-title-en: 'Cinzel', serif;
-  --font-serif: 'Nanum Myeongjo', serif;
+  --font-serif: 'Noto Sans KR', system-ui, sans-serif;
   --font-sans: 'Noto Sans KR', system-ui, sans-serif;
 
   /* aged parchment paper */
-  --color-paper-50: #faf3e0;
+  --color-paper-50: #fdf9ee;
   --color-paper-100: #f2e6c4;
   --color-paper-200: #e6d3a2;
   --color-paper-300: #d4bb80;
@@ -61,6 +61,7 @@ body {
 
 .font-serif-kr {
   font-family: var(--font-serif);
+  font-weight: 400;
 }
 
 .font-title-en {
@@ -95,24 +96,7 @@ body {
   border-radius: 6px 16px 8px 20px / 16px 8px 20px 6px;
 }
 
-/* wax-seal button: gently uneven rounded corners + glossy highlight */
+/* wax-seal button: gently uneven rounded corners, flat */
 .seal-btn {
   border-radius: 14px 18px 16px 20px / 18px 14px 20px 16px;
-  position: relative;
-  box-shadow:
-    0 2px 0 rgba(74, 20, 32, 0.35),
-    0 4px 10px rgba(42, 20, 15, 0.3),
-    inset 0 1px 1px rgba(255, 255, 255, 0.2);
-}
-
-.seal-btn::before {
-  content: '';
-  position: absolute;
-  top: 10%;
-  left: 12%;
-  width: 22%;
-  height: 30%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.3), transparent 70%);
-  pointer-events: none;
 }

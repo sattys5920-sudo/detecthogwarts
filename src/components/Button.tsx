@@ -6,8 +6,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
-  primary:
-    'seal-btn bg-gradient-to-b from-seal-500 to-seal-700 text-paper-50 border border-seal-700/60 hover:brightness-110 active:scale-[0.98]',
+  primary: 'seal-btn bg-seal-600 text-paper-50 border border-seal-700/60 hover:brightness-110',
   secondary:
     'rounded-full bg-paper-50 text-ink-900 border border-ink-700/30 hover:border-gold-400 hover:bg-paper-100',
   ghost:

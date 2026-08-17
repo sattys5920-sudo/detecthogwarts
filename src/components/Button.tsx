@@ -17,7 +17,7 @@ const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
 export default function Button({ children, variant = 'primary', className = '', ...props }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 px-6 py-3 font-serif-kr text-sm font-medium tracking-wide transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${variantClasses[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 font-serif-kr text-sm font-medium tracking-wide transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${variantClasses[variant]} ${className}`}
       {...props}
     >
       {children}

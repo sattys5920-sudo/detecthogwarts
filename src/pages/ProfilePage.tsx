@@ -27,7 +27,7 @@ export default function ProfilePage() {
             <p className="font-serif-kr text-xs uppercase tracking-wide text-ink-500/60">
               아르카눔 마법학교 학생증
             </p>
-            <p className="font-display mt-1 text-xl text-ink-900">{game.nickname || '이름 없음'}</p>
+            <p className="font-display mt-1 text-2xl text-ink-900">{game.nickname || '이름 없음'}</p>
           </div>
           <Crest size={40} />
         </div>

@@ -38,7 +38,7 @@ export default function LoadingPage() {
         <Crest size={72} />
         <div className="mt-3 flex items-center justify-center gap-2 text-ink-500/50">
           <Flourish className="h-5 w-12" />
-          <h1 className="font-display text-2xl text-ink-900">{SCHOOL_NAME}</h1>
+          <h1 className="font-display text-3xl text-ink-900">{SCHOOL_NAME}</h1>
           <Flourish className="h-5 w-12" flip />
         </div>
         <p className="mt-2 font-serif-kr text-sm text-ink-700/70">

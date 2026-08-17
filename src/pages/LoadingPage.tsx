@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
-import Crest from '../components/Crest';
 import Flourish from '../components/Flourish';
 import Footprints from '../components/Footprints';
+import InkBlot from '../components/InkBlot';
 import PaperTexture from '../components/PaperTexture';
 import { useGame } from '../context/GameContext';
 import { SCHOOL_NAME } from '../data/school';
@@ -35,12 +35,9 @@ export default function LoadingPage() {
       <Footprints />
 
       <div>
-        <Crest size={104} />
-
-        <div className="mt-3 inline-flex">
-          <h1 className="ribbon inline-block whitespace-nowrap bg-seal-600 px-6 py-2.5 font-title-en text-lg text-paper-50">
-            ARCANUM CASE FILE
-          </h1>
+        <div className="relative mx-auto flex h-44 w-full max-w-[300px] items-center justify-center">
+          <InkBlot className="absolute inset-0 h-full w-full" />
+          <h1 className="relative font-stamp text-6xl text-paper-50">HWCF</h1>
         </div>
 
         <div className="mt-3 flex items-center justify-center gap-2 text-ink-500/50">

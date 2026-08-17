@@ -3,6 +3,7 @@
 @theme {
   --font-display: 'East Sea Dokdo', 'Nanum Myeongjo', serif;
   --font-title-en: 'Cinzel', serif;
+  --font-stamp: 'Anton', sans-serif;
   --font-serif: 'Noto Sans KR', system-ui, sans-serif;
   --font-sans: 'Noto Sans KR', system-ui, sans-serif;
 
@@ -67,6 +68,11 @@ body {
 .font-title-en {
   font-family: var(--font-title-en);
   letter-spacing: 0.12em;
+}
+
+.font-stamp {
+  font-family: var(--font-stamp);
+  letter-spacing: 0.08em;
 }
 
 /* aged-paper grain, layered as a fixed full-screen overlay */

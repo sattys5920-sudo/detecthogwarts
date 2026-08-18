@@ -3,6 +3,7 @@ import DayChatRoom from '../components/DayChatRoom';
 import FinalDeduction from '../components/FinalDeduction';
 import Letterhead from '../components/Letterhead';
 import SceneExplorer from '../components/SceneExplorer';
+import ScriptViewer from '../components/ScriptViewer';
 import { useGame } from '../context/GameContext';
 import { DAYS } from '../data/investigation/days';
 import type { ClueDef } from '../data/investigation/types';
@@ -13,11 +14,13 @@ export default function ExplorationPage() {
   const { entries, register } = useNotebook();
   const [selectedDay, setSelectedDay] = useState(game.currentDay);
   const [roomDone, setRoomDone] = useState<Record<number, boolean>>({});
+  const [scriptDone, setScriptDone] = useState<Record<number, boolean>>({});
   const unlockedClueTitles = new Set(entries.map((e) => e.title));
 
   const day = DAYS.find((d) => d.day === selectedDay) ?? DAYS[0];
   const hasNpcs = (day.npcs?.length ?? 0) > 0;
-  const showClosing = !hasNpcs || roomDone[day.day];
+  const hasScript = (day.script?.length ?? 0) > 0;
+  const showClosing = (!hasNpcs && !hasScript) || roomDone[day.day] || scriptDone[day.day];
 
   function handleClue(clue: ClueDef) {
     register(clue);
@@ -51,6 +54,16 @@ export default function ExplorationPage() {
         <p className="rounded-sm border border-seal-500/30 bg-paper-100 px-3 py-2 text-xs font-bold text-seal-600">
           {day.objective}
         </p>
+      )}
+
+      {hasScript && (
+        <ScriptViewer
+          key={day.day}
+          day={day.day}
+          beats={day.script!}
+          onClue={handleClue}
+          onComplete={() => setScriptDone((s) => (s[day.day] ? s : { ...s, [day.day]: true }))}
+        />
       )}
 
       {day.sceneItems && (

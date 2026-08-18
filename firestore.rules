@@ -85,5 +85,21 @@ service cloud.firestore {
         allow delete: if true;
       }
     }
+
+    // 인터랙티브 스크립트 진행 상태: 관리자가 '다음'으로 공개 범위(revealedCount)를
+    // 넓히고, 플레이어가 선택지를 고르면 choices 맵에 기록됩니다. 로그인이 없어
+    // 관리자만 쓸 수 있게 제한할 방법은 없고, 클라이언트(관리자 페이지)에서만
+    // 발송 UI를 감춥니다.
+    match /sessions/{dayId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.revealedCount is int
+        && request.resource.data.revealedCount >= 0;
+
+      allow update: if (!('revealedCount' in request.resource.data) || request.resource.data.revealedCount is int)
+        && (!('choices' in request.resource.data) || request.resource.data.choices is map);
+
+      allow delete: if false;
+    }
   }
 }

@@ -7,6 +7,8 @@ export interface Topic {
   prompt: string;
   response: string;
   clue?: ClueDef;
+  /** Titles of notebook clues that must already be registered before this topic can be asked. */
+  requiresClueTitles?: string[];
   followUp?: {
     prompt: string;
     response: string;

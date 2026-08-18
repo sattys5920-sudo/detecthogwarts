@@ -11,9 +11,10 @@ import { useNotebook } from '../hooks/useNotebook';
 
 export default function ExplorationPage() {
   const game = useGame();
-  const { register } = useNotebook();
+  const { entries, register } = useNotebook();
   const [selectedDay, setSelectedDay] = useState(game.currentDay);
   const [openNpcId, setOpenNpcId] = useState<string | null>(null);
+  const unlockedClueTitles = new Set(entries.map((e) => e.title));
 
   const day = DAYS.find((d) => d.day === selectedDay) ?? DAYS[0];
   const npcEntry = day.npcs?.find((n) => n.npcId === openNpcId);
@@ -34,7 +35,13 @@ export default function ExplorationPage() {
         >
           ← 목록으로
         </button>
-        <NpcDialogue npcIcon={npc.icon} script={npcEntry.script} onClue={handleClue} />
+        <NpcDialogue
+          npcIcon={npc.icon}
+          script={npcEntry.script}
+          nickname={game.nickname}
+          unlockedClueTitles={unlockedClueTitles}
+          onClue={handleClue}
+        />
       </div>
     );
   }

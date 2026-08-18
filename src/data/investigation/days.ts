@@ -53,7 +53,7 @@ export const DAYS: DayContent[] = [
       {
         npcId: 'agnes',
         script: {
-          greeting: '...무슨 일이야? 나 아직도 믿기지가 않아.',
+          greeting: '...무슨 일이야, {name}? 나 아직도 믿기지가 않아.',
           topics: [
             {
               id: 'love',
@@ -87,7 +87,7 @@ export const DAYS: DayContent[] = [
       {
         npcId: 'shane',
         script: {
-          greeting: '...에드먼드 얘기지. 나도 아직 정리가 안 됐어.',
+          greeting: '...에드먼드 얘기지, {name}. 나도 아직 정리가 안 됐어.',
           topics: [
             {
               id: 'relation',
@@ -117,7 +117,7 @@ export const DAYS: DayContent[] = [
       {
         npcId: 'tachibana',
         script: {
-          greeting: '할 말 없어. 빨리 끝내줘.',
+          greeting: '할 말 없어. 빨리 끝내줘, {name}.',
           topics: [
             {
               id: 'relation',
@@ -146,7 +146,7 @@ export const DAYS: DayContent[] = [
       {
         npcId: 'selena',
         script: {
-          greeting: '슬픈 일이에요. 제가 아는 선에서 답해드리죠.',
+          greeting: '슬픈 일이에요, {name}. 제가 아는 선에서 답해드리죠.',
           topics: [
             {
               id: 'relation',
@@ -189,7 +189,7 @@ export const DAYS: DayContent[] = [
       {
         npcId: 'paul',
         script: {
-          greeting: '무엇을 도와드릴까요.',
+          greeting: '무엇을 도와드릴까요, {name}.',
           topics: [
             {
               id: 'relation',
@@ -244,7 +244,7 @@ export const DAYS: DayContent[] = [
       {
         npcId: 'shane',
         script: {
-          greeting: '...또 왜.',
+          greeting: '...또 왜, {name}.',
           topics: [
             {
               id: 'victims-list',
@@ -283,12 +283,13 @@ export const DAYS: DayContent[] = [
       {
         npcId: 'tachibana',
         script: {
-          greeting: '...또 왔네.',
+          greeting: '...또 왔네, {name}.',
           topics: [
             {
               id: 'potion',
               prompt: '변신 물약에 대해 추궁한다',
               response: '그게 무슨 소리야, 난 모르는 일이야.',
+              requiresClueTitles: ['변신 물약의 흔적'],
               followUp: {
                 prompt: '증거가 있다고 말한다',
                 response: '...들켰네. 셀레나 교수님 지시였어. 서로 모습을 바꿔서... 진상 보고서를 가져오라고 하셨어.',
@@ -324,7 +325,7 @@ export const DAYS: DayContent[] = [
       {
         npcId: 'paul',
         script: {
-          greeting: '...할 이야기가 남았습니까.',
+          greeting: '...할 이야기가 남았습니까, {name}.',
           topics: [
             {
               id: 'report',
@@ -346,6 +347,7 @@ export const DAYS: DayContent[] = [
               id: 'message',
               prompt: '다잉메시지 "ARCADIA"에 대해 묻는다',
               response: '...제가 남겼습니다. 에드먼드가 아니라.',
+              requiresClueTitles: ['제5 기숙사 학생 명부'],
               clue: { title: '파울의 자백', desc: "현장에 남겨진 'ARCADIA' 메시지가 에드먼드가 아니라 파울 자신이 남긴 것이라고 인정했다.", ink: 'red', status: '확인됨' },
             },
           ],

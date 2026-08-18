@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import DayChatRoom from '../components/DayChatRoom';
 import FinalDeduction from '../components/FinalDeduction';
 import Letterhead from '../components/Letterhead';
-import SceneExplorer from '../components/SceneExplorer';
 import ScriptViewer from '../components/ScriptViewer';
 import { useGame } from '../context/GameContext';
 import { DAYS } from '../data/investigation/days';
@@ -11,16 +9,12 @@ import { useNotebook } from '../hooks/useNotebook';
 
 export default function ExplorationPage() {
   const game = useGame();
-  const { entries, register } = useNotebook();
+  const { register } = useNotebook();
   const [selectedDay, setSelectedDay] = useState(game.currentDay);
-  const [roomDone, setRoomDone] = useState<Record<number, boolean>>({});
   const [scriptDone, setScriptDone] = useState<Record<number, boolean>>({});
-  const unlockedClueTitles = new Set(entries.map((e) => e.title));
 
   const day = DAYS.find((d) => d.day === selectedDay) ?? DAYS[0];
-  const hasNpcs = (day.npcs?.length ?? 0) > 0;
-  const hasScript = (day.script?.length ?? 0) > 0;
-  const showClosing = (!hasNpcs && !hasScript) || roomDone[day.day] || scriptDone[day.day];
+  const showClosing = scriptDone[day.day];
 
   function handleClue(clue: ClueDef) {
     register(clue);
@@ -56,36 +50,13 @@ export default function ExplorationPage() {
         </p>
       )}
 
-      {hasScript && (
-        <ScriptViewer
-          key={day.day}
-          day={day.day}
-          beats={day.script!}
-          onClue={handleClue}
-          onComplete={() => setScriptDone((s) => (s[day.day] ? s : { ...s, [day.day]: true }))}
-        />
-      )}
-
-      {day.sceneItems && (
-        <div>
-          <p className="mb-2 text-xs font-bold text-ink-700/70">현장 조사</p>
-          <SceneExplorer items={day.sceneItems} onClue={handleClue} />
-        </div>
-      )}
-
-      {hasNpcs && (
-        <div>
-          <p className="mb-2 text-xs font-bold text-ink-700/70">조사실 채팅방</p>
-          <DayChatRoom
-            key={day.day}
-            day={day}
-            nickname={game.nickname}
-            unlockedClueTitles={unlockedClueTitles}
-            onClue={handleClue}
-            onWrapUp={() => setRoomDone((r) => ({ ...r, [day.day]: true }))}
-          />
-        </div>
-      )}
+      <ScriptViewer
+        key={day.day}
+        day={day.day}
+        beats={day.script}
+        onClue={handleClue}
+        onComplete={() => setScriptDone((s) => (s[day.day] ? s : { ...s, [day.day]: true }))}
+      />
 
       {showClosing && (
         <>

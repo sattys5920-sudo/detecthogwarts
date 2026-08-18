@@ -60,10 +60,21 @@ export default function ScriptViewer({ day, beats, onClue, onComplete }: ScriptV
               </div>
             );
           }
+          if (beat.speaker) {
+            return (
+              <div key={beat.id} className="flex max-w-[90%] items-start gap-1.5 rounded-lg border border-ink-700/15 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900">
+                <span className="flex-none">{beat.icon}</span>
+                <span>
+                  <span className="mr-1 font-bold text-ink-700/70">{beat.speaker}</span>
+                  {beat.text}
+                </span>
+              </div>
+            );
+          }
           return (
             <p key={beat.id} className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">
               {beat.text}
-              {beat.clue && <span className="ml-1 block font-mono text-[10px] not-italic text-seal-600">🗒️ 조사수첩에 등록됨 — {beat.clue.title}</span>}
+              {beat.clue && <span className="mt-1 block font-mono text-[10px] not-italic text-seal-600">🗒️ 조사수첩에 등록됨 — {beat.clue.title}</span>}
             </p>
           );
         })}

@@ -43,5 +43,47 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+
+    // 연회장 피드/댓글: 이 프로젝트는 아직 로그인(Firebase Auth) 없이 동작하므로
+    // "작성자 본인만 수정 가능" 같은 진짜 신원 검증은 불가능합니다. 형식만
+    // 검증하고, 수정/삭제 버튼 노출은 클라이언트(내 playerId 비교)에서만 막습니다.
+    match /posts/{postId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasAll(
+          ['authorPlayerId', 'authorNickname', 'content', 'allowComments']
+        )
+        && request.resource.data.authorNickname is string
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 2000
+        && request.resource.data.allowComments is bool;
+
+      allow update: if request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 2000
+        && request.resource.data.allowComments is bool;
+
+      allow delete: if true;
+
+      match /comments/{commentId} {
+        allow read: if true;
+
+        allow create: if request.resource.data.keys().hasAll(
+            ['authorPlayerId', 'authorNickname', 'content', 'secret']
+          )
+          && request.resource.data.authorNickname is string
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 500
+          && request.resource.data.secret is bool;
+
+        allow update: if request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 500;
+
+        allow delete: if true;
+      }
+    }
   }
 }

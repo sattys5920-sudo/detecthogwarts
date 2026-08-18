@@ -2,31 +2,49 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useR
 import type { HouseId } from '../data/sortingTest';
 import { createPlayerRecord, listenPlayer } from '../firebase/players';
 
+export interface PlayerStats {
+  hp: number;
+  intelligence: number;
+  stamina: number;
+  spellPower: number;
+}
+
 interface PlayerState {
   nickname: string;
+  avatarDataUrl: string | null;
   houseId: string | null;
   joinedAt: number | null;
   playerId: string | null;
+  stats: PlayerStats;
 }
 
 const STORAGE_KEY = 'arcanum-player';
 const SEEN_ASSIGNMENT_PREFIX = 'arcanum-assignment-seen-';
 
+const defaultStats: PlayerStats = { hp: 100, intelligence: 50, stamina: 50, spellPower: 50 };
+
 const emptyState: PlayerState = {
   nickname: '',
+  avatarDataUrl: null,
   houseId: null,
   joinedAt: null,
   playerId: null,
+  stats: defaultStats,
 };
 
 function loadState(): PlayerState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return emptyState;
-    return { ...emptyState, ...(JSON.parse(raw) as Partial<PlayerState>) };
+    const parsed = JSON.parse(raw) as Partial<PlayerState>;
+    return { ...emptyState, ...parsed, stats: { ...defaultStats, ...parsed.stats } };
   } catch {
     return emptyState;
   }
+}
+
+function clamp(value: number) {
+  return Math.max(0, Math.min(100, value));
 }
 
 interface GameContextValue extends PlayerState {
@@ -36,6 +54,9 @@ interface GameContextValue extends PlayerState {
   clearJustAssigned: () => void;
   completeSignup: (nickname: string, testScores: Record<HouseId, number>, computedHouse: HouseId) => Promise<void>;
   setHouse: (houseId: string) => void;
+  setNickname: (nickname: string) => void;
+  setAvatar: (dataUrl: string | null) => void;
+  adjustStat: (key: keyof PlayerStats, delta: number) => void;
   resetPlayer: () => void;
 }
 
@@ -80,6 +101,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, houseId }));
   }, []);
 
+  const setNickname = useCallback((nickname: string) => {
+    setState((prev) => ({ ...prev, nickname }));
+  }, []);
+
+  const setAvatar = useCallback((dataUrl: string | null) => {
+    setState((prev) => ({ ...prev, avatarDataUrl: dataUrl }));
+  }, []);
+
+  const adjustStat = useCallback((key: keyof PlayerStats, delta: number) => {
+    setState((prev) => ({ ...prev, stats: { ...prev.stats, [key]: clamp(prev.stats[key] + delta) } }));
+  }, []);
+
   const clearJustAssigned = useCallback(() => {
     const playerId = playerIdRef.current;
     if (playerId && assignedHouse) {
@@ -102,6 +135,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     clearJustAssigned,
     completeSignup,
     setHouse,
+    setNickname,
+    setAvatar,
+    adjustStat,
     resetPlayer,
   };
 

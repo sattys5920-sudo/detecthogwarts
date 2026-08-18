@@ -11,26 +11,21 @@ const TABS = [
 export default function BottomTabBar() {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-700/15 bg-paper-100/95 backdrop-blur"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-700/20 bg-paper-200 px-2 pt-2"
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.5rem)' }}
     >
-      <div className="mx-auto flex max-w-md items-stretch justify-between">
+      <div className="mx-auto flex max-w-md items-stretch justify-between gap-1.5">
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
-              `relative flex flex-1 flex-col items-center gap-1 py-4 text-sm font-bold transition-colors ${
-                isActive ? 'text-ink-red' : 'text-ink-500/50'
+              `tablet-tab flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2.5 text-center text-[11px] font-bold leading-tight transition-all ${
+                isActive ? 'tablet-tab-active text-seal-600' : 'text-ink-700/70'
               }`
             }
           >
-            {({ isActive }) => (
-              <>
-                {isActive && <span className="absolute top-0 h-[3px] w-7 rounded-full bg-ink-red" />}
-                <span>{tab.label}</span>
-              </>
-            )}
+            <span>{tab.label}</span>
           </NavLink>
         ))}
       </div>

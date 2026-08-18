@@ -262,7 +262,7 @@ export default function HallPage() {
     <div className="relative flex flex-col gap-4">
       <Letterhead label="연회장" context={SCHOOL_NAME} meta="2026.08.18 · 초승달 · 저녁 식사 시간" />
 
-      {composerOpen && (
+      {composerOpen && game.isAdmin && (
         <div className="flex flex-col gap-2.5 rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
           <textarea
             value={draft}
@@ -289,7 +289,9 @@ export default function HallPage() {
 
       <div className="flex flex-col gap-3">
         {posts.length === 0 && !composerOpen && (
-          <p className="py-10 text-center text-sm text-ink-500/60">아직 게시된 피드가 없어요. + 버튼으로 첫 피드를 남겨보세요.</p>
+          <p className="py-10 text-center text-sm text-ink-500/60">
+            {game.isAdmin ? '아직 게시된 피드가 없어요. + 버튼으로 첫 피드를 남겨보세요.' : '아직 게시된 공지가 없어요.'}
+          </p>
         )}
         {posts.map((p) => (
           <button key={p.id} type="button" onClick={() => setOpenId(p.id)} className="text-left">
@@ -309,7 +311,7 @@ export default function HallPage() {
         ))}
       </div>
 
-      {!composerOpen && (
+      {!composerOpen && game.isAdmin && (
         <button
           type="button"
           onClick={() => setComposerOpen(true)}

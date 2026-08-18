@@ -9,6 +9,9 @@ import SortingTest from '../components/SortingTest';
 import { useGame } from '../context/GameContext';
 import { type HouseId, topHouse } from '../data/sortingTest';
 
+const ADMIN_PASSCODE = '316316316';
+const ZERO_SCORES: Record<HouseId, number> = { flame: 0, moonlight: 0, earth: 0, wind: 0 };
+
 export default function LoadingPage() {
   const game = useGame();
   const navigate = useNavigate();
@@ -17,6 +20,12 @@ export default function LoadingPage() {
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const [adminGateOpen, setAdminGateOpen] = useState(false);
+  const [adminNickname, setAdminNickname] = useState('');
+  const [adminPasscode, setAdminPasscode] = useState('');
+  const [adminError, setAdminError] = useState('');
+  const [adminSubmitting, setAdminSubmitting] = useState(false);
 
   function handleTestComplete(scores: Record<HouseId, number>) {
     setTestScores(scores);
@@ -44,6 +53,43 @@ export default function LoadingPage() {
     }
   }
 
+  function closeAdminGate() {
+    setAdminGateOpen(false);
+    setAdminNickname('');
+    setAdminPasscode('');
+    setAdminError('');
+  }
+
+  async function handleAdminEnter() {
+    if (adminPasscode !== ADMIN_PASSCODE) {
+      setAdminError('암호가 올바르지 않습니다.');
+      return;
+    }
+    let trimmed = '';
+    if (!game.hasEntered) {
+      trimmed = adminNickname.trim();
+      if (!trimmed) {
+        setAdminError('이름을 입력해 주세요.');
+        return;
+      }
+      if (trimmed.length > 12) {
+        setAdminError('이름은 12자 이내로 입력해 주세요.');
+        return;
+      }
+    }
+    setAdminSubmitting(true);
+    try {
+      if (!game.hasEntered) {
+        await game.completeSignup(trimmed, ZERO_SCORES, 'moonlight');
+      }
+      game.unlockAdmin();
+      navigate('/hall');
+    } catch {
+      setAdminError('입장 처리에 실패했습니다. 다시 시도해 주세요.');
+      setAdminSubmitting(false);
+    }
+  }
+
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center gap-6 px-6 text-center">
       <PaperTexture />
@@ -54,7 +100,52 @@ export default function LoadingPage() {
         <h1 className="font-gothic mt-1 text-5xl leading-none text-ink-black">HWCF</h1>
       </div>
 
-      {game.hasEntered ? (
+      {adminGateOpen ? (
+        <Card className="relative w-full max-w-xs text-left">
+          <p className="font-mono text-[11px] tracking-wide text-seal-600">관리자 입장</p>
+          <p className="mt-1 font-serif-kr text-sm text-ink-700/80">
+            암호를 입력하면 적성 검사 없이 바로 입장합니다. 화면은 플레이어와 동일하되, 진행을 조작할 수 있는 권한이 함께 켜집니다.
+          </p>
+          {!game.hasEntered && (
+            <label className="mt-4 block font-serif-kr text-sm text-ink-700/80">
+              이름
+              <input
+                value={adminNickname}
+                onChange={(e) => {
+                  setAdminNickname(e.target.value);
+                  setAdminError('');
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && handleAdminEnter()}
+                placeholder="이름을 입력하세요"
+                maxLength={12}
+                className="mt-1.5 w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-3 py-2 text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+              />
+            </label>
+          )}
+          <label className="mt-3 block font-serif-kr text-sm text-ink-700/80">
+            관리자 암호
+            <input
+              type="password"
+              value={adminPasscode}
+              onChange={(e) => {
+                setAdminPasscode(e.target.value);
+                setAdminError('');
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleAdminEnter()}
+              className="mt-1.5 w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-3 py-2 text-ink-900 outline-none focus:border-seal-500"
+            />
+          </label>
+          {adminError && <p className="mt-2 text-xs text-seal-600">{adminError}</p>}
+          <div className="mt-4 flex gap-2">
+            <Button className="flex-1" onClick={handleAdminEnter} disabled={adminSubmitting}>
+              {adminSubmitting ? '입장 처리 중…' : '입장하기'}
+            </Button>
+            <button type="button" onClick={closeAdminGate} className="px-2 text-xs text-ink-500/50 hover:text-ink-700">
+              취소
+            </button>
+          </div>
+        </Card>
+      ) : game.hasEntered ? (
         <Card className="relative w-full max-w-xs">
           <p className="font-serif-kr text-sm text-ink-700/80">
             다시 오셨군요, <span className="font-semibold text-seal-600">{game.nickname}</span>님.
@@ -101,6 +192,16 @@ export default function LoadingPage() {
             </Card>
           )}
         </OwlIntro>
+      )}
+
+      {!adminGateOpen && !game.isAdmin && (
+        <button
+          type="button"
+          onClick={() => setAdminGateOpen(true)}
+          className="text-xs text-ink-500/30 underline-offset-2 hover:text-ink-700 hover:underline"
+        >
+          관리자이신가요?
+        </button>
       )}
     </div>
   );

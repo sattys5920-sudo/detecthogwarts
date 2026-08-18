@@ -8,8 +8,6 @@ import { HOUSES } from '../data/school';
 import type { HouseId } from '../data/sortingTest';
 import { assignHouse, listenAllPlayers, type PlayerRecord } from '../firebase/players';
 
-const ADMIN_PASSCODE = '316316316';
-
 function houseOf(id: HouseId | null) {
   return HOUSES.find((h) => h.id === id) ?? null;
 }
@@ -91,23 +89,12 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
 export default function AdminPage() {
   const game = useGame();
   const navigate = useNavigate();
-  const [passcode, setPasscode] = useState('');
-  const [passError, setPassError] = useState('');
   const [players, setPlayers] = useState<PlayerRecord[]>([]);
 
   useEffect(() => {
     if (!game.isAdmin) return;
     return listenAllPlayers(setPlayers);
   }, [game.isAdmin]);
-
-  function handleUnlock() {
-    if (passcode === ADMIN_PASSCODE) {
-      game.unlockAdmin();
-      navigate('/exploration');
-    } else {
-      setPassError('암호가 올바르지 않습니다.');
-    }
-  }
 
   if (!game.isAdmin) {
     return (
@@ -116,21 +103,10 @@ export default function AdminPage() {
         <Card className="w-full max-w-xs text-left">
           <p className="font-gothic text-2xl text-ink-black">관리자 페이지</p>
           <p className="mt-1 text-sm text-ink-700/70">
-            암호를 입력하면 평소와 똑같은 화면으로 들어가되, 탐사 활동에서 진행을 조작할 수 있는 권한이 함께 켜집니다.
+            관리자 권한이 없습니다. 처음 화면의 &lsquo;관리자이신가요?&rsquo;로 입장해 주세요.
           </p>
-          <input
-            type="password"
-            value={passcode}
-            onChange={(e) => {
-              setPasscode(e.target.value);
-              setPassError('');
-            }}
-            onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
-            className="mt-3 w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-3 py-2 text-ink-900 outline-none focus:border-seal-500"
-          />
-          {passError && <p className="mt-2 text-xs text-seal-600">{passError}</p>}
-          <Button className="mt-4 w-full" onClick={handleUnlock}>
-            입장
+          <Button className="mt-4 w-full" onClick={() => navigate('/')}>
+            처음 화면으로
           </Button>
         </Card>
       </div>

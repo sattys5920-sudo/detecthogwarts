@@ -210,6 +210,14 @@ export default function ProfilePage() {
       >
         로그아웃
       </Button>
+
+      <button
+        type="button"
+        onClick={() => navigate('/admin')}
+        className="mt-1 self-center text-xs text-ink-500/40 underline-offset-2 hover:text-ink-700 hover:underline"
+      >
+        관리자 페이지
+      </button>
     </div>
   );
 }

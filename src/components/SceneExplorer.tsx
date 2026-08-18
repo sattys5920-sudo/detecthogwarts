@@ -28,7 +28,12 @@ export default function SceneExplorer({ items, onClue }: SceneExplorerProps) {
             {registered[item.id] && <span className="text-xs text-seal-600">✓</span>}
           </button>
           {openId === item.id && (
-            <p className="border-t border-ink-700/10 px-3 py-2.5 text-sm leading-relaxed text-ink-700">{item.text}</p>
+            <div className="border-t border-ink-700/10 px-3 py-2.5">
+              <p className="text-sm leading-relaxed text-ink-700">{item.text}</p>
+              {item.clue && (
+                <p className="mt-2 text-center font-mono text-[11px] text-seal-600">🗒️ 조사수첩에 등록됨 — {item.clue.title}</p>
+              )}
+            </div>
           )}
         </div>
       ))}

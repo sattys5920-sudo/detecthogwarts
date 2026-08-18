@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ClueDef, NpcScript, Topic } from '../data/investigation/types';
 
 interface LogEntry {
-  who: 'npc' | 'me';
+  who: 'npc' | 'me' | 'system';
   text: string;
 }
 
@@ -33,47 +33,58 @@ export default function NpcDialogue({ npcIcon, script, nickname, unlockedClueTit
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [log.length]);
 
-  function registerOnce(key: string, clue?: ClueDef) {
+  function registerOnce(key: string, clue: ClueDef | undefined, pushToLog: (entry: LogEntry) => void) {
     if (!clue || registeredRef.current.has(key)) return;
     registeredRef.current.add(key);
     onClue(clue);
+    pushToLog({ who: 'system', text: `🗒️ 조사수첩에 등록됨 — ${clue.title}` });
   }
 
   function ask(topic: Topic) {
     if (!meetsRequirements(topic.requiresClueTitles, unlockedClueTitles)) return;
-    setLog((l) => [...l, { who: 'me', text: topic.prompt }, { who: 'npc', text: fill(topic.response, nickname) }]);
+    const entries: LogEntry[] = [{ who: 'me', text: topic.prompt }, { who: 'npc', text: fill(topic.response, nickname) }];
+    registerOnce(topic.id, topic.clue, (e) => entries.push(e));
+    setLog((l) => [...l, ...entries]);
     setAsked((a) => ({ ...a, [topic.id]: true }));
-    registerOnce(topic.id, topic.clue);
   }
 
   function askFollowUp(topic: Topic) {
     if (!topic.followUp) return;
     if (!meetsRequirements(topic.followUp.requiresClueTitles, unlockedClueTitles)) return;
-    setLog((l) => [
-      ...l,
-      { who: 'me', text: topic.followUp!.prompt },
-      { who: 'npc', text: fill(topic.followUp!.response, nickname) },
-    ]);
+    const entries: LogEntry[] = [
+      { who: 'me', text: topic.followUp.prompt },
+      { who: 'npc', text: fill(topic.followUp.response, nickname) },
+    ];
+    registerOnce(`${topic.id}-follow`, topic.followUp.clue, (e) => entries.push(e));
+    setLog((l) => [...l, ...entries]);
     setAskedFollowUp((u) => ({ ...u, [topic.id]: true }));
-    registerOnce(`${topic.id}-follow`, topic.followUp.clue);
   }
 
   return (
     <div className="flex flex-col gap-3">
       <div ref={listRef} className="flex max-h-72 flex-col gap-2 overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3">
-        {log.map((m, i) => (
-          <div
-            key={i}
-            className={
-              m.who === 'me'
-                ? 'ml-auto max-w-[85%] rounded-lg bg-paper-200 px-3 py-1.5 text-sm text-ink-900'
-                : 'flex max-w-[85%] items-start gap-1.5 rounded-lg border border-ink-700/15 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900'
-            }
-          >
-            {m.who === 'npc' && <span className="flex-none">{npcIcon}</span>}
-            <span>{m.text}</span>
-          </div>
-        ))}
+        {log.map((m, i) => {
+          if (m.who === 'system') {
+            return (
+              <p key={i} className="text-center font-mono text-[11px] text-seal-600">
+                {m.text}
+              </p>
+            );
+          }
+          return (
+            <div
+              key={i}
+              className={
+                m.who === 'me'
+                  ? 'ml-auto max-w-[85%] rounded-lg bg-paper-200 px-3 py-1.5 text-sm text-ink-900'
+                  : 'flex max-w-[85%] items-start gap-1.5 rounded-lg border border-ink-700/15 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900'
+              }
+            >
+              {m.who === 'npc' && <span className="flex-none">{npcIcon}</span>}
+              <span>{m.text}</span>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex flex-col gap-1.5">

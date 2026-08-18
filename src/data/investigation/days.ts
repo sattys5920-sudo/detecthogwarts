@@ -250,6 +250,7 @@ export const DAYS: DayContent[] = [
             {
               id: 'victims-list',
               prompt: '희생자 명단에서 "송" 성씨를 봤다고 말한다',
+              requiresClueTitles: ['희생자 명단의 파편'],
               response:
                 '...그게, 우리 할아버지 얘기일 거야. 말하려고 하면 목이 조이는 것 같아. 마법부가 무슨 짓을 해놓은 게 분명해.',
               clue: { title: '셰인 가문의 진실', desc: '셰인의 할아버지가 60년 전 제5 기숙사 사건의 희생자였음이 확인된다. 마법부의 봉인 마법으로 발설이 제한되어 있다.', ink: 'red', status: '확인됨' },
@@ -300,6 +301,7 @@ export const DAYS: DayContent[] = [
             {
               id: 'that-night',
               prompt: '그날 밤 에드먼드와 무슨 일이 있었는지 묻는다',
+              requiresClueTitles: ['변신 물약의 진실'],
               response: '밀쳤어... 몸싸움이 있었고, 걔가 쓰러졌어. 난... 죽은 줄 알았어. 보고서만 챙겨서 도망쳤어.',
               clue: { title: '타치바나의 자백 — 밀쳤을 뿐', desc: '타치바나가 에드먼드를 밀쳐 쓰러뜨리고 진상 보고서를 가져갔다고 시인. 죽은 줄 알았다고 진술했다.', ink: 'black', status: '확인됨' },
             },

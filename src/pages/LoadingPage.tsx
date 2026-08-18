@@ -6,7 +6,6 @@ import InkBlot from '../components/InkBlot';
 import OwlIntro from '../components/OwlIntro';
 import PaperTexture from '../components/PaperTexture';
 import { useGame } from '../context/GameContext';
-import { SCHOOL_NAME } from '../data/school';
 
 export default function LoadingPage() {
   const game = useGame();
@@ -36,7 +35,6 @@ export default function LoadingPage() {
       <div className="relative max-w-xs">
         <p className="font-mono text-xs tracking-[0.15em] text-seal-600">CASE FILES</p>
         <h1 className="font-gothic mt-1 text-5xl leading-none text-ink-black">HWCF</h1>
-        <p className="mt-2 font-serif-kr text-lg font-bold text-ink-900">{SCHOOL_NAME}</p>
       </div>
 
       {game.hasEntered ? (

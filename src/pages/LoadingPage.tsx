@@ -5,15 +5,25 @@ import Card from '../components/Card';
 import InkBlot from '../components/InkBlot';
 import OwlIntro from '../components/OwlIntro';
 import PaperTexture from '../components/PaperTexture';
+import SortingTest from '../components/SortingTest';
 import { useGame } from '../context/GameContext';
+import { type HouseId, topHouse } from '../data/sortingTest';
 
 export default function LoadingPage() {
   const game = useGame();
   const navigate = useNavigate();
+  const [stage, setStage] = useState<'test' | 'form'>('test');
+  const [testScores, setTestScores] = useState<Record<HouseId, number> | null>(null);
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleEnter() {
+  function handleTestComplete(scores: Record<HouseId, number>) {
+    setTestScores(scores);
+    setStage('form');
+  }
+
+  async function handleEnter() {
     const trimmed = nickname.trim();
     if (!trimmed) {
       setError('이름을 입력해 주세요.');
@@ -23,8 +33,15 @@ export default function LoadingPage() {
       setError('이름은 12자 이내로 입력해 주세요.');
       return;
     }
-    game.enterApp(trimmed);
-    navigate('/hall');
+    if (!testScores) return;
+    setSubmitting(true);
+    try {
+      await game.completeSignup(trimmed, testScores, topHouse(testScores));
+      navigate('/hall');
+    } catch {
+      setError('입장 처리에 실패했습니다. 다시 시도해 주세요.');
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -55,30 +72,34 @@ export default function LoadingPage() {
         </Card>
       ) : (
         <OwlIntro>
-          <Card className="relative w-full text-left">
-            <p className="font-mono text-[11px] tracking-wide text-seal-600">입학 초대장</p>
-            <p className="mt-1 font-serif-kr text-sm text-ink-700/80">
-              먼 곳에서 부엉이가 이 초대장을 전해왔습니다. 이름을 적으면 입학이 확정됩니다.
-            </p>
-            <label className="mt-4 block font-serif-kr text-sm text-ink-700/80">
-              이름
-              <input
-                value={nickname}
-                onChange={(e) => {
-                  setNickname(e.target.value);
-                  setError('');
-                }}
-                onKeyDown={(e) => e.key === 'Enter' && handleEnter()}
-                placeholder="이름을 입력하세요"
-                maxLength={12}
-                className="mt-1.5 w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-3 py-2 text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
-              />
-            </label>
-            {error && <p className="mt-2 text-xs text-seal-600">{error}</p>}
-            <Button className="mt-4 w-full" onClick={handleEnter}>
-              초대장 수락하고 입장하기
-            </Button>
-          </Card>
+          {stage === 'test' ? (
+            <SortingTest onComplete={handleTestComplete} />
+          ) : (
+            <Card className="relative w-full text-left">
+              <p className="font-mono text-[11px] tracking-wide text-seal-600">입학 초대장</p>
+              <p className="mt-1 font-serif-kr text-sm text-ink-700/80">
+                적성 검사가 끝났습니다. 이름을 적으면 입학이 확정됩니다.
+              </p>
+              <label className="mt-4 block font-serif-kr text-sm text-ink-700/80">
+                이름
+                <input
+                  value={nickname}
+                  onChange={(e) => {
+                    setNickname(e.target.value);
+                    setError('');
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleEnter()}
+                  placeholder="이름을 입력하세요"
+                  maxLength={12}
+                  className="mt-1.5 w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-3 py-2 text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+                />
+              </label>
+              {error && <p className="mt-2 text-xs text-seal-600">{error}</p>}
+              <Button className="mt-4 w-full" onClick={handleEnter} disabled={submitting}>
+                {submitting ? '입장 처리 중…' : '초대장 수락하고 입장하기'}
+              </Button>
+            </Card>
+          )}
         </OwlIntro>
       )}
     </div>

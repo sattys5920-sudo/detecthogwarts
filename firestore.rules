@@ -20,5 +20,28 @@ service cloud.firestore {
 
       allow update, delete: if false;
     }
+
+    // 기숙사 배정 테스트 결과: 응시자 본인이 결과를 생성할 수 있고, 관리자 페이지가
+    // 목록을 읽습니다. 배정(assignedHouse/assignedAt)만 이후에 갱신할 수 있고,
+    // 그 외 필드는 생성 이후 변경할 수 없습니다.
+    match /players/{playerId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasAll(
+          ['nickname', 'testScores', 'computedHouse', 'assignedHouse', 'assignedAt', 'createdAt']
+        )
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() > 0
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.testScores is map
+        && request.resource.data.computedHouse in ['flame', 'moonlight', 'earth', 'wind']
+        && request.resource.data.assignedHouse == null
+        && request.resource.data.assignedAt == null;
+
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assignedHouse', 'assignedAt'])
+        && request.resource.data.assignedHouse in ['flame', 'moonlight', 'earth', 'wind'];
+
+      allow delete: if false;
+    }
   }
 }

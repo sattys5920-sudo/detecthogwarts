@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './components/AppShell';
 import SvgDefs from './components/SvgDefs';
 import { GameProvider } from './context/GameContext';
+import AdminPage from './pages/AdminPage';
 import ExplorationPage from './pages/ExplorationPage';
 import HallPage from './pages/HallPage';
 import LoadingPage from './pages/LoadingPage';
@@ -55,6 +56,7 @@ export default function App() {
             </AppShell>
           }
         />
+        <Route path="/admin" element={<AdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </GameProvider>

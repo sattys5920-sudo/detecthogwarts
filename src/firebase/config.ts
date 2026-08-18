@@ -1,5 +1,5 @@
 import { type FirebaseApp, initializeApp } from 'firebase/app';
-import { type Firestore, getFirestore } from 'firebase/firestore';
+import { type Firestore, initializeFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -20,7 +20,9 @@ let db: Firestore | undefined;
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
+  // 일부 사내망/프록시 환경에서 Firestore의 기본 스트리밍 연결이 끊기는 문제를
+  // 방지하기 위해 롱폴링을 강제로 사용합니다.
+  db = initializeFirestore(app, { experimentalForceLongPolling: true });
 } else {
   console.warn(
     '[firebase] .env 에 Firebase 설정 값이 없어 Firestore 연동 없이 데모 모드로 동작합니다. ' +

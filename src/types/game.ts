@@ -4,4 +4,5 @@ export interface House {
   element: string;
   color: string;
   accent: string;
+  icon: string;
 }

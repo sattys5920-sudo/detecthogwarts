@@ -36,12 +36,23 @@ export interface DayNpcEntry {
   script: NpcScript;
 }
 
+export interface RoomLine {
+  speaker: string;
+  icon: string;
+  text: string;
+}
+
 export interface DayContent {
   day: number;
   title: string;
   summary: string;
+  objective?: string;
   sceneItems?: SceneItem[];
   npcs?: DayNpcEntry[];
+  /** Lines the fellow investigators say when the day's chat room opens, before any suspect joins. */
+  roomIntro?: RoomLine[];
+  /** Lines the fellow investigators say once the player is done talking for the day. */
+  roomOutro?: RoomLine[];
   closing: string;
   finalDeduction?: boolean;
 }

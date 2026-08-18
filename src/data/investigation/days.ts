@@ -5,6 +5,7 @@ export const DAYS: DayContent[] = [
     day: 1,
     title: '사건',
     summary: '에드먼드 엘리오, 회랑에서 시신으로 발견',
+    objective: '오늘의 과제 — 현장의 단서 5개를 모두 조사하라',
     sceneItems: [
       {
         id: 'body',
@@ -49,6 +50,16 @@ export const DAYS: DayContent[] = [
     day: 2,
     title: '용의자',
     summary: '여섯 사람을 심문한다',
+    objective: '오늘의 과제 — 여섯 용의자 모두와 이야기하라',
+    roomIntro: [
+      { speaker: '불가', icon: '🔥', text: '오늘은 다 모였다며? 한 명씩 불러서 물어보자.' },
+      { speaker: '서호', icon: '📘', text: '여섯 명 다야... 시간 좀 걸리겠는데.' },
+      { speaker: '유리', icon: '🧭', text: '누구부터 갈지는 네가 정해.' },
+    ],
+    roomOutro: [
+      { speaker: '유리', icon: '🧭', text: '다들 뭔가 숨기고 있는 느낌인데.' },
+      { speaker: '불가', icon: '🔥', text: '그래도 오늘 알아낸 게 많아. 내일은 60년 전 사건 쪽을 파보자.' },
+    ],
     npcs: [
       {
         npcId: 'agnes',
@@ -218,6 +229,15 @@ export const DAYS: DayContent[] = [
     day: 3,
     title: '제5 기숙사',
     summary: '옛 기록보관소에서 60년 전 사건을 추적한다',
+    objective: '오늘의 과제 — 제5 기숙사의 실체를 확인하라',
+    roomIntro: [
+      { speaker: '서호', icon: '📘', text: '기록보관소는 오랜만이네.' },
+      { speaker: '유리', icon: '🧭', text: '여기 어딘가에 제5 기숙사 얘기가 있을 거야. 찾아보자.' },
+    ],
+    roomOutro: [
+      { speaker: '불가', icon: '🔥', text: '제5 기숙사, 진짜였구나...' },
+      { speaker: '서호', icon: '📘', text: '이게 이번 사건이랑 어떻게 이어지는지 계속 파봐야겠어.' },
+    ],
     sceneItems: [
       {
         id: 'roster',
@@ -265,6 +285,14 @@ export const DAYS: DayContent[] = [
     day: 4,
     title: '시간',
     summary: '사건 당일 밤의 행적을 재구성한다',
+    objective: '오늘의 과제 — 사건 당일 밤의 순서를 재구성하라',
+    roomIntro: [
+      { speaker: '유리', icon: '🧭', text: '변신 물약 흔적이라니, 심상치 않은데.' },
+      { speaker: '불가', icon: '🔥', text: '타치바나한테 다시 가보자. 뭔가 더 알고 있을 거야.' },
+    ],
+    roomOutro: [
+      { speaker: '서호', icon: '📘', text: '밀친 것뿐이라니... 그럼 진짜 범인은 따로 있다는 거네.' },
+    ],
     sceneItems: [
       {
         id: 'potion',
@@ -315,6 +343,14 @@ export const DAYS: DayContent[] = [
     day: 5,
     title: '마지막 주문',
     summary: '파울 슈미트를 마주한다',
+    objective: '오늘의 과제 — 진실을 마주하고 추리를 완성하라',
+    roomIntro: [
+      { speaker: '불가', icon: '🔥', text: '파울 아저씨... 설마.' },
+      { speaker: '유리', icon: '🧭', text: '확실한 증거 없이 함부로 말하지 마. 가서 직접 물어보자.' },
+    ],
+    roomOutro: [
+      { speaker: '서호', icon: '📘', text: '이제 우리가 알아낸 걸 정리할 시간이야.' },
+    ],
     sceneItems: [
       {
         id: 'keys',

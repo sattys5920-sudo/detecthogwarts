@@ -55,9 +55,11 @@ export function useNotebook() {
   }, [entries]);
 
   const register = useCallback((entry: Omit<NotebookEntry, 'id' | 'registeredAt'>) => {
-    const created: NotebookEntry = { ...entry, id: crypto.randomUUID(), registeredAt: Date.now() };
-    setEntries((prev) => [created, ...prev]);
-    return created;
+    setEntries((prev) => {
+      if (prev.some((e) => e.title === entry.title)) return prev;
+      const created: NotebookEntry = { ...entry, id: crypto.randomUUID(), registeredAt: Date.now() };
+      return [created, ...prev];
+    });
   }, []);
 
   return { entries, register };

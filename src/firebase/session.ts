@@ -1,4 +1,5 @@
 import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
+import type { ClueDef } from '../data/investigation/types';
 import { db, isFirebaseConfigured } from './config';
 
 export interface SessionState {
@@ -8,9 +9,11 @@ export interface SessionState {
 
 export interface AdlibMessage {
   id: string;
+  kind: 'narration' | 'evidence';
   speaker: string;
   icon: string;
   text: string;
+  clue?: ClueDef;
   at: number;
 }
 
@@ -119,9 +122,11 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
           const data = docSnap.data();
           return {
             id: docSnap.id,
+            kind: data.kind === 'evidence' ? 'evidence' : 'narration',
             speaker: data.speaker,
             icon: data.icon,
             text: data.text,
+            clue: data.clue,
             at: data.at?.toMillis?.() ?? 0,
           } satisfies AdlibMessage;
         }),
@@ -134,12 +139,29 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
   return () => window.removeEventListener(DEMO_ADLIB_EVENT, read);
 }
 
-export async function sendAdlib(day: number, speaker: string, icon: string, text: string): Promise<void> {
+export async function sendAdlib(day: number, speaker: string, icon: string, text: string, clue?: ClueDef): Promise<void> {
+  const payload = { kind: 'narration' as const, speaker, icon, text, ...(clue ? { clue } : {}) };
   if (isFirebaseConfigured && db) {
-    await addDoc(adlibCollectionRef(day), { speaker, icon, text, at: serverTimestamp() });
+    await addDoc(adlibCollectionRef(day), { ...payload, at: serverTimestamp() });
     return;
   }
   const messages = readAdlibDemo(day);
-  messages.push({ id: crypto.randomUUID(), speaker, icon, text, at: Date.now() });
+  messages.push({ ...payload, id: crypto.randomUUID(), at: Date.now() });
+  writeAdlibDemo(day, messages);
+}
+
+export async function presentEvidence(day: number, presenterNickname: string, clue: { title: string; ink: ClueDef['ink'] }): Promise<void> {
+  const payload = {
+    kind: 'evidence' as const,
+    speaker: presenterNickname,
+    icon: '🔍',
+    text: `『${clue.title}』을(를) 제시했다.`,
+  };
+  if (isFirebaseConfigured && db) {
+    await addDoc(adlibCollectionRef(day), { ...payload, at: serverTimestamp() });
+    return;
+  }
+  const messages = readAdlibDemo(day);
+  messages.push({ ...payload, id: crypto.randomUUID(), at: Date.now() });
   writeAdlibDemo(day, messages);
 }

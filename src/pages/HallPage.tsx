@@ -293,22 +293,51 @@ export default function HallPage() {
             {game.isAdmin ? '아직 게시된 피드가 없어요. + 버튼으로 첫 피드를 남겨보세요.' : '아직 게시된 공지가 없어요.'}
           </p>
         )}
-        {posts.map((p) => (
-          <button key={p.id} type="button" onClick={() => setOpenId(p.id)} className="text-left">
-            <div className="rounded-sm border border-ink-700/15 bg-paper-50 p-3.5 hover:border-ink-700/30">
-              <div className="flex items-center gap-2">
-                <Avatar src={p.authorAvatar} name={p.authorNickname} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-ink-900">{p.authorNickname}</p>
-                  <p className="font-mono text-[10px] text-ink-500/60">
-                    {formatTime(p.createdAt)} {p.editedAt && '(수정됨)'}
-                  </p>
+
+        {posts.length > 0 && (
+          <button type="button" onClick={() => setOpenId(posts[0].id)} className="text-left">
+            <div className="overflow-hidden rounded-2xl border border-ink-700/12 bg-paper-50 shadow-[0_4px_18px_rgba(42,28,18,0.1)] transition hover:shadow-[0_6px_22px_rgba(42,28,18,0.16)]">
+              <div className="h-1.5 bg-gradient-to-r from-seal-600 to-seal-400" />
+              <div className="p-4">
+                <div className="flex items-center gap-2.5">
+                  <Avatar src={posts[0].authorAvatar} name={posts[0].authorNickname} size={10} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="text-sm font-bold text-ink-900">{posts[0].authorNickname}</p>
+                      <span className="rounded-full bg-seal-600/10 px-2 py-0.5 text-[10px] font-bold text-seal-600">최신 소식</span>
+                    </div>
+                    <p className="font-mono text-[10px] text-ink-500/60">
+                      {formatTime(posts[0].createdAt)} {posts[0].editedAt && '(수정됨)'}
+                    </p>
+                  </div>
                 </div>
+                <p className="mt-3 line-clamp-5 whitespace-pre-wrap text-sm leading-relaxed text-ink-900">{posts[0].content}</p>
+                <p className="mt-3 text-xs text-ink-500/50">💬 댓글 보기 →</p>
               </div>
-              <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm text-ink-900">{p.content}</p>
             </div>
           </button>
-        ))}
+        )}
+
+        {posts.length > 1 && (
+          <div className="flex flex-col gap-2.5">
+            {posts.slice(1).map((p) => (
+              <button key={p.id} type="button" onClick={() => setOpenId(p.id)} className="text-left">
+                <div className="rounded-xl border border-ink-700/12 bg-paper-50 p-3.5 shadow-[0_2px_8px_rgba(42,28,18,0.06)] transition hover:border-ink-700/25">
+                  <div className="flex items-center gap-2">
+                    <Avatar src={p.authorAvatar} name={p.authorNickname} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-ink-900">{p.authorNickname}</p>
+                      <p className="font-mono text-[10px] text-ink-500/60">
+                        {formatTime(p.createdAt)} {p.editedAt && '(수정됨)'}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm text-ink-900">{p.content}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {!composerOpen && game.isAdmin && (

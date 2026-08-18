@@ -10,7 +10,7 @@ import { useNotebook } from '../hooks/useNotebook';
 
 export default function ExplorationPage() {
   const game = useGame();
-  const { register } = useNotebook();
+  const { entries, register } = useNotebook();
   const [selectedDay, setSelectedDay] = useState(game.currentDay);
   const [scriptDone, setScriptDone] = useState<Record<number, boolean>>({});
 
@@ -61,6 +61,8 @@ export default function ExplorationPage() {
         key={day.day}
         day={day.day}
         beats={day.script}
+        notebookEntries={entries}
+        presenterNickname={game.nickname}
         onClue={handleClue}
         onComplete={() => setScriptDone((s) => (s[day.day] ? s : { ...s, [day.day]: true }))}
       />

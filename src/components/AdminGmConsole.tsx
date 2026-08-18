@@ -1,35 +1,49 @@
 import { useEffect, useState } from 'react';
 import { CHARACTERS } from '../data/investigation/characters';
 import { eligibleBeats } from '../data/investigation/scriptUtils';
-import type { ScriptBeat } from '../data/investigation/types';
-import { advanceSession, listenSessionState, resetSession, sendAdlib, type SessionState } from '../firebase/session';
+import type { ClueDef, ScriptBeat } from '../data/investigation/types';
+import { advanceSession, chooseOption, listenSessionState, resetSession, sendAdlib, type SessionState } from '../firebase/session';
 
 const NARRATOR = { id: 'narrator', name: '상황 설명', icon: '' };
+const INK_OPTIONS: { id: ClueDef['ink']; label: string }[] = [
+  { id: 'black', label: '검정' },
+  { id: 'red', label: '빨강' },
+  { id: 'indigo', label: '남색' },
+];
 
 export default function AdminGmConsole({ day, beats }: { day: number; beats: ScriptBeat[] }) {
   const [state, setState] = useState<SessionState>({ revealedCount: 0, choices: {} });
   const [speakerId, setSpeakerId] = useState(NARRATOR.id);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [clueMode, setClueMode] = useState(false);
+  const [clueTitle, setClueTitle] = useState('');
+  const [clueInk, setClueInk] = useState<ClueDef['ink']>('black');
 
   useEffect(() => listenSessionState(day, setState), [day]);
 
   const eligible = eligibleBeats(beats, state.choices);
   const revealed = eligible.slice(0, state.revealedCount);
   const lastRevealed = revealed[revealed.length - 1];
-  const pendingChoice = lastRevealed?.type === 'choice' && !state.choices[lastRevealed.id];
+  const pendingChoice = lastRevealed?.type === 'choice' && !state.choices[lastRevealed.id] ? lastRevealed : null;
   const done = state.revealedCount >= eligible.length && eligible.length > 0;
   const next = !pendingChoice && !done ? eligible[state.revealedCount] : null;
 
   async function send() {
     const text = message.trim();
     if (!text) return;
+    if (clueMode && !clueTitle.trim()) return;
     setSending(true);
     try {
       const speaker = speakerId === NARRATOR.id ? '' : (CHARACTERS.find((c) => c.id === speakerId)?.name ?? '');
       const icon = speakerId === NARRATOR.id ? '' : (CHARACTERS.find((c) => c.id === speakerId)?.icon ?? '');
-      await sendAdlib(day, speaker, icon, text);
+      const clue: ClueDef | undefined = clueMode
+        ? { title: clueTitle.trim(), desc: text, ink: clueInk, status: '확인됨' }
+        : undefined;
+      await sendAdlib(day, speaker, icon, text, clue);
       setMessage('');
+      setClueMode(false);
+      setClueTitle('');
     } finally {
       setSending(false);
     }
@@ -50,23 +64,39 @@ export default function AdminGmConsole({ day, beats }: { day: number; beats: Scr
             다음: {next.type === 'choice' ? `[선택지] ${next.options?.map((o) => o.text).join(' / ')}` : next.text}
           </p>
         )}
-        <div className="mt-1.5 flex gap-2">
-          <button
-            type="button"
-            onClick={() => advanceSession(day, state.revealedCount + 1)}
-            disabled={!!pendingChoice || done}
-            className="tablet-btn tablet-btn-dark flex-1 rounded-lg px-3 py-1.5 text-xs font-bold disabled:opacity-40"
-          >
-            다음 →
-          </button>
-          <button
-            type="button"
-            onClick={() => resetSession(day)}
-            className="tablet-btn tablet-btn-ghost flex-none rounded-lg px-3 py-1.5 text-xs font-bold"
-          >
-            초기화
-          </button>
-        </div>
+
+        {pendingChoice ? (
+          <div className="mt-1.5 flex flex-col gap-1">
+            {pendingChoice.options?.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => chooseOption(day, pendingChoice.id, o.id)}
+                className="tablet-tab rounded-lg px-3 py-1.5 text-left text-xs font-medium text-ink-900"
+              >
+                {o.text}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-1.5 flex gap-2">
+            <button
+              type="button"
+              onClick={() => advanceSession(day, state.revealedCount + 1)}
+              disabled={done}
+              className="tablet-btn tablet-btn-dark flex-1 rounded-lg px-3 py-1.5 text-xs font-bold disabled:opacity-40"
+            >
+              다음 →
+            </button>
+            <button
+              type="button"
+              onClick={() => resetSession(day)}
+              className="tablet-btn tablet-btn-ghost flex-none rounded-lg px-3 py-1.5 text-xs font-bold"
+            >
+              초기화
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="h-px bg-ink-700/10" />
@@ -90,19 +120,46 @@ export default function AdminGmConsole({ day, beats }: { day: number; beats: Scr
             <input
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && send()}
+              onKeyDown={(e) => e.key === 'Enter' && !clueMode && send()}
               placeholder="대사나 상황 설명을 입력하세요"
               className="flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
             />
             <button
               type="button"
               onClick={send}
-              disabled={!message.trim() || sending}
+              disabled={!message.trim() || sending || (clueMode && !clueTitle.trim())}
               className="flex-none rounded-lg bg-ink-black px-3 py-1.5 text-xs font-bold text-paper-50 disabled:opacity-40"
             >
               {sending ? '전송 중…' : '보내기'}
             </button>
           </div>
+
+          <label className="flex items-center gap-1.5 text-xs text-ink-700/70">
+            <input type="checkbox" checked={clueMode} onChange={(e) => setClueMode(e.target.checked)} />
+            🗒️ 이 메시지를 단서로 등록 (모두의 조사 수첩에 기록됨)
+          </label>
+
+          {clueMode && (
+            <div className="flex items-center gap-2">
+              <input
+                value={clueTitle}
+                onChange={(e) => setClueTitle(e.target.value)}
+                placeholder="단서 제목 (예: E01. 현장 사진)"
+                className="flex-1 rounded-lg border border-seal-500/40 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+              />
+              <select
+                value={clueInk}
+                onChange={(e) => setClueInk(e.target.value as ClueDef['ink'])}
+                className="flex-none rounded-lg border border-ink-700/20 bg-paper-50 px-2 py-1.5 text-xs text-ink-900 outline-none focus:border-seal-500"
+              >
+                {INK_OPTIONS.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
     </div>

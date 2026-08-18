@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import AdminGmConsole from '../components/AdminGmConsole';
 import FinalDeduction from '../components/FinalDeduction';
 import Letterhead from '../components/Letterhead';
 import ScriptViewer from '../components/ScriptViewer';
@@ -24,9 +25,15 @@ export default function ExplorationPage() {
     <div className="flex flex-col gap-4">
       <Letterhead label={`Day ${day.day} / 5`} context={day.title} meta={day.summary} />
 
+      {game.isAdmin && (
+        <p className="rounded-sm bg-ink-black px-2.5 py-1 text-center font-mono text-[11px] font-bold text-paper-50">
+          🎲 관리자 모드
+        </p>
+      )}
+
       <div className="flex gap-1.5 overflow-x-auto pb-1">
         {DAYS.map((d) => {
-          const locked = d.day > game.currentDay;
+          const locked = !game.isAdmin && d.day > game.currentDay;
           const active = d.day === selectedDay;
           return (
             <button
@@ -57,6 +64,8 @@ export default function ExplorationPage() {
         onClue={handleClue}
         onComplete={() => setScriptDone((s) => (s[day.day] ? s : { ...s, [day.day]: true }))}
       />
+
+      {game.isAdmin && <AdminGmConsole key={`gm-${day.day}`} day={day.day} beats={day.script} />}
 
       {showClosing && (
         <>

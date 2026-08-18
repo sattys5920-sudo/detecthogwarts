@@ -22,6 +22,7 @@ interface PlayerState {
 
 const STORAGE_KEY = 'arcanum-player';
 const SEEN_ASSIGNMENT_PREFIX = 'arcanum-assignment-seen-';
+const ADMIN_KEY = 'arcanum-admin-unlocked';
 
 const defaultStats: PlayerStats = { hp: 100, intelligence: 50, stamina: 50, spellPower: 50 };
 
@@ -55,6 +56,8 @@ interface GameContextValue extends PlayerState {
   hasEntered: boolean;
   assignedHouse: HouseId | null;
   justAssigned: boolean;
+  isAdmin: boolean;
+  unlockAdmin: () => void;
   clearJustAssigned: () => void;
   completeSignup: (nickname: string, testScores: Record<HouseId, number>, computedHouse: HouseId) => Promise<void>;
   setHouse: (houseId: string) => void;
@@ -72,6 +75,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PlayerState>(loadState);
   const [assignedHouse, setAssignedHouse] = useState<HouseId | null>(null);
   const [justAssigned, setJustAssigned] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem(ADMIN_KEY) === 'true');
   const playerIdRef = useRef(state.playerId);
   playerIdRef.current = state.playerId;
 
@@ -127,6 +131,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, deductionSolved: solved }));
   }, []);
 
+  const unlockAdmin = useCallback(() => {
+    sessionStorage.setItem(ADMIN_KEY, 'true');
+    setIsAdmin(true);
+  }, []);
+
   const clearJustAssigned = useCallback(() => {
     const playerId = playerIdRef.current;
     if (playerId && assignedHouse) {
@@ -146,6 +155,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     hasEntered: state.nickname !== '',
     assignedHouse,
     justAssigned,
+    isAdmin,
+    unlockAdmin,
     clearJustAssigned,
     completeSignup,
     setHouse,

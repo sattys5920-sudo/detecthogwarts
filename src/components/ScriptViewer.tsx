@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { chooseOption, listenSessionState } from '../firebase/session';
+import { type AdlibMessage, chooseOption, listenAdlibs, listenSessionState } from '../firebase/session';
 import { eligibleBeats } from '../data/investigation/scriptUtils';
 import type { ClueDef, ScriptBeat } from '../data/investigation/types';
 
@@ -13,6 +13,7 @@ interface ScriptViewerProps {
 export default function ScriptViewer({ day, beats, onClue, onComplete }: ScriptViewerProps) {
   const [revealedCount, setRevealedCount] = useState(0);
   const [choices, setChoices] = useState<Record<string, string>>({});
+  const [adlibs, setAdlibs] = useState<AdlibMessage[]>([]);
   const registeredRef = useRef<Set<string>>(new Set());
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -20,6 +21,8 @@ export default function ScriptViewer({ day, beats, onClue, onComplete }: ScriptV
     setRevealedCount(s.revealedCount);
     setChoices(s.choices);
   }), [day]);
+
+  useEffect(() => listenAdlibs(day, setAdlibs), [day]);
 
   const eligible = eligibleBeats(beats, choices);
   const revealed = eligible.slice(0, revealedCount);
@@ -41,12 +44,12 @@ export default function ScriptViewer({ day, beats, onClue, onComplete }: ScriptV
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [revealed.length]);
+  }, [revealed.length, adlibs.length]);
 
   return (
     <div className="flex flex-col gap-3">
       <div ref={listRef} className="flex max-h-96 flex-col gap-2.5 overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
-        {revealed.length === 0 && (
+        {revealed.length === 0 && adlibs.length === 0 && (
           <p className="py-6 text-center text-xs text-ink-500/50">관리자가 이야기를 시작하기를 기다리는 중…</p>
         )}
         {revealed.map((beat) => {
@@ -78,6 +81,22 @@ export default function ScriptViewer({ day, beats, onClue, onComplete }: ScriptV
             </p>
           );
         })}
+
+        {adlibs.map((m) =>
+          m.speaker ? (
+            <div key={m.id} className="flex max-w-[90%] items-start gap-1.5 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900">
+              <span className="flex-none">{m.icon}</span>
+              <span>
+                <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>
+                {m.text}
+              </span>
+            </div>
+          ) : (
+            <p key={m.id} className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">
+              {m.text}
+            </p>
+          ),
+        )}
       </div>
 
       {pendingChoice && (

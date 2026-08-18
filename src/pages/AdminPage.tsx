@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import PaperTexture from '../components/PaperTexture';
-import { DAYS } from '../data/investigation/days';
-import { eligibleBeats } from '../data/investigation/scriptUtils';
+import { useGame } from '../context/GameContext';
 import { HOUSES } from '../data/school';
 import type { HouseId } from '../data/sortingTest';
 import { assignHouse, listenAllPlayers, type PlayerRecord } from '../firebase/players';
-import { advanceSession, listenSessionState, resetSession, type SessionState } from '../firebase/session';
 
 const ADMIN_PASSCODE = '316316316';
-const UNLOCK_KEY = 'arcanum-admin-unlocked';
 
 function houseOf(id: HouseId | null) {
   return HOUSES.find((h) => h.id === id) ?? null;
@@ -90,104 +88,36 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
   );
 }
 
-const SCRIPT_DAYS = DAYS.filter((d) => d.script && d.script.length > 0);
-
-function SessionControlPanel() {
-  const [day, setDay] = useState(SCRIPT_DAYS[0]?.day ?? 1);
-  const [state, setState] = useState<SessionState>({ revealedCount: 0, choices: {} });
-
-  useEffect(() => listenSessionState(day, setState), [day]);
-
-  const dayContent = SCRIPT_DAYS.find((d) => d.day === day);
-  const beats = dayContent?.script ?? [];
-  const eligible = eligibleBeats(beats, state.choices);
-  const revealed = eligible.slice(0, state.revealedCount);
-  const lastRevealed = revealed[revealed.length - 1];
-  const pendingChoice = lastRevealed?.type === 'choice' && !state.choices[lastRevealed.id];
-  const done = state.revealedCount >= eligible.length && eligible.length > 0;
-  const next = !pendingChoice && !done ? eligible[state.revealedCount] : null;
-
-  return (
-    <Card className="flex flex-col gap-3">
-      <p className="font-gothic text-xl text-ink-black">진행 제어 (VN 스크립트)</p>
-
-      <div className="flex gap-1.5">
-        {SCRIPT_DAYS.map((d) => (
-          <button
-            key={d.day}
-            type="button"
-            onClick={() => setDay(d.day)}
-            className={`tablet-tab rounded-lg px-3 py-1.5 text-xs font-bold ${day === d.day ? 'tablet-tab-active text-seal-600' : 'text-ink-700/70'}`}
-          >
-            Day {d.day}
-          </button>
-        ))}
-      </div>
-
-      <p className="text-xs text-ink-700/70">
-        진행: {state.revealedCount} / {eligible.length}
-        {pendingChoice && <span className="ml-1 text-seal-600">(선택 대기 중)</span>}
-        {done && <span className="ml-1 text-seal-600">(완료)</span>}
-      </p>
-
-      <div className="rounded-sm border border-ink-700/15 bg-paper-100/60 p-2.5 text-xs text-ink-900">
-        {lastRevealed ? (
-          <>
-            마지막 공개: {lastRevealed.type === 'choice' ? `[선택지] ${lastRevealed.options?.map((o) => o.text).join(' / ')}` : lastRevealed.text}
-          </>
-        ) : (
-          '아직 아무것도 공개되지 않았습니다.'
-        )}
-        {next && (
-          <p className="mt-1.5 text-ink-500/60">
-            다음: {next.type === 'choice' ? `[선택지] ${next.options?.map((o) => o.text).join(' / ')}` : next.text}
-          </p>
-        )}
-      </div>
-
-      <div className="flex gap-2">
-        <Button
-          onClick={() => advanceSession(day, state.revealedCount + 1)}
-          disabled={!!pendingChoice || done}
-          className="flex-1 px-4 py-2 text-sm"
-        >
-          다음 →
-        </Button>
-        <Button variant="ghost" onClick={() => resetSession(day)} className="flex-none px-3 py-2 text-xs">
-          초기화
-        </Button>
-      </div>
-    </Card>
-  );
-}
-
 export default function AdminPage() {
-  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(UNLOCK_KEY) === 'true');
+  const game = useGame();
+  const navigate = useNavigate();
   const [passcode, setPasscode] = useState('');
   const [passError, setPassError] = useState('');
   const [players, setPlayers] = useState<PlayerRecord[]>([]);
 
   useEffect(() => {
-    if (!unlocked) return;
+    if (!game.isAdmin) return;
     return listenAllPlayers(setPlayers);
-  }, [unlocked]);
+  }, [game.isAdmin]);
 
   function handleUnlock() {
     if (passcode === ADMIN_PASSCODE) {
-      sessionStorage.setItem(UNLOCK_KEY, 'true');
-      setUnlocked(true);
+      game.unlockAdmin();
+      navigate('/exploration');
     } else {
       setPassError('암호가 올바르지 않습니다.');
     }
   }
 
-  if (!unlocked) {
+  if (!game.isAdmin) {
     return (
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         <PaperTexture />
         <Card className="w-full max-w-xs text-left">
           <p className="font-gothic text-2xl text-ink-black">관리자 페이지</p>
-          <p className="mt-1 text-sm text-ink-700/70">암호를 입력하세요.</p>
+          <p className="mt-1 text-sm text-ink-700/70">
+            암호를 입력하면 평소와 똑같은 화면으로 들어가되, 탐사 활동에서 진행을 조작할 수 있는 권한이 함께 켜집니다.
+          </p>
           <input
             type="password"
             value={passcode}
@@ -211,7 +141,12 @@ export default function AdminPage() {
     <div className="relative min-h-svh px-4 py-8">
       <PaperTexture />
       <div className="mx-auto flex max-w-md flex-col gap-4">
-        {SCRIPT_DAYS.length > 0 && <SessionControlPanel />}
+        <Card className="flex items-center justify-between gap-3">
+          <p className="text-sm text-ink-700/80">🎲 관리자 권한이 켜져 있습니다. 이야기 진행은 탐사 활동 탭에서 합니다.</p>
+          <Button onClick={() => navigate('/exploration')} className="flex-none px-4 py-2 text-xs">
+            탐사 활동으로 →
+          </Button>
+        </Card>
 
         <div>
           <p className="font-gothic text-3xl text-ink-black">기숙사 배정 관리</p>

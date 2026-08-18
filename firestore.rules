@@ -100,6 +100,24 @@ service cloud.firestore {
         && (!('choices' in request.resource.data) || request.resource.data.choices is map);
 
       allow delete: if false;
+
+      // 관리자의 즉흥 대사/상황 설명(Roll20 스타일 애드립): 정해진 대본 외에
+      // 관리자가 그 자리에서 보내는 메시지 로그입니다. 채팅 로그와 마찬가지로
+      // 추가만 가능하고 수정/삭제는 막습니다.
+      match /adlibs/{adlibId} {
+        allow read: if true;
+
+        allow create: if request.resource.data.keys().hasAll(['speaker', 'icon', 'text'])
+          && request.resource.data.speaker is string
+          && request.resource.data.speaker.size() <= 30
+          && request.resource.data.icon is string
+          && request.resource.data.icon.size() <= 10
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000;
+
+        allow update, delete: if false;
+      }
     }
   }
 }

@@ -45,7 +45,7 @@ export default function OwlIntro({ children }: { children: ReactNode }) {
         />
       )}
       {showOwl && phase === 'flying' && (
-        <OwlSilhouette className="animate-owl-flight absolute h-24 w-24" onAnimationEnd={() => setShowOwl(false)} />
+        <OwlSilhouette className="animate-owl-flight absolute h-36 w-36" onAnimationEnd={() => setShowOwl(false)} />
       )}
       {(phase === 'landed' || phase === 'opening') && (
         <button type="button" onClick={handleOpen} className="group flex flex-col items-center gap-3">

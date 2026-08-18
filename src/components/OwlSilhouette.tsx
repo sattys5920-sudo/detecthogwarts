@@ -54,6 +54,11 @@ export default function OwlSilhouette({ className = '', onAnimationEnd }: OwlSil
 
       <path d="M50 78 Q54 74 58 78 Q62 74 66 78 Q70 74 74 78 Q78 74 82 78 Q86 74 90 78" strokeWidth="2" />
       <path d="M52 88 Q56 84 60 88 Q64 84 68 88 Q72 84 76 88 Q80 84 84 88 Q88 84 88 88" strokeWidth="2" />
+
+      <path d="M58 97 L54 116" strokeWidth="2.2" />
+      <path d="M48 122 L54 116 L60 121" strokeWidth="1.8" />
+      <path d="M82 97 L87 116" strokeWidth="2.2" />
+      <path d="M81 121 L87 116 L93 122" strokeWidth="1.8" />
     </svg>
   );
 }

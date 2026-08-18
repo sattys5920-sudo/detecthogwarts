@@ -16,6 +16,8 @@ interface PlayerState {
   joinedAt: number | null;
   playerId: string | null;
   stats: PlayerStats;
+  currentDay: number;
+  deductionSolved: boolean;
 }
 
 const STORAGE_KEY = 'arcanum-player';
@@ -30,6 +32,8 @@ const emptyState: PlayerState = {
   joinedAt: null,
   playerId: null,
   stats: defaultStats,
+  currentDay: 1,
+  deductionSolved: false,
 };
 
 function loadState(): PlayerState {
@@ -57,6 +61,8 @@ interface GameContextValue extends PlayerState {
   setNickname: (nickname: string) => void;
   setAvatar: (dataUrl: string | null) => void;
   adjustStat: (key: keyof PlayerStats, delta: number) => void;
+  advanceDay: () => void;
+  setDeductionSolved: (solved: boolean) => void;
   resetPlayer: () => void;
 }
 
@@ -113,6 +119,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, stats: { ...prev.stats, [key]: clamp(prev.stats[key] + delta) } }));
   }, []);
 
+  const advanceDay = useCallback(() => {
+    setState((prev) => ({ ...prev, currentDay: Math.min(5, prev.currentDay + 1) }));
+  }, []);
+
+  const setDeductionSolved = useCallback((solved: boolean) => {
+    setState((prev) => ({ ...prev, deductionSolved: solved }));
+  }, []);
+
   const clearJustAssigned = useCallback(() => {
     const playerId = playerIdRef.current;
     if (playerId && assignedHouse) {
@@ -138,6 +152,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setNickname,
     setAvatar,
     adjustStat,
+    advanceDay,
+    setDeductionSolved,
     resetPlayer,
   };
 

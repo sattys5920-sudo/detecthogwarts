@@ -1,34 +1,120 @@
-import Card from '../components/Card';
-import ChatLog, { type ChatMessage } from '../components/ChatLog';
-import Composer from '../components/Composer';
+import { useState } from 'react';
+import FinalDeduction from '../components/FinalDeduction';
 import Letterhead from '../components/Letterhead';
-
-const MESSAGES: ChatMessage[] = [
-  { id: 'q1', name: '불가', initial: '불', who: 'red', text: '회랑 끝에서 차가운 바람이 느껴진다.' },
-  { id: 'q2', name: '서호', initial: '서', who: 'black', text: '조심스럽게 다가가 본다.' },
-  { id: 'q3', name: '유리', initial: '유', who: 'indigo', text: '나침반을 꺼내 방향을 확인한다.' },
-  { id: 'q4', name: '불가', initial: '불', who: 'red', text: '바늘이 미친 듯이 돌아간다……' },
-  { id: 'q5', name: '다인', initial: '다', who: 'black', text: '다들 뒤로 물러나자.', me: true },
-];
+import NpcDialogue from '../components/NpcDialogue';
+import SceneExplorer from '../components/SceneExplorer';
+import { useGame } from '../context/GameContext';
+import { DAYS } from '../data/investigation/days';
+import { NPCS } from '../data/investigation/npcs';
+import type { ClueDef } from '../data/investigation/types';
+import { useNotebook } from '../hooks/useNotebook';
 
 export default function ExplorationPage() {
+  const game = useGame();
+  const { register } = useNotebook();
+  const [selectedDay, setSelectedDay] = useState(game.currentDay);
+  const [openNpcId, setOpenNpcId] = useState<string | null>(null);
+
+  const day = DAYS.find((d) => d.day === selectedDay) ?? DAYS[0];
+  const npcEntry = day.npcs?.find((n) => n.npcId === openNpcId);
+  const npc = NPCS.find((n) => n.id === openNpcId);
+
+  function handleClue(clue: ClueDef) {
+    register(clue);
+  }
+
+  if (npcEntry && npc) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Letterhead label={`Day ${day.day}`} context={day.title} meta={`${npc.icon} ${npc.name} · ${npc.role}`} />
+        <button
+          type="button"
+          onClick={() => setOpenNpcId(null)}
+          className="self-start text-xs text-ink-500/60 underline-offset-2 hover:text-ink-700 hover:underline"
+        >
+          ← 목록으로
+        </button>
+        <NpcDialogue npcIcon={npc.icon} script={npcEntry.script} onClue={handleClue} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label="탐사 기록 01" context="아직 배정된 탐사가 없습니다" meta="남은 시간 · --:--" tag="준비 중" />
+      <Letterhead label={`Day ${day.day} / 5`} context={day.title} meta={day.summary} />
 
-      <Card className="text-center text-sm text-ink-500/60">
-        아래는 탐사 진행 화면 미리보기예요. 실제 진행 기능은 곧 연결됩니다.
-      </Card>
-
-      <div className="rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
-        <p className="mb-2.5 text-center font-mono text-[11px] text-ink-500/70">
-          ◆ 탐사 시작 · 제한시간 10분
-        </p>
-        <ChatLog messages={MESSAGES} />
-        <div className="mt-3">
-          <Composer />
-        </div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {DAYS.map((d) => {
+          const locked = d.day > game.currentDay;
+          const active = d.day === selectedDay;
+          return (
+            <button
+              key={d.day}
+              type="button"
+              disabled={locked}
+              onClick={() => setSelectedDay(d.day)}
+              className={`tablet-tab flex-none rounded-lg px-3 py-2 text-xs font-bold ${
+                active ? 'tablet-tab-active text-seal-600' : locked ? 'text-ink-500/40' : 'text-ink-700/70'
+              }`}
+            >
+              {locked ? '🔒 ' : ''}Day {d.day}
+            </button>
+          );
+        })}
       </div>
+
+      {day.sceneItems && (
+        <div>
+          <p className="mb-2 text-xs font-bold text-ink-700/70">현장 조사</p>
+          <SceneExplorer items={day.sceneItems} onClue={handleClue} />
+        </div>
+      )}
+
+      {day.npcs && day.npcs.length > 0 && (
+        <div>
+          <p className="mb-2 text-xs font-bold text-ink-700/70">대화 상대</p>
+          <div className="flex flex-col gap-2">
+            {day.npcs.map(({ npcId }) => {
+              const n = NPCS.find((x) => x.id === npcId);
+              if (!n) return null;
+              return (
+                <button
+                  key={npcId}
+                  type="button"
+                  onClick={() => setOpenNpcId(npcId)}
+                  className="flex items-center gap-3 rounded-sm border border-ink-700/15 bg-paper-50 p-3 text-left hover:border-ink-700/30"
+                >
+                  <span className="text-xl">{n.icon}</span>
+                  <div>
+                    <p className="font-serif-kr font-semibold text-ink-900">{n.name}</p>
+                    <p className="text-xs text-ink-700/70">{n.role}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-sm border border-ink-700/15 bg-paper-100/60 p-3.5 text-sm leading-relaxed text-ink-900">
+        {day.closing}
+      </div>
+
+      {day.finalDeduction && <FinalDeduction onSolved={() => game.setDeductionSolved(true)} />}
+
+      {selectedDay === game.currentDay && game.currentDay < 5 && (
+        <button
+          type="button"
+          onClick={() => {
+            const next = day.day + 1;
+            game.advanceDay();
+            setSelectedDay(next);
+          }}
+          className="tablet-btn tablet-btn-dark self-center rounded-lg px-5 py-2.5 text-sm font-bold"
+        >
+          다음 날로 →
+        </button>
+      )}
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { HOUSES } from '../data/school';
 import type { HouseId } from '../data/sortingTest';
 import { assignHouse, listenAllPlayers, type PlayerRecord } from '../firebase/players';
 
-const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || 'hwcf-admin';
+const ADMIN_PASSCODE = '316316316';
 const UNLOCK_KEY = 'arcanum-admin-unlocked';
 
 function houseOf(id: HouseId | null) {

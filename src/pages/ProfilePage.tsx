@@ -5,12 +5,6 @@ import Letterhead from '../components/Letterhead';
 import { useGame } from '../context/GameContext';
 import { HOUSES, SCHOOL_NAME } from '../data/school';
 
-const STATS = [
-  { label: '마력', value: 72 },
-  { label: '담력', value: 45 },
-  { label: '지식', value: 88 },
-];
-
 const ITEMS = [
   { name: '나침반', count: 1 },
   { name: '부적', count: 2 },
@@ -46,18 +40,6 @@ export default function ProfilePage() {
           </span>
         </div>
 
-        <div className="mt-4 flex flex-col gap-2 text-left">
-          {STATS.map((s) => (
-            <div key={s.label} className="flex items-center gap-2 text-xs">
-              <span className="w-8 flex-none text-ink-500/70">{s.label}</span>
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full border border-ink-700/15 bg-paper-200">
-                <div className="h-full bg-ink-black" style={{ width: `${s.value}%` }} />
-              </div>
-              <span className="w-6 flex-none text-right font-mono text-ink-red">{s.value}</span>
-            </div>
-          ))}
-        </div>
-
         <div className="my-4 h-px bg-ink-700/10" />
 
         <div className="grid grid-cols-2 gap-2 text-left text-sm">
@@ -68,6 +50,27 @@ export default function ProfilePage() {
           ))}
         </div>
       </Card>
+
+      <div>
+        <p className="mb-2 text-xs font-bold text-ink-700/70">소속 기숙사</p>
+        <div className="grid grid-cols-2 gap-3">
+          {HOUSES.map((h) => {
+            const selected = game.houseId === h.id;
+            return (
+              <button key={h.id} type="button" onClick={() => game.setHouse(h.id)} className="text-left">
+                <Card
+                  className={`transition-colors ${selected ? 'ring-2 ring-seal-500/50' : 'hover:border-ink-700/30'}`}
+                  style={selected ? { borderColor: h.color } : undefined}
+                >
+                  <span className="block h-2 w-8 rounded-full" style={{ backgroundColor: h.color }} />
+                  <p className="mt-2 font-serif-kr font-semibold text-ink-900">{h.name}</p>
+                  <p className="text-xs text-ink-500/70">{h.element}</p>
+                </Card>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <Button
         variant="ghost"

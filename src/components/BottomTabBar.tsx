@@ -1,12 +1,11 @@
 import { NavLink } from 'react-router-dom';
 
 const TABS = [
-  { to: '/notices', label: '공지' },
-  { to: '/class', label: '수업' },
-  { to: '/house', label: '기숙사' },
-  { to: '/quest', label: '임무' },
-  { to: '/shop', label: '상점' },
-  { to: '/profile', label: '프로필' },
+  { to: '/hall', label: '연회장' },
+  { to: '/exploration', label: '탐사 활동' },
+  { to: '/recess', label: '휴게시간' },
+  { to: '/notebook', label: '탐사 수첩' },
+  { to: '/profile', label: '내 정보' },
 ];
 
 export default function BottomTabBar() {

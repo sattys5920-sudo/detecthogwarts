@@ -2,13 +2,12 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './components/AppShell';
 import SvgDefs from './components/SvgDefs';
 import { GameProvider } from './context/GameContext';
-import ClassPage from './pages/ClassPage';
-import HousePage from './pages/HousePage';
+import ExplorationPage from './pages/ExplorationPage';
+import HallPage from './pages/HallPage';
 import LoadingPage from './pages/LoadingPage';
-import NoticesPage from './pages/NoticesPage';
+import NotebookPage from './pages/NotebookPage';
 import ProfilePage from './pages/ProfilePage';
-import QuestPage from './pages/QuestPage';
-import ShopPage from './pages/ShopPage';
+import RecessPage from './pages/RecessPage';
 
 export default function App() {
   return (
@@ -17,42 +16,34 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LoadingPage />} />
         <Route
-          path="/notices"
+          path="/hall"
           element={
             <AppShell>
-              <NoticesPage />
+              <HallPage />
             </AppShell>
           }
         />
         <Route
-          path="/class"
+          path="/exploration"
           element={
             <AppShell>
-              <ClassPage />
+              <ExplorationPage />
             </AppShell>
           }
         />
         <Route
-          path="/house"
+          path="/recess"
           element={
             <AppShell>
-              <HousePage />
+              <RecessPage />
             </AppShell>
           }
         />
         <Route
-          path="/quest"
+          path="/notebook"
           element={
             <AppShell>
-              <QuestPage />
-            </AppShell>
-          }
-        />
-        <Route
-          path="/shop"
-          element={
-            <AppShell>
-              <ShopPage />
+              <NotebookPage />
             </AppShell>
           }
         />

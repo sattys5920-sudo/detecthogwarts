@@ -24,7 +24,7 @@ export default function LoadingPage() {
       return;
     }
     game.enterApp(trimmed);
-    navigate('/notices');
+    navigate('/hall');
   }
 
   return (
@@ -42,7 +42,7 @@ export default function LoadingPage() {
           <p className="font-serif-kr text-sm text-ink-700/80">
             다시 오셨군요, <span className="font-semibold text-seal-600">{game.nickname}</span>님.
           </p>
-          <Button className="mt-4 w-full" onClick={() => navigate('/notices')}>
+          <Button className="mt-4 w-full" onClick={() => navigate('/hall')}>
             계속하기
           </Button>
           <button

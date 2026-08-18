@@ -11,18 +11,18 @@ const MESSAGES: ChatMessage[] = [
   { id: 'q5', name: '다인', initial: '다', who: 'black', text: '다들 뒤로 물러나자.', me: true },
 ];
 
-export default function QuestPage() {
+export default function ExplorationPage() {
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label="Case No. 01" context="아직 배정된 임무가 없습니다" meta="남은 시간 · --:--" tag="준비 중" />
+      <Letterhead label="탐사 기록 01" context="아직 배정된 탐사가 없습니다" meta="남은 시간 · --:--" tag="준비 중" />
 
       <Card className="text-center text-sm text-ink-500/60">
-        아래는 임무 진행 화면 미리보기예요. 실제 진행 기능은 곧 연결됩니다.
+        아래는 탐사 진행 화면 미리보기예요. 실제 진행 기능은 곧 연결됩니다.
       </Card>
 
       <div className="rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
         <p className="mb-2.5 text-center font-mono text-[11px] text-ink-500/70">
-          ◆ 임무 시작 · 제한시간 10분
+          ◆ 탐사 시작 · 제한시간 10분
         </p>
         <ChatLog messages={MESSAGES} />
         <div className="mt-3">

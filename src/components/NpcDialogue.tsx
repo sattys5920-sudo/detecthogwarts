@@ -18,8 +18,8 @@ function fill(text: string, nickname: string) {
   return text.replaceAll('{name}', nickname || '당신');
 }
 
-function isUnlocked(topic: Topic, unlockedClueTitles: Set<string>) {
-  return (topic.requiresClueTitles ?? []).every((title) => unlockedClueTitles.has(title));
+function meetsRequirements(requiresClueTitles: string[] | undefined, unlockedClueTitles: Set<string>) {
+  return (requiresClueTitles ?? []).every((title) => unlockedClueTitles.has(title));
 }
 
 export default function NpcDialogue({ npcIcon, script, nickname, unlockedClueTitles, onClue }: NpcDialogueProps) {
@@ -40,7 +40,7 @@ export default function NpcDialogue({ npcIcon, script, nickname, unlockedClueTit
   }
 
   function ask(topic: Topic) {
-    if (!isUnlocked(topic, unlockedClueTitles)) return;
+    if (!meetsRequirements(topic.requiresClueTitles, unlockedClueTitles)) return;
     setLog((l) => [...l, { who: 'me', text: topic.prompt }, { who: 'npc', text: fill(topic.response, nickname) }]);
     setAsked((a) => ({ ...a, [topic.id]: true }));
     registerOnce(topic.id, topic.clue);
@@ -48,6 +48,7 @@ export default function NpcDialogue({ npcIcon, script, nickname, unlockedClueTit
 
   function askFollowUp(topic: Topic) {
     if (!topic.followUp) return;
+    if (!meetsRequirements(topic.followUp.requiresClueTitles, unlockedClueTitles)) return;
     setLog((l) => [
       ...l,
       { who: 'me', text: topic.followUp!.prompt },
@@ -77,7 +78,8 @@ export default function NpcDialogue({ npcIcon, script, nickname, unlockedClueTit
 
       <div className="flex flex-col gap-1.5">
         {script.topics.map((t) => {
-          const unlocked = isUnlocked(t, unlockedClueTitles);
+          const unlocked = meetsRequirements(t.requiresClueTitles, unlockedClueTitles);
+          const followUpUnlocked = t.followUp ? meetsRequirements(t.followUp.requiresClueTitles, unlockedClueTitles) : false;
           return (
             <div key={t.id} className="flex flex-col gap-1.5">
               <button
@@ -92,9 +94,10 @@ export default function NpcDialogue({ npcIcon, script, nickname, unlockedClueTit
                 <button
                   type="button"
                   onClick={() => askFollowUp(t)}
-                  className="ml-3 rounded-lg border border-seal-500/40 bg-paper-50 px-3 py-1.5 text-left text-xs font-medium text-seal-600"
+                  disabled={!followUpUnlocked}
+                  className="ml-3 rounded-lg border border-seal-500/40 bg-paper-50 px-3 py-1.5 text-left text-xs font-medium text-seal-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  ↳ {t.followUp.prompt}
+                  {followUpUnlocked ? `↳ ${t.followUp.prompt}` : '🔒 더 캐물을 근거가 부족하다'}
                 </button>
               )}
             </div>

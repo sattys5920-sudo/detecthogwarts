@@ -160,6 +160,7 @@ export const DAYS: DayContent[] = [
               followUp: {
                 prompt: '무엇을 지도하고 있는지 묻는다',
                 response: '...학생 개인사까지 알려드릴 의무는 없다고 생각하는데요.',
+                requiresClueTitles: ['타치바나의 금지 마법 연구'],
                 clue: { title: '셀레나와 타치바나의 은밀한 관계', desc: '개인 지도를 하고 있다고 밝혔지만, 구체적인 내용은 완강히 거부했다.', ink: 'red', status: '조사 중' },
               },
             },
@@ -331,6 +332,7 @@ export const DAYS: DayContent[] = [
               id: 'report',
               prompt: '진상 보고서의 행방을 묻는다',
               response: '그건... 타치바나가 가져갔을 겁니다. 저도 몰라요.',
+              requiresClueTitles: ['타치바나의 자백 — 밀쳤을 뿐'],
               followUp: {
                 prompt: '거짓말하지 말라고 한다',
                 response: '...맞습니다. 제가 그 자리에 있었어요. 하지만 제가 갔을 땐 이미 보고서가 없었습니다.',

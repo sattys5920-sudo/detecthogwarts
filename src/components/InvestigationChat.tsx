@@ -3,7 +3,6 @@ import ClueRegisterModal from './ClueRegisterModal';
 import Composer from './Composer';
 import { CHARACTERS } from '../data/investigation/characters';
 import { type AdlibMessage, listenAdlibs, presentEvidence, sendChatMessage } from '../firebase/session';
-import { useLongPress } from '../hooks/useLongPress';
 import type { NotebookEntry } from '../hooks/useNotebook';
 
 function avatarFor(speaker: string) {
@@ -21,21 +20,36 @@ const INK_DOT: Record<NotebookEntry['ink'], string> = {
   indigo: 'bg-ink-indigo',
 };
 
-interface NarrationBubbleProps {
-  m: AdlibMessage;
-  onHold: (m: AdlibMessage) => void;
+function RegisterDots({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="단서로 등록"
+      className="flex-none rounded-full px-1.5 py-0.5 text-xs font-bold leading-none text-ink-500/40 hover:bg-paper-200 hover:text-seal-600"
+    >
+      ⋯
+    </button>
+  );
 }
 
-/** Any admin-sent narration line (suspect dialogue or plain situation text) — long-press or right-click to register it as a clue. */
-function NarrationBubble({ m, onHold }: NarrationBubbleProps) {
-  const longPress = useLongPress(() => onHold(m));
+interface NarrationBubbleProps {
+  m: AdlibMessage;
+  onRegister: (m: AdlibMessage) => void;
+}
+
+/** Any admin-sent narration line (suspect dialogue or plain situation text) — tap the ⋯ to register it as a clue. */
+function NarrationBubble({ m, onRegister }: NarrationBubbleProps) {
   const avatarSrc = m.speaker ? avatarFor(m.speaker) : undefined;
 
   if (!m.speaker) {
     return (
-      <div {...longPress} className="flex touch-none select-none flex-col items-center [-webkit-touch-callout:none] [-webkit-user-drag:none]">
+      <div className="flex flex-col items-center gap-0.5">
         <p className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">{m.text}</p>
-        <span className="mt-0.5 font-mono text-[10px] text-ink-500/40">{formatTime(m.at)}</span>
+        <div className="flex items-center gap-1">
+          <span className="font-mono text-[10px] text-ink-500/40">{formatTime(m.at)}</span>
+          <RegisterDots onClick={() => onRegister(m)} />
+        </div>
       </div>
     );
   }
@@ -49,15 +63,15 @@ function NarrationBubble({ m, onHold }: NarrationBubbleProps) {
           {m.speaker[0]}
         </span>
       )}
-      <div
-        {...longPress}
-        className="flex touch-none select-none flex-col items-start gap-1 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900 [-webkit-touch-callout:none] [-webkit-user-drag:none]"
-      >
+      <div className="flex flex-col items-start gap-1 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900">
         <span>
           <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>
           {m.text}
         </span>
-        <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
+        <div className="flex items-center gap-1">
+          <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
+          <RegisterDots onClick={() => onRegister(m)} />
+        </div>
       </div>
     </div>
   );
@@ -65,12 +79,11 @@ function NarrationBubble({ m, onHold }: NarrationBubbleProps) {
 
 interface OptionsBubbleProps {
   m: AdlibMessage;
-  onHold: (m: AdlibMessage) => void;
+  onRegister: (m: AdlibMessage) => void;
   onPick: (text: string) => void;
 }
 
-function OptionsBubble({ m, onHold, onPick }: OptionsBubbleProps) {
-  const longPress = useLongPress(() => onHold(m));
+function OptionsBubble({ m, onRegister, onPick }: OptionsBubbleProps) {
   const avatarSrc = m.speaker ? avatarFor(m.speaker) : undefined;
 
   return (
@@ -84,10 +97,7 @@ function OptionsBubble({ m, onHold, onPick }: OptionsBubbleProps) {
           </span>
         )
       ) : null}
-      <div
-        {...longPress}
-        className="flex touch-none select-none flex-col items-start gap-1.5 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-2 text-sm text-ink-900 [-webkit-touch-callout:none] [-webkit-user-drag:none]"
-      >
+      <div className="flex flex-col items-start gap-1.5 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-2 text-sm text-ink-900">
         {m.text && (
           <span>
             {m.speaker && <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>}
@@ -101,7 +111,10 @@ function OptionsBubble({ m, onHold, onPick }: OptionsBubbleProps) {
             </button>
           ))}
         </div>
-        <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
+        <div className="flex items-center gap-1">
+          <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
+          <RegisterDots onClick={() => onRegister(m)} />
+        </div>
       </div>
     </div>
   );
@@ -153,7 +166,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
   return (
     <div className="flex flex-col gap-3">
       <p className="text-xs font-bold text-ink-700/70">
-        조사실 채팅 — 다 함께 대화하고, 관리자의 서술과 제시된 증거도 여기 표시됩니다. 관리자가 보낸 말풍선을 꾹 누르면(웹은 우클릭) 단서로 등록할 수 있습니다.
+        조사실 채팅 — 다 함께 대화하고, 관리자의 서술과 제시된 증거도 여기 표시됩니다. 관리자가 보낸 말풍선 옆의 ⋯ 버튼을 누르면 단서로 등록할 수 있습니다.
       </p>
 
       <div ref={listRef} className="flex max-h-72 flex-col gap-2.5 overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
@@ -173,7 +186,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
           }
 
           if (m.kind === 'options') {
-            return <OptionsBubble key={m.id} m={m} onHold={setRegisterTarget} onPick={handleSendChat} />;
+            return <OptionsBubble key={m.id} m={m} onRegister={setRegisterTarget} onPick={handleSendChat} />;
           }
 
           if (m.kind === 'chat') {
@@ -204,7 +217,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
             );
           }
 
-          return <NarrationBubble key={m.id} m={m} onHold={setRegisterTarget} />;
+          return <NarrationBubble key={m.id} m={m} onRegister={setRegisterTarget} />;
         })}
       </div>
 

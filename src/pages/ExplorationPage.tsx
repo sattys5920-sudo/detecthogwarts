@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import AdminGmConsole from '../components/AdminGmConsole';
-import DayExplorer from '../components/DayExplorer';
+import AdminScriptReference from '../components/AdminScriptReference';
 import FinalDeduction from '../components/FinalDeduction';
 import InvestigationChat from '../components/InvestigationChat';
 import Letterhead from '../components/Letterhead';
@@ -23,7 +23,7 @@ export default function ExplorationPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label={`Day ${day.day} / 5`} context={day.title} meta={`${day.nodes.length}개 조사 항목`} />
+      <Letterhead label={`Day ${day.day} / 5`} context={day.title} meta="탐사 활동" />
 
       {game.isAdmin && (
         <p className="rounded-sm bg-ink-black px-2.5 py-1 text-center font-mono text-[11px] font-bold text-paper-50">
@@ -58,10 +58,6 @@ export default function ExplorationPage() {
         </p>
       )}
 
-      <DayExplorer key={day.day} day={day} notebookEntries={entries} onRegister={handleRegister} />
-
-      <div className="h-px bg-ink-700/10" />
-
       <InvestigationChat
         key={`chat-${day.day}`}
         day={day.day}
@@ -70,7 +66,12 @@ export default function ExplorationPage() {
         onRegisterClue={handleRegister}
       />
 
-      {game.isAdmin && <AdminGmConsole key={`console-${day.day}`} day={day.day} />}
+      {game.isAdmin && (
+        <>
+          <AdminGmConsole key={`console-${day.day}`} day={day.day} />
+          <AdminScriptReference key={`ref-${day.day}`} day={day} />
+        </>
+      )}
 
       {!showClosing[day.day] && (
         <button

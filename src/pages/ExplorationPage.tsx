@@ -17,8 +17,8 @@ export default function ExplorationPage() {
   const day = DAYS.find((d) => d.day === selectedDay) ?? DAYS[0];
   const showClosing = scriptDone[day.day];
 
-  function handleClue(clue: ClueDef) {
-    register(clue);
+  function handleRegister(sourceId: string, clue: ClueDef) {
+    register({ ...clue, sourceId });
   }
 
   return (
@@ -27,7 +27,7 @@ export default function ExplorationPage() {
 
       {game.isAdmin && (
         <p className="rounded-sm bg-ink-black px-2.5 py-1 text-center font-mono text-[11px] font-bold text-paper-50">
-          🎲 관리자 모드
+          관리자 모드
         </p>
       )}
 
@@ -45,7 +45,8 @@ export default function ExplorationPage() {
                 active ? 'tablet-tab-active text-seal-600' : locked ? 'text-ink-500/40' : 'text-ink-700/70'
               }`}
             >
-              {locked ? '🔒 ' : ''}Day {d.day}
+              Day {d.day}
+              {locked ? ' (잠김)' : ''}
             </button>
           );
         })}
@@ -63,7 +64,7 @@ export default function ExplorationPage() {
         beats={day.script}
         notebookEntries={entries}
         presenterNickname={game.nickname}
-        onClue={handleClue}
+        onRegister={handleRegister}
         onComplete={() => setScriptDone((s) => (s[day.day] ? s : { ...s, [day.day]: true }))}
       />
 

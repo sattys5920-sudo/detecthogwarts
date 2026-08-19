@@ -11,7 +11,6 @@ export interface AdlibMessage {
   id: string;
   kind: 'narration' | 'evidence';
   speaker: string;
-  icon: string;
   text: string;
   clue?: ClueDef;
   at: number;
@@ -124,7 +123,6 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
             id: docSnap.id,
             kind: data.kind === 'evidence' ? 'evidence' : 'narration',
             speaker: data.speaker,
-            icon: data.icon,
             text: data.text,
             clue: data.clue,
             at: data.at?.toMillis?.() ?? 0,
@@ -139,8 +137,8 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
   return () => window.removeEventListener(DEMO_ADLIB_EVENT, read);
 }
 
-export async function sendAdlib(day: number, speaker: string, icon: string, text: string, clue?: ClueDef): Promise<void> {
-  const payload = { kind: 'narration' as const, speaker, icon, text, ...(clue ? { clue } : {}) };
+export async function sendAdlib(day: number, speaker: string, text: string, clue?: ClueDef): Promise<void> {
+  const payload = { kind: 'narration' as const, speaker, text, ...(clue ? { clue } : {}) };
   if (isFirebaseConfigured && db) {
     await addDoc(adlibCollectionRef(day), { ...payload, at: serverTimestamp() });
     return;
@@ -154,7 +152,6 @@ export async function presentEvidence(day: number, presenterNickname: string, cl
   const payload = {
     kind: 'evidence' as const,
     speaker: presenterNickname,
-    icon: '🔍',
     text: `『${clue.title}』을(를) 제시했다.`,
   };
   if (isFirebaseConfigured && db) {

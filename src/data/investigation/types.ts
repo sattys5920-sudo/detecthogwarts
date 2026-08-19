@@ -12,7 +12,6 @@ export interface ScriptBeat {
   id: string;
   type: 'narration' | 'choice';
   speaker?: string;
-  icon?: string;
   text?: string;
   clue?: ClueDef;
   options?: { id: string; text: string }[];

@@ -41,15 +41,13 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
 
       <div className="flex flex-wrap items-center gap-3 text-xs text-ink-700/80">
         <span>
-          추천: <b>{computed ? `${computed.icon} ${computed.name}` : '-'}</b>
+          추천: <b>{computed ? computed.name : '-'}</b>
         </span>
         <span className="text-ink-500/40">·</span>
         <span>
           현재 배정:{' '}
           {assigned ? (
-            <b className="text-seal-600">
-              {assigned.icon} {assigned.name}
-            </b>
+            <b className="text-seal-600">{assigned.name}</b>
           ) : (
             <b className="text-ink-500/60">미배정</b>
           )}
@@ -60,8 +58,7 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
       <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px] text-ink-500/60">
         {HOUSES.map((h) => (
           <span key={h.id}>
-            {h.icon}
-            {h.name.slice(0, 1)} {player.testScores?.[h.id as HouseId] ?? 0}
+            {h.name} {player.testScores?.[h.id as HouseId] ?? 0}
           </span>
         ))}
       </div>
@@ -74,7 +71,7 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
         >
           {HOUSES.map((h) => (
             <option key={h.id} value={h.id}>
-              {h.icon} {h.name}
+              {h.name}
             </option>
           ))}
         </select>
@@ -118,7 +115,7 @@ export default function AdminPage() {
       <PaperTexture />
       <div className="mx-auto flex max-w-md flex-col gap-4">
         <Card className="flex items-center justify-between gap-3">
-          <p className="text-sm text-ink-700/80">🎲 관리자 권한이 켜져 있습니다. 이야기 진행은 탐사 활동 탭에서 합니다.</p>
+          <p className="text-sm text-ink-700/80">관리자 권한이 켜져 있습니다. 이야기 진행은 탐사 활동 탭에서 합니다.</p>
           <Button onClick={() => navigate('/exploration')} className="flex-none px-4 py-2 text-xs">
             탐사 활동으로 →
           </Button>

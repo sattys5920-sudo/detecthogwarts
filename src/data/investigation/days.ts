@@ -14,17 +14,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd1s1n1', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '여기서부터는 제가 안내하겠습니다. 시신이 발견된 뒤 복도는 그대로 보존했습니다.',
       },
       {
         id: 'd1s1n2', type: 'narration',
-        speaker: '교수', icon: '🎓',
+        speaker: '교수',
         text: '학생이 죽었습니다. 지금부터 누구도 학교 밖으로 나갈 수 없습니다.',
       },
       {
         id: 'd1s1n3', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '발견 시각은 10시 17분. 피해자는 후플푸프 11학년, 에드먼드 엘리오입니다.',
       },
       {
@@ -53,22 +53,22 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd1s2n1', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '이건 단순히 쓰러진 것처럼 보이지 않습니다.',
       },
       {
         id: 'd1s2n2', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '시체는 제가 건드리지 않았습니다.',
       },
       {
         id: 'd1s2n3', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '그럼 이 종이는?',
       },
       {
         id: 'd1s2n4', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '그것도 발견 당시 그대로입니다.',
       },
       {
@@ -98,12 +98,12 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd1s3n1', type: 'narration',
-        speaker: '학생', icon: '👤',
+        speaker: '학생',
         text: '저런 기호... 학교에 저런 기숙사가 있었어요?',
       },
       {
         id: 'd1s3n2', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '제가 오래 일했지만 처음 보는 문장입니다.',
       },
       {
@@ -133,12 +133,12 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd1s4n1', type: 'narration',
-        speaker: '아네스', icon: '🥀',
+        speaker: '아네스',
         text: '그 이름... 에드먼드가 며칠 전에 말했어요.',
       },
       {
         id: 'd1s4n2', type: 'narration',
-        speaker: '셰인', icon: '📘',
+        speaker: '셰인',
         text: '나한테도 한 번 물어봤어. 그런데 내가 대답할 수 없었어.',
       },
       {
@@ -167,17 +167,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd1s5n1', type: 'narration',
-        speaker: '아네스', icon: '🥀',
+        speaker: '아네스',
         text: '저는 그를 죽이지 않았어요. 물론... 그날 밤 그를 따라간 건 맞아요.',
       },
       {
         id: 'd1s5n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '왜 따라갔습니까?',
       },
       {
         id: 'd1s5n3', type: 'narration',
-        speaker: '아네스', icon: '🥀',
+        speaker: '아네스',
         text: '바람을 피우는 줄 알았으니까요. 그리고 따라가다 이상한 문을 봤어요. 그 뒤로는 모르는 척했어요.',
       },
       {
@@ -206,27 +206,27 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd1s6n1', type: 'narration',
-        speaker: '셰인', icon: '📘',
+        speaker: '셰인',
         text: '에드먼드한테 그 조사를 그만두라고 했어요.',
       },
       {
         id: 'd1s6n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '왜요?',
       },
       {
         id: 'd1s6n3', type: 'narration',
-        speaker: '셰인', icon: '📘',
+        speaker: '셰인',
         text: '그냥... 위험해 보여서.',
       },
       {
         id: 'd1s6n4', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '아르카디아를 아나요?',
       },
       {
         id: 'd1s6n5', type: 'narration',
-        speaker: '셰인', icon: '📘',
+        speaker: '셰인',
         text: '...말하려고 하면 머리가 깨질 것처럼 아파요.',
       },
       {
@@ -255,17 +255,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd1s7n1', type: 'narration',
-        speaker: '타치바나', icon: '⚔️',
+        speaker: '타치바나',
         text: '그를 싫어했습니다. 인정하죠. 하지만 죽이고 싶지는 않았습니다.',
       },
       {
         id: 'd1s7n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '금지된 마법을 연구했다는 소문이 있습니다.',
       },
       {
         id: 'd1s7n3', type: 'narration',
-        speaker: '타치바나', icon: '⚔️',
+        speaker: '타치바나',
         text: '연구한 건 맞습니다. 사용한 적은 없습니다.',
       },
       {
@@ -294,12 +294,12 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd1s8n1', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '죽은 사람이 마지막으로 남긴 글이라면... 왜 이렇게 또렷하죠?',
       },
       {
         id: 'd1s8n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '그게 오히려 이상한 겁니다.',
       },
       {
@@ -338,7 +338,7 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd2s1n1', type: 'narration',
-        speaker: '기록 담당자', icon: '📗',
+        speaker: '기록 담당자',
         text: '밤 9시부터 10시까지는 자동으로 위치가 기록됩니다. 다만 변신 마법은 별개입니다.',
       },
       {
@@ -367,17 +367,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd2s2n1', type: 'narration',
-        speaker: '아네스', icon: '🥀',
+        speaker: '아네스',
         text: '저는 기숙사에 있었어요. 다만 9시 40분쯤 잠깐 나갔어요.',
       },
       {
         id: 'd2s2n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '왜요?',
       },
       {
         id: 'd2s2n3', type: 'narration',
-        speaker: '아네스', icon: '🥀',
+        speaker: '아네스',
         text: '에드먼드가 돌아오지 않아서요. 따라갔다가 지하 복도 입구를 보고 돌아왔어요.',
       },
       {
@@ -406,12 +406,12 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd2s3n1', type: 'narration',
-        speaker: '사서', icon: '📚',
+        speaker: '사서',
         text: '셰인은 8시 30분부터 거의 움직이지 않았습니다. 중간에 화장실에 간 것 말고는요.',
       },
       {
         id: 'd2s3n2', type: 'narration',
-        speaker: '셰인', icon: '📘',
+        speaker: '셰인',
         text: '제가 숨기는 게 있다면... 할아버지 이야기입니다. 살인과는 관계없어요.',
       },
       {
@@ -440,17 +440,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd2s4n1', type: 'narration',
-        speaker: '타치바나', icon: '⚔️',
+        speaker: '타치바나',
         text: '저는 그 시간에 연구했습니다. 금지된 마법인 건 맞습니다. 하지만 사람을 죽이는 마법은 아니었습니다.',
       },
       {
         id: 'd2s4n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '누가 연구를 시켰습니까?',
       },
       {
         id: 'd2s4n3', type: 'narration',
-        speaker: '타치바나', icon: '⚔️',
+        speaker: '타치바나',
         text: '...교수님입니다.',
       },
       {
@@ -480,7 +480,7 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd2s5n1', type: 'narration',
-        speaker: '셀레나', icon: '🪄',
+        speaker: '셀레나',
         text: '타치바나는 문제를 일으키는 학생이지만, 제가 그를 죽음으로 몰아넣을 이유는 없습니다.',
       },
       {
@@ -509,17 +509,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd2s6n1', type: 'narration',
-        speaker: '용의자 5', icon: '🌫️',
+        speaker: '용의자 5',
         text: '아르카디아는 죽지 않았습니다. 이름만 지워졌을 뿐이에요.',
       },
       {
         id: 'd2s6n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '에드먼드를 죽였습니까?',
       },
       {
         id: 'd2s6n3', type: 'narration',
-        speaker: '용의자 5', icon: '🌫️',
+        speaker: '용의자 5',
         text: '아니요. 하지만 그가 너무 많은 것을 알아낸 건 사실입니다.',
       },
       {
@@ -548,7 +548,7 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd2s7n1', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '밤 9시 30분부터 10시 10분까지 보일러실에 있었습니다. 학교가 오래돼서요.',
       },
       {
@@ -577,12 +577,12 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd2s8n1', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '알리바이는 사실일 수도 있고, 일부만 사실일 수도 있습니다.',
       },
       {
         id: 'd2s8n2', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '그렇다면 과거부터 봐야겠군요.',
       },
       {
@@ -620,7 +620,7 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd3s1n1', type: 'narration',
-        speaker: '기록', icon: '📜',
+        speaker: '기록',
         text: '아르카디아 기숙사. 60년 전 폐쇄. 공식 사유: 구조적 위험.',
       },
       {
@@ -650,7 +650,7 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd3s2n1', type: 'narration',
-        speaker: '기록', icon: '📜',
+        speaker: '기록',
         text: '모닝베일. 아르카디아 기숙사 사감. 아름다움의 경계를 넘어선 교육을 주장.',
       },
       {
@@ -680,7 +680,7 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd3s3n1', type: 'narration',
-        speaker: '기록', icon: '📜',
+        speaker: '기록',
         text: '한 명의 생명을 대가로, 한 명이 죽음의 문턱을 경험한다.',
       },
       {
@@ -710,17 +710,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd3s4n1', type: 'narration',
-        speaker: '셰인', icon: '📘',
+        speaker: '셰인',
         text: '이제 이해했죠? 제가 왜 말하지 못했는지.',
       },
       {
         id: 'd3s4n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '할아버지가 아르카디아의 희생자였습니까?',
       },
       {
         id: 'd3s4n3', type: 'narration',
-        speaker: '셰인', icon: '📘',
+        speaker: '셰인',
         text: '네. 하지만 그 사실을 말하려 하면 마법이 저를 막습니다.',
       },
       {
@@ -750,7 +750,7 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd3s5n1', type: 'narration',
-        speaker: '기록', icon: '📜',
+        speaker: '기록',
         text: '안토니우 아르카디아 — 사건 관련 증언자. 이후 행방 불명.',
       },
       {
@@ -779,7 +779,7 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd3s6n1', type: 'narration',
-        speaker: '에드먼드의 메모', icon: '💬',
+        speaker: '에드먼드의 메모',
         text: '이 보고서가 공개되면 학교는 더 이상 숨길 수 없다. 하지만 지금 공개하면 아직 남아 있는 자들이 움직일 수 있다.',
       },
       {
@@ -809,7 +809,7 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd3s7n1', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '오래된 학교에는 오래된 죄가 있습니다. 누군가는 그것을 기억해야 합니다.',
       },
       {
@@ -838,12 +838,12 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd3s8n1', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '누군가 60년 전 사건을 현재의 살인에 덧씌웠습니다.',
       },
       {
         id: 'd3s8n2', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '그렇다면 범인은 과거를 알고 있겠군요.',
       },
       {
@@ -881,7 +881,7 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd4s1n1', type: 'narration',
-        speaker: '기록', icon: '📜',
+        speaker: '기록',
         text: '사용자 신원 확인 불가. 동일한 두 개의 복용량.',
       },
       {
@@ -911,17 +911,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd4s2n1', type: 'narration',
-        speaker: '타치바나', icon: '⚔️',
+        speaker: '타치바나',
         text: '그 시간에... 제가 어디 있었는지는 확실히 말할 수 없습니다.',
       },
       {
         id: 'd4s2n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '왜 기억이 없습니까?',
       },
       {
         id: 'd4s2n3', type: 'narration',
-        speaker: '타치바나', icon: '⚔️',
+        speaker: '타치바나',
         text: '교수님과 관련된 일입니다.',
       },
       {
@@ -950,12 +950,12 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd4s3n1', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '이 충격은 치명상이 아니었습니다.',
       },
       {
         id: 'd4s3n2', type: 'narration',
-        speaker: '의무 담당자', icon: '➕',
+        speaker: '의무 담당자',
         text: '살아 있었다는 뜻입니다.',
       },
       {
@@ -986,17 +986,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd4s4n1', type: 'narration',
-        speaker: '타치바나', icon: '⚔️',
+        speaker: '타치바나',
         text: '죽었다고 생각했습니다. 그래서... 문서를 가져갔습니다.',
       },
       {
         id: 'd4s4n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '그 문서는 지금 어디 있습니까?',
       },
       {
         id: 'd4s4n3', type: 'narration',
-        speaker: '타치바나', icon: '⚔️',
+        speaker: '타치바나',
         text: '교수님에게 줬습니다.',
       },
       {
@@ -1025,17 +1025,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd4s5n1', type: 'narration',
-        speaker: '셀레나', icon: '🪄',
+        speaker: '셀레나',
         text: '그 아이는 실수를 했습니다. 저는 그 실수를 덮으려고 했을 뿐이에요.',
       },
       {
         id: 'd4s5n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '당신이 타치바나의 모습으로 움직였죠?',
       },
       {
         id: 'd4s5n3', type: 'narration',
-        speaker: '셀레나', icon: '🪄',
+        speaker: '셀레나',
         text: '...네.',
       },
       {
@@ -1064,17 +1064,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd4s6n1', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '그 통로는 사용하지 않습니다. 위험하니까요.',
       },
       {
         id: 'd4s6n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '그런데 당신은 존재를 알고 있군요.',
       },
       {
         id: 'd4s6n3', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '관리인이라면 학교의 구조를 알아야 합니다.',
       },
       {
@@ -1104,12 +1104,12 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd4s7n1', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '그는 타치바나가 떠난 뒤에도 살아 있었습니다.',
       },
       {
         id: 'd4s7n2', type: 'narration',
-        speaker: '셰인', icon: '📘',
+        speaker: '셰인',
         text: '그럼... 그 뒤에 누군가가 왔다는 거잖아요.',
       },
       {
@@ -1138,12 +1138,12 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd4s8n1', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '타치바나는 에드먼드를 죽이지 않았습니다. 셀레나도 마지막 순간에는 현장에 없었습니다.',
       },
       {
         id: 'd4s8n2', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '그럼 남는 사람은 누구죠?',
       },
       {
@@ -1181,17 +1181,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd5s1n1', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '학교는 기억하지 않으면 같은 일을 반복합니다.',
       },
       {
         id: 'd5s1n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '당신은 60년 전 사건을 알고 있었죠?',
       },
       {
         id: 'd5s1n3', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '...알고 있었습니다.',
       },
       {
@@ -1220,22 +1220,22 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd5s2n1', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '보고서가 사라진 뒤 당신은 무엇을 했습니까?',
       },
       {
         id: 'd5s2n2', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '기다렸습니다.',
       },
       {
         id: 'd5s2n3', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '무엇을요?',
       },
       {
         id: 'd5s2n4', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '누군가가 진실을 말할 수밖에 없는 순간을요.',
       },
       {
@@ -1264,12 +1264,12 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd5s3n1', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '에드먼드가 남긴 게 아닙니다. 누군가가 남겼어요.',
       },
       {
         id: 'd5s3n2', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '그렇다면 그 사람이 왜 그랬을까요?',
       },
       {
@@ -1298,7 +1298,7 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd5s4n1', type: 'narration',
-        speaker: '기록', icon: '📜',
+        speaker: '기록',
         text: '10시 17분 발견. 하지만 사망은 그보다 앞선 시점이며, 타치바나의 공격 직후에는 생존 반응이 있었다.',
       },
       {
@@ -1327,17 +1327,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd5s5n1', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '보일러실에 있었던 건 맞습니다. 하지만 계속 있었던 건 아니죠.',
       },
       {
         id: 'd5s5n2', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '관리인은 학교 안을 돌아다닙니다. 그게 제 일입니다.',
       },
       {
         id: 'd5s5n3', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '그래서 당신은 누구보다 쉽게 현장에 갈 수 있었죠.',
       },
       {
@@ -1367,17 +1367,17 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd5s6n1', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '에드먼드는 진실을 찾았습니다. 하지만 결국 망설였죠. 보고서를 숨기려 했습니다.',
       },
       {
         id: 'd5s6n2', type: 'narration',
-        speaker: '조사관', icon: '🔍',
+        speaker: '조사관',
         text: '그래서 죽였습니까?',
       },
       {
         id: 'd5s6n3', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '보고서 하나가 사라지면 또 덮일 겁니다. 하지만 학생이 죽고, 아르카디아의 이름이 다시 나타난다면... 이번에는 모두가 보게 됩니다.',
       },
       {
@@ -1407,32 +1407,32 @@ export const DAYS: DayContent[] = [
       },
       {
         id: 'd5s7n1', type: 'narration',
-        speaker: '아네스', icon: '🥀',
+        speaker: '아네스',
         text: '저는 그를 따라갔지만 죽이지 않았어요.',
       },
       {
         id: 'd5s7n2', type: 'narration',
-        speaker: '셰인', icon: '📘',
+        speaker: '셰인',
         text: '저는 그를 말렸지만 그날 밤 도서관에 있었습니다.',
       },
       {
         id: 'd5s7n3', type: 'narration',
-        speaker: '타치바나', icon: '⚔️',
+        speaker: '타치바나',
         text: '제가 밀쳤습니다. 하지만 그는 살아 있었습니다.',
       },
       {
         id: 'd5s7n4', type: 'narration',
-        speaker: '셀레나', icon: '🪄',
+        speaker: '셀레나',
         text: '제가 보고서를 가져갔습니다. 하지만 살인은 아닙니다.',
       },
       {
         id: 'd5s7n5', type: 'narration',
-        speaker: '용의자 5', icon: '🌫️',
+        speaker: '용의자 5',
         text: '저는 아르카디아의 잔재와 관련됐지만 그를 죽이지 않았습니다.',
       },
       {
         id: 'd5s7n6', type: 'narration',
-        speaker: '파울', icon: '🗝️',
+        speaker: '파울',
         text: '...',
       },
       {

@@ -10,22 +10,27 @@ const INK_DOT: Record<NotebookEntry['ink'], string> = {
   indigo: 'bg-ink-indigo',
 };
 
+function deriveClue(text: string, speaker: string | undefined, preset?: ClueDef): ClueDef {
+  if (preset) return preset;
+  const label = speaker ? `${speaker}: ${text}` : text;
+  return { title: label.length > 24 ? `${label.slice(0, 24)}…` : label, desc: text, ink: 'black', status: '기록됨' };
+}
+
 interface ScriptViewerProps {
   day: number;
   beats: ScriptBeat[];
   notebookEntries: NotebookEntry[];
   presenterNickname: string;
-  onClue: (clue: ClueDef) => void;
+  onRegister: (sourceId: string, clue: ClueDef) => void;
   onComplete: () => void;
 }
 
-export default function ScriptViewer({ day, beats, notebookEntries, presenterNickname, onClue, onComplete }: ScriptViewerProps) {
+export default function ScriptViewer({ day, beats, notebookEntries, presenterNickname, onRegister, onComplete }: ScriptViewerProps) {
   const [revealedCount, setRevealedCount] = useState(0);
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [adlibs, setAdlibs] = useState<AdlibMessage[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [presenting, setPresenting] = useState(false);
-  const registeredRef = useRef<Set<string>>(new Set());
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => listenSessionState(day, (s) => {
@@ -41,12 +46,6 @@ export default function ScriptViewer({ day, beats, notebookEntries, presenterNic
   const pendingChoice = lastRevealed?.type === 'choice' && !choices[lastRevealed.id] ? lastRevealed : null;
 
   useEffect(() => {
-    for (const beat of revealed) {
-      if (beat.clue && !registeredRef.current.has(beat.id)) {
-        registeredRef.current.add(beat.id);
-        onClue(beat.clue);
-      }
-    }
     if (revealedCount >= eligible.length && eligible.length > 0) {
       onComplete();
     }
@@ -54,18 +53,24 @@ export default function ScriptViewer({ day, beats, notebookEntries, presenterNic
   }, [revealedCount, choices]);
 
   useEffect(() => {
-    for (const m of adlibs) {
-      if (m.clue && !registeredRef.current.has(m.id)) {
-        registeredRef.current.add(m.id);
-        onClue(m.clue);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adlibs]);
-
-  useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [revealed.length, adlibs.length]);
+
+  const registeredIds = new Set(notebookEntries.map((e) => e.sourceId).filter(Boolean));
+
+  function RegisterButton({ sourceId, text, speaker, preset }: { sourceId: string; text: string; speaker?: string; preset?: ClueDef }) {
+    const already = registeredIds.has(sourceId);
+    return (
+      <button
+        type="button"
+        disabled={already}
+        onClick={() => onRegister(sourceId, deriveClue(text, speaker, preset))}
+        className="mt-1 text-[10px] font-bold text-ink-500/40 underline-offset-2 hover:text-seal-600 hover:underline disabled:text-seal-600 disabled:no-underline"
+      >
+        {already ? '수첩에 등록됨' : '수첩에 등록'}
+      </button>
+    );
+  }
 
   async function handlePresent(entry: NotebookEntry) {
     setPresenting(true);
@@ -96,20 +101,20 @@ export default function ScriptViewer({ day, beats, notebookEntries, presenterNic
           }
           if (beat.speaker) {
             return (
-              <div key={beat.id} className="flex max-w-[90%] items-start gap-1.5 rounded-lg border border-ink-700/15 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900">
-                <span className="flex-none">{beat.icon}</span>
+              <div key={beat.id} className="flex max-w-[90%] flex-col items-start rounded-lg border border-ink-700/15 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900">
                 <span>
                   <span className="mr-1 font-bold text-ink-700/70">{beat.speaker}</span>
                   {beat.text}
                 </span>
+                <RegisterButton sourceId={beat.id} text={beat.text ?? ''} speaker={beat.speaker} preset={beat.clue} />
               </div>
             );
           }
           return (
-            <p key={beat.id} className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">
-              {beat.text}
-              {beat.clue && <span className="mt-1 block font-mono text-[10px] not-italic text-seal-600">🗒️ 조사수첩에 등록됨 — {beat.clue.title}</span>}
-            </p>
+            <div key={beat.id} className="flex flex-col items-center">
+              <p className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">{beat.text}</p>
+              <RegisterButton sourceId={beat.id} text={beat.text ?? ''} preset={beat.clue} />
+            </div>
           );
         })}
 
@@ -117,7 +122,6 @@ export default function ScriptViewer({ day, beats, notebookEntries, presenterNic
           if (m.kind === 'evidence') {
             return (
               <div key={m.id} className="mx-auto flex max-w-[85%] items-center gap-1.5 rounded-lg border border-seal-600/50 bg-seal-600/10 px-3 py-1.5 text-xs text-seal-600">
-                <span>🔍</span>
                 <span>
                   <b>{m.speaker}</b>이(가) {m.text}
                 </span>
@@ -125,19 +129,18 @@ export default function ScriptViewer({ day, beats, notebookEntries, presenterNic
             );
           }
           return m.speaker ? (
-            <div key={m.id} className="flex max-w-[90%] items-start gap-1.5 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900">
-              <span className="flex-none">{m.icon}</span>
+            <div key={m.id} className="flex max-w-[90%] flex-col items-start rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900">
               <span>
                 <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>
                 {m.text}
-                {m.clue && <span className="mt-1 block font-mono text-[10px] text-seal-600">🗒️ 조사수첩에 등록됨 — {m.clue.title}</span>}
               </span>
+              <RegisterButton sourceId={m.id} text={m.text} speaker={m.speaker} preset={m.clue} />
             </div>
           ) : (
-            <p key={m.id} className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">
-              {m.text}
-              {m.clue && <span className="mt-1 block font-mono text-[10px] not-italic text-seal-600">🗒️ 조사수첩에 등록됨 — {m.clue.title}</span>}
-            </p>
+            <div key={m.id} className="flex flex-col items-center">
+              <p className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">{m.text}</p>
+              <RegisterButton sourceId={m.id} text={m.text} preset={m.clue} />
+            </div>
           );
         })}
       </div>
@@ -156,7 +159,7 @@ export default function ScriptViewer({ day, beats, notebookEntries, presenterNic
           onClick={() => setPickerOpen((v) => !v)}
           className="tablet-btn tablet-btn-ghost self-center rounded-lg px-4 py-1.5 text-xs font-bold"
         >
-          🔍 증거 제시{pickerOpen ? ' 닫기' : ''}
+          증거 제시{pickerOpen ? ' 닫기' : ''}
         </button>
 
         {pickerOpen && (

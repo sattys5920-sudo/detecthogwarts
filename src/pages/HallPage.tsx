@@ -86,7 +86,7 @@ function CommentRow({ comment, postAuthorId, onEdit, onDelete }: {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-bold text-ink-900">{comment.authorNickname}</span>
-          {comment.secret && <span className="text-[10px] text-ink-500/60">🔒 비밀</span>}
+          {comment.secret && <span className="text-[10px] text-ink-500/60">비밀</span>}
           <span className="font-mono text-[10px] text-ink-500/50">{formatTime(comment.createdAt)}</span>
           {comment.editedAt && <span className="text-[10px] text-ink-500/40">(수정됨)</span>}
         </div>
@@ -104,7 +104,7 @@ function CommentRow({ comment, postAuthorId, onEdit, onDelete }: {
           </div>
         ) : (
           <p className="mt-0.5 text-sm text-ink-900">
-            {canSeeSecret ? comment.content : <span className="text-ink-500/50">🔒 비밀 댓글입니다.</span>}
+            {canSeeSecret ? comment.content : <span className="text-ink-500/50">비밀 댓글입니다.</span>}
           </p>
         )}
         {isMine && !editing && (
@@ -118,10 +118,11 @@ function CommentRow({ comment, postAuthorId, onEdit, onDelete }: {
   );
 }
 
-function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: () => void; onEdit: (text: string) => void; onDelete: () => void }) {
+function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: () => void; onEdit: (title: string, content: string) => void; onDelete: () => void }) {
   const game = useGame();
   const [comments, setComments] = useState<Comment[]>([]);
   const [editing, setEditing] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(post.title);
   const [draft, setDraft] = useState(post.content);
   const [secretDraft, setSecretDraft] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -161,6 +162,13 @@ function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: ()
         </div>
         {editing ? (
           <div className="mt-2.5 flex flex-col gap-2">
+            <input
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              maxLength={60}
+              placeholder="제목"
+              className="w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-2.5 py-2 text-sm font-bold text-ink-900 outline-none focus:border-seal-500"
+            />
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -168,12 +176,26 @@ function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: ()
               className="w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-2.5 py-2 text-sm text-ink-900 outline-none focus:border-seal-500"
             />
             <div className="flex gap-2">
-              <button type="button" onClick={() => { if (draft.trim()) { onEdit(draft.trim()); setEditing(false); } }} className="text-xs font-bold text-seal-600">저장</button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (draft.trim()) {
+                    onEdit(titleDraft.trim(), draft.trim());
+                    setEditing(false);
+                  }
+                }}
+                className="text-xs font-bold text-seal-600"
+              >
+                저장
+              </button>
               <button type="button" onClick={() => setEditing(false)} className="text-xs text-ink-500/60">취소</button>
             </div>
           </div>
         ) : (
-          <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed text-ink-900">{post.content}</p>
+          <>
+            {post.title && <p className="mt-2.5 text-base font-bold text-ink-900">{post.title}</p>}
+            <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-ink-900">{post.content}</p>
+          </>
         )}
         {isMine && !editing && (
           <div className="mt-2 flex gap-2 text-[11px] text-ink-500/50">
@@ -219,6 +241,7 @@ export default function HallPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [titleDraft, setTitleDraft] = useState('');
   const [draft, setDraft] = useState('');
   const [allowComments, setAllowComments] = useState(true);
 
@@ -233,9 +256,11 @@ export default function HallPage() {
       authorPlayerId: game.playerId ?? '',
       authorNickname: game.nickname,
       authorAvatar: game.avatarDataUrl,
+      title: titleDraft.trim(),
       content: trimmed,
       allowComments,
     });
+    setTitleDraft('');
     setDraft('');
     setAllowComments(true);
     setComposerOpen(false);
@@ -248,7 +273,7 @@ export default function HallPage() {
         <PostDetail
           post={openPost}
           onBack={() => setOpenId(null)}
-          onEdit={(text) => updatePost(openPost.id, text, openPost.allowComments)}
+          onEdit={(title, content) => updatePost(openPost.id, title, content, openPost.allowComments)}
           onDelete={() => {
             deletePost(openPost.id);
             setOpenId(null);
@@ -264,11 +289,18 @@ export default function HallPage() {
 
       {composerOpen && game.isAdmin && (
         <div className="flex flex-col gap-2.5 rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
+          <input
+            value={titleDraft}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            maxLength={60}
+            autoFocus
+            placeholder="제목"
+            className="w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-2.5 py-2 text-sm font-bold text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+          />
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             rows={3}
-            autoFocus
             placeholder="오늘 있었던 일을 나눠보세요"
             className="w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-2.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
           />
@@ -311,8 +343,9 @@ export default function HallPage() {
                     </p>
                   </div>
                 </div>
-                <p className="mt-3 line-clamp-5 whitespace-pre-wrap text-sm leading-relaxed text-ink-900">{posts[0].content}</p>
-                <p className="mt-3 text-xs text-ink-500/50">💬 댓글 보기 →</p>
+                {posts[0].title && <p className="mt-3 text-base font-bold text-ink-900">{posts[0].title}</p>}
+                <p className="mt-1.5 line-clamp-4 whitespace-pre-wrap text-sm leading-relaxed text-ink-900">{posts[0].content}</p>
+                <p className="mt-3 text-xs text-ink-500/50">댓글 보기 →</p>
               </div>
             </div>
           </button>
@@ -332,7 +365,8 @@ export default function HallPage() {
                       </p>
                     </div>
                   </div>
-                  <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm text-ink-900">{p.content}</p>
+                  {p.title && <p className="mt-2 text-sm font-bold text-ink-900">{p.title}</p>}
+                  <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-ink-900">{p.content}</p>
                 </div>
               </button>
             ))}

@@ -11,7 +11,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative min-h-svh">
       <PaperTexture />
-      <div className="mx-auto max-w-md px-4 pb-28 pt-6">{children}</div>
+      <div className="mx-auto max-w-md px-4 pb-32 pt-6">{children}</div>
       <BottomTabBar />
     </div>
   );

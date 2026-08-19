@@ -7,6 +7,7 @@ export interface NotebookEntry {
   desc: string;
   status: string;
   registeredAt: number;
+  sourceId?: string;
 }
 
 const STORAGE_KEY = 'arcanum-notebook';
@@ -56,11 +57,20 @@ export function useNotebook() {
 
   const register = useCallback((entry: Omit<NotebookEntry, 'id' | 'registeredAt'>) => {
     setEntries((prev) => {
-      if (prev.some((e) => e.title === entry.title)) return prev;
+      if (entry.sourceId && prev.some((e) => e.sourceId === entry.sourceId)) return prev;
+      if (!entry.sourceId && prev.some((e) => e.title === entry.title)) return prev;
       const created: NotebookEntry = { ...entry, id: crypto.randomUUID(), registeredAt: Date.now() };
       return [created, ...prev];
     });
   }, []);
 
-  return { entries, register };
+  const remove = useCallback((id: string) => {
+    setEntries((prev) => prev.filter((e) => e.id !== id));
+  }, []);
+
+  const setInk = useCallback((id: string, ink: NotebookEntry['ink']) => {
+    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ink } : e)));
+  }, []);
+
+  return { entries, register, remove, setInk };
 }

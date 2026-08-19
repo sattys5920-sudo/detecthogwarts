@@ -70,7 +70,7 @@ export default function ProfilePage() {
       {game.justAssigned && house && (
         <div className="deckle-edge flex items-center justify-between gap-3 border border-seal-500/40 bg-paper-100 p-3.5">
           <p className="font-serif-kr text-sm text-ink-900">
-            {house.icon} <b className="text-seal-600">{house.name}</b>에 배정되었습니다!
+            <b className="text-seal-600">{house.name}</b>에 배정되었습니다!
           </p>
           <button
             type="button"
@@ -97,8 +97,8 @@ export default function ProfilePage() {
               initial
             )}
           </button>
-          <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-paper-50 text-[10px] shadow">
-            ✎
+          <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-paper-50 px-1.5 py-0.5 text-[9px] font-bold text-ink-700 shadow">
+            수정
           </span>
         </div>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
@@ -126,13 +126,13 @@ export default function ProfilePage() {
             }}
             className="font-gothic mt-2 text-2xl text-ink-black"
           >
-            {game.nickname || '이름 없음'} <span className="text-sm text-ink-500/40">✎</span>
+            {game.nickname || '이름 없음'} <span className="text-xs text-ink-500/40">(수정)</span>
           </button>
         )}
 
         <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
           <span className="rounded-full border border-ink-700/20 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
-            {house ? `${house.icon} ${house.name}` : '기숙사 미배정'}
+            {house ? house.name : '기숙사 미배정'}
           </span>
           <span className="rounded-full border border-ink-700/20 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
             탐구자
@@ -169,9 +169,7 @@ export default function ProfilePage() {
           <p className="mb-2 text-xs font-bold text-ink-700/70">소속 기숙사</p>
           <Card>
             <span className="block h-2 w-8 rounded-full" style={{ backgroundColor: house?.color }} />
-            <p className="mt-2 font-serif-kr font-semibold text-ink-900">
-              {house?.icon} {house?.name}
-            </p>
+            <p className="mt-2 font-serif-kr font-semibold text-ink-900">{house?.name}</p>
             <p className="text-xs text-ink-500/70">적성 검사를 통해 정식 배정되었습니다.</p>
           </Card>
         </div>
@@ -189,9 +187,7 @@ export default function ProfilePage() {
                     style={selected ? { borderColor: h.color } : undefined}
                   >
                     <span className="block h-2 w-8 rounded-full" style={{ backgroundColor: h.color }} />
-                    <p className="mt-2 font-serif-kr font-semibold text-ink-900">
-                      {h.icon} {h.name}
-                    </p>
+                    <p className="mt-2 font-serif-kr font-semibold text-ink-900">{h.name}</p>
                     <p className="text-xs text-ink-500/70">{h.element}</p>
                   </Card>
                 </button>

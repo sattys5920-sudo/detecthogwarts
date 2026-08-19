@@ -13,6 +13,14 @@ const INK_BG: Record<NotebookEntry['ink'], string> = {
   indigo: 'bg-ink-indigo',
 };
 
+const INK_LABEL: Record<NotebookEntry['ink'], string> = {
+  black: '보통',
+  red: '중요',
+  indigo: '단서',
+};
+
+const INK_ORDER: NotebookEntry['ink'][] = ['black', 'red', 'indigo'];
+
 function formatDate(ms: number) {
   return new Date(ms).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
 }
@@ -28,7 +36,7 @@ function Spiral() {
 }
 
 export default function NotebookPage() {
-  const { entries } = useNotebook();
+  const { entries, remove, setInk } = useNotebook();
   const [openId, setOpenId] = useState<string | null>(null);
   const open = entries.find((e) => e.id === openId);
   const unresolved = entries.filter((e) => e.status !== '확인됨').length;
@@ -51,6 +59,34 @@ export default function NotebookPage() {
             <h2 className="font-display mt-1 text-3xl leading-tight text-ink-900">{open.title}</h2>
             <p className="mt-1 font-mono text-[10px] text-ink-500/60">{formatDate(open.registeredAt)} 등록</p>
             <p className="mt-4 font-serif-kr text-sm leading-relaxed text-ink-900">{open.desc}</p>
+
+            <div className="mt-5 flex items-center gap-2">
+              <span className="text-xs text-ink-500/60">중요도</span>
+              {INK_ORDER.map((ink) => (
+                <button
+                  key={ink}
+                  type="button"
+                  onClick={() => setInk(open.id, ink)}
+                  className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold transition ${
+                    open.ink === ink ? 'border-ink-700/40 bg-paper-200' : 'border-ink-700/15 text-ink-500/50 hover:border-ink-700/30'
+                  }`}
+                >
+                  <span className={`h-2 w-2 rounded-full ${INK_BG[ink]}`} />
+                  {INK_LABEL[ink]}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                remove(open.id);
+                setOpenId(null);
+              }}
+              className="mt-4 text-xs text-ink-500/50 underline-offset-2 hover:text-seal-600 hover:underline"
+            >
+              이 단서 삭제
+            </button>
           </div>
         ) : (
           <div className="notebook-page">

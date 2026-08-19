@@ -4,7 +4,7 @@ import { eligibleBeats } from '../data/investigation/scriptUtils';
 import type { ClueDef, ScriptBeat } from '../data/investigation/types';
 import { advanceSession, chooseOption, listenSessionState, resetSession, sendAdlib, type SessionState } from '../firebase/session';
 
-const NARRATOR = { id: 'narrator', name: '상황 설명', icon: '' };
+const NARRATOR = { id: 'narrator', name: '상황 설명' };
 const INK_OPTIONS: { id: ClueDef['ink']; label: string }[] = [
   { id: 'black', label: '검정' },
   { id: 'red', label: '빨강' },
@@ -36,11 +36,10 @@ export default function AdminGmConsole({ day, beats }: { day: number; beats: Scr
     setSending(true);
     try {
       const speaker = speakerId === NARRATOR.id ? '' : (CHARACTERS.find((c) => c.id === speakerId)?.name ?? '');
-      const icon = speakerId === NARRATOR.id ? '' : (CHARACTERS.find((c) => c.id === speakerId)?.icon ?? '');
       const clue: ClueDef | undefined = clueMode
         ? { title: clueTitle.trim(), desc: text, ink: clueInk, status: '확인됨' }
         : undefined;
-      await sendAdlib(day, speaker, icon, text, clue);
+      await sendAdlib(day, speaker, text, clue);
       setMessage('');
       setClueMode(false);
       setClueTitle('');
@@ -51,7 +50,7 @@ export default function AdminGmConsole({ day, beats }: { day: number; beats: Scr
 
   return (
     <div className="flex flex-col gap-3 rounded-sm border border-seal-500/40 bg-paper-100 p-3.5">
-      <p className="font-mono text-[11px] font-bold tracking-wide text-seal-600">🎲 관리자 진행 콘솔</p>
+      <p className="font-mono text-[11px] font-bold tracking-wide text-seal-600">관리자 진행 콘솔</p>
 
       <div>
         <p className="text-xs text-ink-700/70">
@@ -112,7 +111,7 @@ export default function AdminGmConsole({ day, beats }: { day: number; beats: Scr
             <option value={NARRATOR.id}>{NARRATOR.name}</option>
             {CHARACTERS.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.icon} {c.name}
+                {c.name}
               </option>
             ))}
           </select>
@@ -136,7 +135,7 @@ export default function AdminGmConsole({ day, beats }: { day: number; beats: Scr
 
           <label className="flex items-center gap-1.5 text-xs text-ink-700/70">
             <input type="checkbox" checked={clueMode} onChange={(e) => setClueMode(e.target.checked)} />
-            🗒️ 이 메시지를 단서로 등록 (모두의 조사 수첩에 기록됨)
+            단서 제목 지정 (플레이어가 수첩에 등록할 때 사용됨)
           </label>
 
           {clueMode && (

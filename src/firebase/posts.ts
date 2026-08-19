@@ -6,6 +6,7 @@ export interface Post {
   authorPlayerId: string;
   authorNickname: string;
   authorAvatar: string | null;
+  title: string;
   content: string;
   allowComments: boolean;
   createdAt: number;
@@ -65,15 +66,15 @@ export async function createPost(input: NewPost): Promise<string> {
   return id;
 }
 
-export async function updatePost(id: string, content: string, allowComments: boolean): Promise<void> {
+export async function updatePost(id: string, title: string, content: string, allowComments: boolean): Promise<void> {
   if (isFirebaseConfigured && db) {
-    await updateDoc(doc(db, POSTS, id), { content, allowComments, editedAt: serverTimestamp() });
+    await updateDoc(doc(db, POSTS, id), { title, content, allowComments, editedAt: serverTimestamp() });
     return;
   }
   const store = readDemo();
   const idx = store.posts.findIndex((p) => p.id === id);
   if (idx >= 0) {
-    store.posts[idx] = { ...store.posts[idx], content, allowComments, editedAt: Date.now() };
+    store.posts[idx] = { ...store.posts[idx], title, content, allowComments, editedAt: Date.now() };
     writeDemo(store);
   }
 }
@@ -101,6 +102,7 @@ export function listenPosts(callback: (posts: Post[]) => void): () => void {
             authorPlayerId: data.authorPlayerId,
             authorNickname: data.authorNickname,
             authorAvatar: data.authorAvatar ?? null,
+            title: data.title ?? '',
             content: data.content,
             allowComments: data.allowComments,
             createdAt: data.createdAt?.toMillis?.() ?? 0,

@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Card from '../components/Card';
 import DaVinciCodeGame from '../components/DaVinciCodeGame';
 import DormChat from '../components/DormChat';
 import Letterhead from '../components/Letterhead';
+import { usePageBack } from '../context/BackContext';
 import { useGame, type PlayerStats } from '../context/GameContext';
 import { HOUSES } from '../data/school';
+import { listenRoomLock, setRoomLock } from '../firebase/locks';
 
 interface Room {
   id: string;
@@ -14,14 +16,15 @@ interface Room {
   statLabel?: string;
   gain?: number;
   action?: string;
+  lockable?: boolean;
 }
 
 const ROOMS: Room[] = [
   { id: 'library', name: '도서관', desc: '도서관에 상주하는, 게임을 좋아하는 귀신 크리스토 백작과 게임을 해서 이겨 보세요.' },
-  { id: 'forest', name: '숲', desc: '금지된 숲 근처에서 주문을 연습합니다.', stat: 'spellPower', statLabel: '주문 공격력', gain: 5, action: '주문 연습하기' },
-  { id: 'pitch', name: '퀴디치 운동장', desc: '빗자루를 타고 체력을 단련합니다.', stat: 'stamina', statLabel: '스태미나', gain: 5, action: '훈련하기' },
-  { id: 'herbarium', name: '약초 농장', desc: '온실에서 약초를 돌보며 몸을 회복합니다.', stat: 'hp', statLabel: 'HP', gain: 8, action: '휴식하기' },
-  { id: 'dorm', name: '기숙사', desc: '같은 기숙사 친구들과 이야기를 나눕니다.', action: '대화 참여하기' },
+  { id: 'forest', name: '숲', desc: '금지된 숲 근처에서 주문을 연습합니다.', stat: 'spellPower', statLabel: '주문 공격력', gain: 5, action: '주문 연습하기', lockable: true },
+  { id: 'pitch', name: '퀴디치 운동장', desc: '빗자루를 타고 체력을 단련합니다.', stat: 'stamina', statLabel: '스태미나', gain: 5, action: '훈련하기', lockable: true },
+  { id: 'herbarium', name: '약초 농장', desc: '온실에서 약초를 돌보며 몸을 회복합니다.', stat: 'hp', statLabel: 'HP', gain: 8, action: '휴식하기', lockable: true },
+  { id: 'dorm', name: '기숙사', desc: '같은 기숙사 친구들과 이야기를 나눕니다.', action: '대화 참여하기', lockable: true },
 ];
 
 const DAVINCI_MAX_PLAYS = 10;
@@ -37,8 +40,28 @@ export default function RecessPage() {
   const [davinciPlaying, setDavinciPlaying] = useState(false);
   const [davinciResult, setDavinciResult] = useState<'win' | 'lose' | null>(null);
   const [davinciPlays, setDavinciPlays] = useState(() => Number(localStorage.getItem(davinciPlaysKey(game.currentDay)) ?? 0));
+  const [roomLocks, setRoomLocks] = useState<Record<string, boolean>>({});
   const room = ROOMS.find((r) => r.id === activeRoom);
   const house = HOUSES.find((h) => h.id === game.houseId);
+
+  useEffect(() => {
+    const unsubs = ROOMS.filter((r) => r.lockable).map((r) =>
+      listenRoomLock(r.id, (locked) => setRoomLocks((prev) => ({ ...prev, [r.id]: locked }))),
+    );
+    return () => unsubs.forEach((u) => u());
+  }, []);
+
+  function exitRoom() {
+    if (davinciPlaying) exitDavinci();
+    setActiveRoom(null);
+  }
+
+  usePageBack(room ? exitRoom : null);
+
+  function enterRoom(r: Room) {
+    if (r.lockable && roomLocks[r.id] && !game.isAdmin) return;
+    setActiveRoom(r.id);
+  }
 
   function startDavinci() {
     const next = davinciPlays + 1;
@@ -60,22 +83,37 @@ export default function RecessPage() {
   }
 
   if (room) {
+    const locked = room.lockable ? Boolean(roomLocks[room.id]) : false;
+
     return (
       <div className="flex flex-col gap-4">
         <Letterhead label={room.name} context={room.desc} meta="휴게시간" />
 
-        <button
-          type="button"
-          onClick={() => {
-            if (davinciPlaying) exitDavinci();
-            setActiveRoom(null);
-          }}
-          className="self-start text-xs text-ink-500/60 underline-offset-2 hover:text-ink-700 hover:underline"
-        >
+        <button type="button" onClick={exitRoom} className="self-start text-xs text-ink-500/60 underline-offset-2 hover:text-ink-700 hover:underline">
           ← 방 목록으로
         </button>
 
-        {room.id === 'library' ? (
+        {game.isAdmin && room.lockable && (
+          <div className="flex items-center justify-between gap-2 rounded-sm bg-ink-black px-2.5 py-1.5">
+            <p className="font-mono text-[11px] font-bold text-paper-50">관리자 모드</p>
+            <button
+              type="button"
+              onClick={() => setRoomLock(room.id, !locked)}
+              className={`rounded-full px-2.5 py-1 font-mono text-[11px] font-bold ${
+                locked ? 'bg-seal-600 text-paper-50' : 'bg-paper-100 text-ink-900'
+              }`}
+            >
+              {locked ? '잠김 — 열기' : '열림 — 잠그기'}
+            </button>
+          </div>
+        )}
+
+        {locked && !game.isAdmin ? (
+          <div className="rounded-sm border border-ink-700/15 bg-paper-100/60 py-10 text-center">
+            <p className="text-sm font-bold text-ink-700/70">아직 잠긴 공간입니다.</p>
+            <p className="mt-1 text-xs text-ink-500/60">관리자가 열어야 이용할 수 있어요.</p>
+          </div>
+        ) : room.id === 'library' ? (
           davinciPlaying ? (
             <DaVinciCodeGame key={davinciSession} onFinished={handleDavinciFinished} onExit={exitDavinci} />
           ) : (
@@ -136,19 +174,25 @@ export default function RecessPage() {
       <Letterhead label="휴게시간" context="갈 곳을 골라보세요" meta="쉬는 시간 · 10분 남음" />
 
       <div className="flex flex-col gap-3">
-        {ROOMS.map((r) => (
-          <button key={r.id} type="button" onClick={() => setActiveRoom(r.id)} className="text-left">
-            <Card className="flex items-center gap-3 hover:border-ink-700/30">
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-ink-black text-sm font-bold text-paper-50">
-                {r.name[0]}
-              </span>
-              <div>
-                <p className="font-serif-kr font-semibold text-ink-900">{r.name}</p>
-                <p className="text-xs text-ink-700/70">{r.desc}</p>
-              </div>
-            </Card>
-          </button>
-        ))}
+        {ROOMS.map((r) => {
+          const locked = r.lockable && roomLocks[r.id] && !game.isAdmin;
+          return (
+            <button key={r.id} type="button" onClick={() => enterRoom(r)} disabled={locked} className="text-left disabled:opacity-50">
+              <Card className="flex items-center gap-3 hover:border-ink-700/30">
+                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-ink-black text-sm font-bold text-paper-50">
+                  {r.name[0]}
+                </span>
+                <div>
+                  <p className="font-serif-kr font-semibold text-ink-900">
+                    {r.name}
+                    {locked && <span className="ml-1.5 font-mono text-[10px] font-bold text-ink-500/60">(잠김)</span>}
+                  </p>
+                  <p className="text-xs text-ink-700/70">{r.desc}</p>
+                </div>
+              </Card>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

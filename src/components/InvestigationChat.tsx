@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import ClueRegisterModal from './ClueRegisterModal';
 import Composer from './Composer';
 import { CHARACTERS } from '../data/investigation/characters';
 import { type AdlibMessage, listenAdlibs, presentEvidence, sendChatMessage } from '../firebase/session';
+import { useLongPress } from '../hooks/useLongPress';
 import type { NotebookEntry } from '../hooks/useNotebook';
 
 function avatarFor(speaker: string) {
@@ -19,6 +21,38 @@ const INK_DOT: Record<NotebookEntry['ink'], string> = {
   indigo: 'bg-ink-indigo',
 };
 
+interface SuspectBubbleProps {
+  m: AdlibMessage;
+  onHold: (m: AdlibMessage) => void;
+}
+
+function SuspectBubble({ m, onHold }: SuspectBubbleProps) {
+  const longPress = useLongPress(() => onHold(m));
+  const avatarSrc = avatarFor(m.speaker);
+
+  return (
+    <div className="flex max-w-[90%] items-start gap-2">
+      {avatarSrc ? (
+        <img src={avatarSrc} alt="" className="h-8 w-8 flex-none rounded-full border border-ink-700/20 object-cover" />
+      ) : (
+        <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-ink-black text-[11px] font-bold text-paper-50">
+          {m.speaker[0]}
+        </span>
+      )}
+      <div
+        {...longPress}
+        className="flex select-none flex-col items-start gap-1 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900 [-webkit-touch-callout:none]"
+      >
+        <span>
+          <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>
+          {m.text}
+        </span>
+        <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
+      </div>
+    </div>
+  );
+}
+
 interface InvestigationChatProps {
   day: number;
   notebookEntries: NotebookEntry[];
@@ -31,8 +65,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
   const [adlibs, setAdlibs] = useState<AdlibMessage[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [presenting, setPresenting] = useState(false);
-  const [registeringId, setRegisteringId] = useState<string | null>(null);
-  const [titleDraft, setTitleDraft] = useState('');
+  const [registerTarget, setRegisterTarget] = useState<AdlibMessage | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => listenAdlibs(day, setAdlibs), [day]);
@@ -57,22 +90,17 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
     sendChatMessage(day, nickname, text, avatar);
   }
 
-  function startRegistering(m: AdlibMessage) {
-    setRegisteringId(m.id);
-    setTitleDraft(m.text.slice(0, 20));
-  }
-
-  function confirmRegister(m: AdlibMessage) {
-    const title = titleDraft.trim();
-    if (!title) return;
-    onRegisterClue(m.id, { title, desc: m.text, ink: 'black', status: '확인됨' });
-    setRegisteringId(null);
-    setTitleDraft('');
+  function confirmRegister(title: string) {
+    if (!registerTarget) return;
+    onRegisterClue(registerTarget.id, { title, desc: registerTarget.text, ink: 'black', status: '확인됨' });
+    setRegisterTarget(null);
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs font-bold text-ink-700/70">조사실 채팅 — 다 함께 대화하고, 관리자의 서술과 제시된 증거도 여기 표시됩니다</p>
+      <p className="text-xs font-bold text-ink-700/70">
+        조사실 채팅 — 다 함께 대화하고, 관리자의 서술과 제시된 증거도 여기 표시됩니다. 용의자의 말풍선을 꾹 누르면(웹은 우클릭) 단서로 등록할 수 있습니다.
+      </p>
 
       <div ref={listRef} className="flex max-h-72 flex-col gap-2.5 overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
         {adlibs.length === 0 && (
@@ -157,64 +185,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
           }
 
           if (m.speaker) {
-            const avatarSrc = avatarFor(m.speaker);
-            const registering = registeringId === m.id;
-            return (
-              <div key={m.id} className="flex max-w-[90%] items-start gap-2">
-                {avatarSrc ? (
-                  <img src={avatarSrc} alt="" className="h-8 w-8 flex-none rounded-full border border-ink-700/20 object-cover" />
-                ) : (
-                  <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-ink-black text-[11px] font-bold text-paper-50">
-                    {m.speaker[0]}
-                  </span>
-                )}
-                <div className="flex flex-col items-start gap-1 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900">
-                  <span>
-                    <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>
-                    {m.text}
-                  </span>
-                  <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
-
-                  {registering ? (
-                    <div className="mt-0.5 flex items-center gap-1.5">
-                      <input
-                        value={titleDraft}
-                        onChange={(e) => setTitleDraft(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && confirmRegister(m)}
-                        placeholder="단서 제목을 입력하세요"
-                        maxLength={40}
-                        autoFocus
-                        className="w-40 rounded-md border border-seal-500/40 bg-paper-50 px-2 py-1 text-xs text-ink-900 outline-none focus:border-seal-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => confirmRegister(m)}
-                        disabled={!titleDraft.trim()}
-                        className="flex-none text-[10px] font-bold text-seal-600 disabled:opacity-40"
-                      >
-                        등록
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRegisteringId(null)}
-                        className="flex-none text-[10px] text-ink-500/50 hover:underline"
-                      >
-                        취소
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={registeredIds.has(m.id)}
-                      onClick={() => startRegistering(m)}
-                      className="mt-0.5 text-[10px] font-bold text-ink-500/40 underline-offset-2 hover:text-seal-600 hover:underline disabled:text-seal-600 disabled:no-underline"
-                    >
-                      {registeredIds.has(m.id) ? '수첩에 등록됨' : '수첩에 등록'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
+            return <SuspectBubble key={m.id} m={m} onHold={setRegisterTarget} />;
           }
 
           return (
@@ -258,6 +229,15 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
           </div>
         )}
       </div>
+
+      {registerTarget && (
+        <ClueRegisterModal
+          sourceText={registerTarget.text}
+          alreadyRegistered={registeredIds.has(registerTarget.id)}
+          onConfirm={confirmRegister}
+          onClose={() => setRegisterTarget(null)}
+        />
+      )}
     </div>
   );
 }

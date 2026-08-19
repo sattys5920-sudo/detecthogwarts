@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { usePageBack } from '../context/BackContext';
 import { useNotebook, type NotebookEntry } from '../hooks/useNotebook';
 
 const INK_TEXT: Record<NotebookEntry['ink'], string> = {
@@ -41,6 +42,8 @@ export default function NotebookPage() {
   const [memoDraft, setMemoDraft] = useState('');
   const open = entries.find((e) => e.id === openId);
   const unresolved = entries.filter((e) => e.status !== '확인됨').length;
+
+  usePageBack(open ? () => setOpenId(null) : null);
 
   function openEntry(id: string) {
     setOpenId(id);

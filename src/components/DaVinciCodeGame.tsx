@@ -169,10 +169,11 @@ interface TileFaceProps {
   tile: HandTile;
   hidden: boolean;
   selected?: boolean;
+  revealedMarker?: boolean;
   onClick?: () => void;
 }
 
-function TileFace({ tile, hidden, selected, onClick }: TileFaceProps) {
+function TileFace({ tile, hidden, selected, revealedMarker, onClick }: TileFaceProps) {
   const light = tile.color === 'white';
   const clickable = !!onClick;
   return (
@@ -180,10 +181,13 @@ function TileFace({ tile, hidden, selected, onClick }: TileFaceProps) {
       type="button"
       disabled={!clickable}
       onClick={onClick}
-      className={`flex h-14 w-10 flex-none flex-col items-center justify-center rounded-sm border-2 text-sm font-bold transition ${
+      className={`relative flex h-14 min-w-[22px] max-w-10 flex-1 flex-col items-center justify-center rounded-sm border-2 text-sm font-bold transition ${
         light ? 'border-ink-700/40 bg-paper-50 text-ink-900' : 'border-ink-black bg-ink-black text-paper-50'
       } ${selected ? 'ring-2 ring-seal-600 ring-offset-1' : ''} ${clickable ? 'cursor-pointer hover:opacity-80' : ''}`}
     >
+      {revealedMarker && (
+        <span className="absolute -top-1.5 -right-1.5 h-3 w-3 rounded-full border border-paper-50 bg-ink-red" aria-label="상대에게 공개됨" />
+      )}
       {hidden ? <span className="text-[10px] opacity-50">?</span> : <span>{tileLabel(tile.value)}</span>}
     </button>
   );
@@ -380,7 +384,7 @@ export default function DaVinciCodeGame({ onFinished, onExit }: DaVinciCodeGameP
     <div className="flex flex-col gap-3">
       <div className="rounded-sm border border-ink-700/15 bg-paper-100/50 p-3">
         <p className="mb-1.5 text-center text-[11px] font-bold text-ink-700/70">크리스토 백작의 패 (남은 카드: {state.pool.length}장)</p>
-        <div className="flex flex-wrap justify-center gap-1.5">
+        <div className="flex w-full justify-center gap-1">
           {state.computer.map((t, i) => (
             <TileFace
               key={t.id}
@@ -433,10 +437,15 @@ export default function DaVinciCodeGame({ onFinished, onExit }: DaVinciCodeGameP
       )}
 
       <div className="rounded-sm border border-ink-700/15 bg-paper-100/50 p-3">
-        <p className="mb-1.5 text-center text-[11px] font-bold text-ink-700/70">내 패</p>
-        <div className="flex flex-wrap justify-center gap-1.5">
+        <div className="mb-1.5 flex items-center justify-center gap-2">
+          <p className="text-center text-[11px] font-bold text-ink-700/70">내 패</p>
+          <span className="flex items-center gap-1 font-mono text-[10px] text-ink-500/60">
+            <span className="h-2 w-2 rounded-full border border-paper-50 bg-ink-red" /> 상대에게 공개됨
+          </span>
+        </div>
+        <div className="flex w-full justify-center gap-1">
           {state.player.map((t) => (
-            <TileFace key={t.id} tile={t} hidden={false} />
+            <TileFace key={t.id} tile={t} hidden={false} revealedMarker={t.revealed} />
           ))}
         </div>
       </div>

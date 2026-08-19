@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Composer from '../components/Composer';
 import Letterhead from '../components/Letterhead';
+import { usePageBack } from '../context/BackContext';
 import { useGame } from '../context/GameContext';
 import { SCHOOL_NAME } from '../data/school';
 import {
@@ -215,6 +216,8 @@ export default function HallPage() {
   useEffect(() => listenPosts(setPosts), []);
 
   const openPost = posts.find((p) => p.id === openId);
+
+  usePageBack(openPost ? () => setOpenId(null) : null);
 
   function handleCreatePost() {
     const trimmed = draft.trim();

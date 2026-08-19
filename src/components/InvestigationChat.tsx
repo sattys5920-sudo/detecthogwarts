@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import Composer from './Composer';
+import { CHARACTERS } from '../data/investigation/characters';
 import { type AdlibMessage, listenAdlibs, presentEvidence, sendChatMessage } from '../firebase/session';
 import type { NotebookEntry } from '../hooks/useNotebook';
+
+function avatarFor(speaker: string) {
+  return CHARACTERS.find((c) => c.name === speaker)?.avatar;
+}
 
 const INK_DOT: Record<NotebookEntry['ink'], string> = {
   black: 'bg-ink-black',
@@ -77,24 +82,37 @@ export default function InvestigationChat({ day, notebookEntries, nickname, onRe
               </div>
             );
           }
-          return m.speaker ? (
-            <div key={m.id} className="flex max-w-[90%] flex-col items-start rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900">
-              <span>
-                <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>
-                {m.text}
-              </span>
-              {m.clue && (
-                <button
-                  type="button"
-                  disabled={registeredIds.has(m.id)}
-                  onClick={() => onRegisterClue(m.id, m.clue!)}
-                  className="mt-1 text-[10px] font-bold text-ink-500/40 underline-offset-2 hover:text-seal-600 hover:underline disabled:text-seal-600 disabled:no-underline"
-                >
-                  {registeredIds.has(m.id) ? '수첩에 등록됨' : '수첩에 등록'}
-                </button>
-              )}
-            </div>
-          ) : (
+          if (m.speaker) {
+            const avatar = avatarFor(m.speaker);
+            return (
+              <div key={m.id} className="flex max-w-[90%] items-start gap-2">
+                {avatar ? (
+                  <img src={avatar} alt="" className="h-8 w-8 flex-none rounded-full border border-ink-700/20 object-cover" />
+                ) : (
+                  <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-ink-black text-[11px] font-bold text-paper-50">
+                    {m.speaker[0]}
+                  </span>
+                )}
+                <div className="flex flex-col items-start rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900">
+                  <span>
+                    <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>
+                    {m.text}
+                  </span>
+                  {m.clue && (
+                    <button
+                      type="button"
+                      disabled={registeredIds.has(m.id)}
+                      onClick={() => onRegisterClue(m.id, m.clue!)}
+                      className="mt-1 text-[10px] font-bold text-ink-500/40 underline-offset-2 hover:text-seal-600 hover:underline disabled:text-seal-600 disabled:no-underline"
+                    >
+                      {registeredIds.has(m.id) ? '수첩에 등록됨' : '수첩에 등록'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          }
+          return (
             <div key={m.id} className="flex flex-col items-center">
               <p className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">{m.text}</p>
               {m.clue && (

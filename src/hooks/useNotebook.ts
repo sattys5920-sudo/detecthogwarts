@@ -8,6 +8,7 @@ export interface NotebookEntry {
   status: string;
   registeredAt: number;
   sourceId?: string;
+  memo?: string;
 }
 
 const STORAGE_KEY = 'arcanum-notebook';
@@ -72,5 +73,9 @@ export function useNotebook() {
     setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ink } : e)));
   }, []);
 
-  return { entries, register, remove, setInk };
+  const setMemo = useCallback((id: string, memo: string) => {
+    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, memo } : e)));
+  }, []);
+
+  return { entries, register, remove, setInk, setMemo };
 }

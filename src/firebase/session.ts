@@ -4,10 +4,12 @@ import { db, isFirebaseConfigured } from './config';
 
 export interface AdlibMessage {
   id: string;
-  kind: 'narration' | 'evidence' | 'chat';
+  kind: 'narration' | 'evidence' | 'chat' | 'options';
   speaker: string;
   text: string;
   clue?: ClueDef;
+  options?: string[];
+  authorAvatar?: string | null;
   at: number;
 }
 
@@ -49,10 +51,12 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
           const data = docSnap.data();
           return {
             id: docSnap.id,
-            kind: data.kind === 'evidence' || data.kind === 'chat' ? data.kind : 'narration',
+            kind: data.kind === 'evidence' || data.kind === 'chat' || data.kind === 'options' ? data.kind : 'narration',
             speaker: data.speaker,
             text: data.text,
             clue: data.clue,
+            options: data.options,
+            authorAvatar: data.authorAvatar ?? null,
             at: data.at?.toMillis?.() ?? 0,
           } satisfies AdlibMessage;
         }),
@@ -65,8 +69,8 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
   return () => window.removeEventListener(DEMO_ADLIB_EVENT, read);
 }
 
-export async function sendAdlib(day: number, speaker: string, text: string, clue?: ClueDef): Promise<void> {
-  const payload = { kind: 'narration' as const, speaker, text, ...(clue ? { clue } : {}) };
+export async function sendAdlib(day: number, speaker: string, text: string): Promise<void> {
+  const payload = { kind: 'narration' as const, speaker, text };
   if (isFirebaseConfigured && db) {
     await addDoc(adlibCollectionRef(day), { ...payload, at: serverTimestamp() });
     return;
@@ -76,8 +80,19 @@ export async function sendAdlib(day: number, speaker: string, text: string, clue
   writeAdlibDemo(day, messages);
 }
 
-export async function sendChatMessage(day: number, nickname: string, text: string): Promise<void> {
-  const payload = { kind: 'chat' as const, speaker: nickname, text };
+export async function sendOptionsMessage(day: number, speaker: string, prompt: string, options: string[]): Promise<void> {
+  const payload = { kind: 'options' as const, speaker, text: prompt, options };
+  if (isFirebaseConfigured && db) {
+    await addDoc(adlibCollectionRef(day), { ...payload, at: serverTimestamp() });
+    return;
+  }
+  const messages = readAdlibDemo(day);
+  messages.push({ ...payload, id: crypto.randomUUID(), at: Date.now() });
+  writeAdlibDemo(day, messages);
+}
+
+export async function sendChatMessage(day: number, nickname: string, text: string, authorAvatar: string | null): Promise<void> {
+  const payload = { kind: 'chat' as const, speaker: nickname, text, authorAvatar };
   if (isFirebaseConfigured && db) {
     await addDoc(adlibCollectionRef(day), { ...payload, at: serverTimestamp() });
     return;

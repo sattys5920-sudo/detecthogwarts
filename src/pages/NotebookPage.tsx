@@ -36,10 +36,20 @@ function Spiral() {
 }
 
 export default function NotebookPage() {
-  const { entries, remove, setInk } = useNotebook();
+  const { entries, remove, setInk, setMemo } = useNotebook();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [memoDraft, setMemoDraft] = useState('');
   const open = entries.find((e) => e.id === openId);
   const unresolved = entries.filter((e) => e.status !== '확인됨').length;
+
+  function openEntry(id: string) {
+    setOpenId(id);
+    setMemoDraft(entries.find((e) => e.id === id)?.memo ?? '');
+  }
+
+  function saveMemo() {
+    if (open) setMemo(open.id, memoDraft);
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -59,6 +69,18 @@ export default function NotebookPage() {
             <h2 className="font-display mt-1 text-3xl leading-tight text-ink-900">{open.title}</h2>
             <p className="mt-1 font-mono text-[10px] text-ink-500/60">{formatDate(open.registeredAt)} 등록</p>
             <p className="mt-4 font-serif-kr text-sm leading-relaxed text-ink-900">{open.desc}</p>
+
+            <div className="mt-4 flex flex-col gap-1.5">
+              <span className="text-xs text-ink-500/60">내 메모</span>
+              <textarea
+                value={memoDraft}
+                onChange={(e) => setMemoDraft(e.target.value)}
+                onBlur={saveMemo}
+                rows={3}
+                placeholder="이 단서에 대한 생각을 적어보세요"
+                className="w-full rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+              />
+            </div>
 
             <div className="mt-5 flex items-center gap-2">
               <span className="text-xs text-ink-500/60">중요도</span>
@@ -103,7 +125,7 @@ export default function NotebookPage() {
                 <button
                   key={e.id}
                   type="button"
-                  onClick={() => setOpenId(e.id)}
+                  onClick={() => openEntry(e.id)}
                   className="flex items-center gap-2.5 border-b border-ink-700/10 py-3 text-left last:border-b-0"
                 >
                   <span className={`h-2 w-2 flex-none rounded-full ${INK_BG[e.ink]}`} />

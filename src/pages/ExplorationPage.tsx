@@ -63,6 +63,7 @@ export default function ExplorationPage() {
         day={day.day}
         notebookEntries={entries}
         nickname={game.nickname}
+        avatar={game.avatarDataUrl}
         onRegisterClue={handleRegister}
       />
 

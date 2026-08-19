@@ -102,12 +102,16 @@ service cloud.firestore {
         allow read: if true;
 
         allow create: if request.resource.data.keys().hasAll(['kind', 'speaker', 'text'])
-          && request.resource.data.kind in ['narration', 'evidence', 'chat']
+          && request.resource.data.kind in ['narration', 'evidence', 'chat', 'options']
           && request.resource.data.speaker is string
           && request.resource.data.speaker.size() <= 30
           && request.resource.data.text is string
-          && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 1000;
+          && request.resource.data.text.size() <= 1000
+          && (request.resource.data.kind == 'options' || request.resource.data.text.size() > 0)
+          && (request.resource.data.kind != 'options'
+            || (request.resource.data.options is list
+              && request.resource.data.options.size() >= 1
+              && request.resource.data.options.size() <= 5));
 
         allow update, delete: if false;
       }

@@ -1,86 +1,105 @@
 import { useState } from 'react';
+import type { NotebookEntry } from '../hooks/useNotebook';
 
-const OPTIONS = [
-  {
-    id: 'A',
-    text: '파울 슈미트 — 타치바나의 공격 이후 살아 있던 에드먼드를 살해하고, 아르카디아의 문장과 안토니우 아르카디아의 이름을 남겨 60년 전 사건을 공론화하려 했다.',
-    result: 'TRUE ENDING 조건 충족.',
-    trueEnding: true,
-  },
-  {
-    id: 'B',
-    text: '타치바나 고 — 에드먼드를 밀쳐 죽였다.',
-    result: '부분 정답. 실제 사망 시각과 생존 흔적 때문에 오답.',
-    trueEnding: false,
-  },
-  {
-    id: 'C',
-    text: '셀레나 미고 — 보고서를 빼앗고 살해했다.',
-    result: '부분 정답. 보고서 탈취는 사실이나 최종 살인은 아님.',
-    trueEnding: false,
-  },
-  {
-    id: 'D',
-    text: '용의자 5 — 아르카디아의 잔재이므로 살해했다.',
-    result: '동기와 현장 증거가 맞지 않아 오답.',
-    trueEnding: false,
-  },
+const REQUIRED_FLAGS = [
+  '엘리오의 사망 시각과 흔적',
+  '문서 탈취',
+  '타치바나의 기절 진술',
+  '파울의 현장 도착 진술',
+  '파울의 가족사',
+  '현장 혈서 — 아르카디아',
 ];
 
-export default function FinalDeduction({ onSolved }: { onSolved: () => void }) {
-  const [selected, setSelected] = useState('');
+export default function FinalDeduction({ notebookEntries, onSolved }: { notebookEntries: NotebookEntry[]; onSolved: () => void }) {
   const [submitted, setSubmitted] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
 
-  const picked = OPTIONS.find((o) => o.id === selected);
+  const collected = REQUIRED_FLAGS.filter((f) => notebookEntries.some((e) => e.title === f));
+  const solvedEnough = collected.length >= REQUIRED_FLAGS.length;
 
-  function submit() {
-    if (!selected) return;
+  function accuse() {
     setSubmitted(true);
-    if (picked?.trueEnding) onSolved();
+    if (solvedEnough) onSolved();
+  }
+
+  if (reviewing) {
+    return (
+      <div className="flex flex-col gap-3 rounded-sm border border-ink-700/15 bg-paper-50 p-4">
+        <p className="font-serif-kr text-sm font-semibold text-ink-900">확보한 핵심 단서</p>
+        <ul className="flex flex-col gap-1.5 text-sm">
+          {REQUIRED_FLAGS.map((f) => {
+            const got = collected.includes(f);
+            return (
+              <li key={f} className="flex items-center gap-2">
+                <span className={`h-2 w-2 flex-none rounded-full ${got ? 'bg-seal-600' : 'bg-ink-500/20'}`} />
+                <span className={got ? 'text-ink-900' : 'text-ink-500/50'}>{f}</span>
+              </li>
+            );
+          })}
+        </ul>
+        <p className="text-xs text-ink-700/70">
+          {collected.length} / {REQUIRED_FLAGS.length}개 확보. 탐사 활동으로 돌아가 부족한 단서를 더 조사해 수첩에 등록하세요.
+        </p>
+        <button
+          type="button"
+          onClick={() => setReviewing(false)}
+          className="tablet-btn tablet-btn-ghost self-start rounded-lg px-4 py-2 text-sm font-bold"
+        >
+          되돌아가기
+        </button>
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col gap-3 rounded-sm border border-ink-700/15 bg-paper-50 p-4">
-      <p className="font-serif-kr text-sm font-semibold text-ink-900">마지막 주문은 누구를 향했나 — 범인과 범행 과정을 제출하라.</p>
-      <div className="flex flex-col gap-2">
-        {OPTIONS.map((o) => (
-          <label key={o.id} className="flex items-start gap-2 text-sm text-ink-900">
-            <input
-              type="radio"
-              name="ending"
-              value={o.id}
-              checked={selected === o.id}
-              onChange={() => setSelected(o.id)}
-              className="mt-1 flex-none"
-            />
-            <span>
-              <b>{o.id}.</b> {o.text}
-            </span>
-          </label>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={submit}
-        disabled={!selected}
-        className="tablet-btn tablet-btn-dark self-start rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-40"
-      >
-        추리 제출
-      </button>
+      <p className="font-serif-kr text-sm font-semibold text-ink-900">마지막 기록을 맞추면 시간 순서가 선명해진다. 이제, 범인을 지목하라.</p>
 
-      {submitted && picked?.trueEnding && (
-        <div className="flex flex-col gap-3 rounded-sm border border-seal-500/40 bg-paper-100 p-3.5 text-sm leading-relaxed text-ink-900">
-          <p className="font-bold text-seal-600">TRUE ENDING — 마지막 주문은 누구를 향했나</p>
-          <p>사건의 마지막 기록이 화면에 나타난다.</p>
-          <p className="italic">에드먼드의 메모: &quot;진실은 반드시 밝혀져야 한다. 하지만 누군가가 다치면서까지 밝혀져야 하는 것은 아니다.&quot;</p>
-          <p>이어 파울이 남긴 마지막 기록이 공개된다.</p>
-          <p className="italic">파울의 기록: &quot;그들은 60년 동안 죽은 자의 이름을 지웠다. 나는 이번에는 이름을 지우지 못하게 할 것이다.&quot;</p>
-          <p>화면에는 아르카디아의 문장이 다시 나타난다. 그리고 마지막 문구가 뜬다.</p>
-          <p className="text-center font-display text-lg text-seal-600">「아르카디아는 사라진 것이 아니다. 우리는 단지 그것을 기억하지 않았을 뿐이다.」</p>
+      {!submitted && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={accuse}
+            className="tablet-btn tablet-btn-dark rounded-lg px-4 py-2 text-sm font-bold"
+          >
+            파울을 범인으로 지목한다
+          </button>
+          <button
+            type="button"
+            onClick={() => setReviewing(true)}
+            className="tablet-btn tablet-btn-ghost rounded-lg px-4 py-2 text-sm font-bold"
+          >
+            모든 증거를 다시 확인한다
+          </button>
         </div>
       )}
-      {submitted && picked && !picked.trueEnding && (
-        <div className="rounded-sm border border-ink-700/20 bg-paper-100 p-3 text-sm text-ink-700">{picked.result}</div>
+
+      {submitted && solvedEnough && (
+        <div className="flex flex-col gap-3 rounded-sm border border-seal-500/40 bg-paper-100 p-3.5 text-sm leading-relaxed text-ink-900">
+          <p className="font-bold text-seal-600">ENDING A — 진실을 밝힌다</p>
+          <p>아르카디아는 사라진 것이 아니었다. 이름만 사라졌을 뿐이었다.</p>
+          <p>60년 전 은폐된 사건과 현재의 살인이 하나의 선으로 이어진다.</p>
+          <p className="italic">교장: &quot;이제 학교는 더 이상 침묵하지 않겠습니다.&quot;</p>
+          <p>진실이 밝혀지는 순간, 아름다움이라는 이름으로 포장된 희생은 그 본래의 잔혹함을 드러낸다.</p>
+        </div>
+      )}
+
+      {submitted && !solvedEnough && (
+        <div className="flex flex-col gap-3 rounded-sm border border-ink-700/20 bg-paper-100 p-3.5 text-sm leading-relaxed text-ink-900">
+          <p className="font-bold text-ink-700">ENDING B — 증거 부족</p>
+          <p>범인은 특정했지만 모든 연결고리를 설명하지 못했다.</p>
+          <p>사건은 끝나지 않았다. 아르카디아의 잔재가 아직 남아 있기 때문이다.</p>
+          <p className="text-xs text-ink-500/60">
+            (핵심 단서 {collected.length} / {REQUIRED_FLAGS.length}개만 확보됨. 조사 활동으로 돌아가 부족한 단서를 더 모으면 다시 지목할 수 있습니다.)
+          </p>
+          <button
+            type="button"
+            onClick={() => setSubmitted(false)}
+            className="tablet-btn tablet-btn-ghost self-start rounded-lg px-4 py-1.5 text-xs font-bold"
+          >
+            다시 지목하기
+          </button>
+        </div>
       )}
     </div>
   );

@@ -90,32 +90,21 @@ service cloud.firestore {
       }
     }
 
-    // 인터랙티브 스크립트 진행 상태: 관리자가 '다음'으로 공개 범위(revealedCount)를
-    // 넓히고, 플레이어가 선택지를 고르면 choices 맵에 기록됩니다. 로그인이 없어
-    // 관리자만 쓸 수 있게 제한할 방법은 없고, 클라이언트(관리자 페이지)에서만
-    // 발송 UI를 감춥니다.
+    // 조사 활동은 플레이어별 자유 탐색(로컬 저장)이라 이 문서 자체는 쓰이지
+    // 않습니다. 관리자의 즉흥 대사/증거 제시 로그(adlibs)만 서브컬렉션으로 둡니다.
     match /sessions/{dayId} {
       allow read: if true;
+      allow create, update, delete: if false;
 
-      allow create: if request.resource.data.revealedCount is int
-        && request.resource.data.revealedCount >= 0;
-
-      allow update: if (!('revealedCount' in request.resource.data) || request.resource.data.revealedCount is int)
-        && (!('choices' in request.resource.data) || request.resource.data.choices is map);
-
-      allow delete: if false;
-
-      // 관리자의 즉흥 대사/상황 설명(Roll20 스타일 애드립): 정해진 대본 외에
-      // 관리자가 그 자리에서 보내는 메시지 로그입니다. 채팅 로그와 마찬가지로
-      // 추가만 가능하고 수정/삭제는 막습니다.
+      // 관리자의 즉흥 대사/상황 설명(Roll20 스타일 애드립)과 플레이어의 증거
+      // 제시 로그입니다. 채팅 로그와 마찬가지로 추가만 가능하고 수정/삭제는 막습니다.
       match /adlibs/{adlibId} {
         allow read: if true;
 
-        allow create: if request.resource.data.keys().hasAll(['speaker', 'icon', 'text'])
+        allow create: if request.resource.data.keys().hasAll(['kind', 'speaker', 'text'])
+          && request.resource.data.kind in ['narration', 'evidence']
           && request.resource.data.speaker is string
           && request.resource.data.speaker.size() <= 30
-          && request.resource.data.icon is string
-          && request.resource.data.icon.size() <= 10
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 1000;

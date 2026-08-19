@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import AdminGmConsole from '../components/AdminGmConsole';
+import DayExplorer from '../components/DayExplorer';
 import FinalDeduction from '../components/FinalDeduction';
+import GmChannel from '../components/GmChannel';
 import Letterhead from '../components/Letterhead';
-import ScriptViewer from '../components/ScriptViewer';
 import { useGame } from '../context/GameContext';
 import { DAYS } from '../data/investigation/days';
 import type { ClueDef } from '../data/investigation/types';
@@ -12,10 +13,9 @@ export default function ExplorationPage() {
   const game = useGame();
   const { entries, register } = useNotebook();
   const [selectedDay, setSelectedDay] = useState(game.currentDay);
-  const [scriptDone, setScriptDone] = useState<Record<number, boolean>>({});
+  const [showClosing, setShowClosing] = useState<Record<number, boolean>>({});
 
   const day = DAYS.find((d) => d.day === selectedDay) ?? DAYS[0];
-  const showClosing = scriptDone[day.day];
 
   function handleRegister(sourceId: string, clue: ClueDef) {
     register({ ...clue, sourceId });
@@ -23,7 +23,7 @@ export default function ExplorationPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label={`Day ${day.day} / 5`} context={day.title} meta={day.summary} />
+      <Letterhead label={`Day ${day.day} / 5`} context={day.title} meta={`${day.nodes.length}개 조사 항목`} />
 
       {game.isAdmin && (
         <p className="rounded-sm bg-ink-black px-2.5 py-1 text-center font-mono text-[11px] font-bold text-paper-50">
@@ -58,27 +58,41 @@ export default function ExplorationPage() {
         </p>
       )}
 
-      <ScriptViewer
-        key={day.day}
+      <DayExplorer key={day.day} day={day} notebookEntries={entries} onRegister={handleRegister} />
+
+      <div className="h-px bg-ink-700/10" />
+
+      <GmChannel
+        key={`gm-${day.day}`}
         day={day.day}
-        beats={day.script}
         notebookEntries={entries}
         presenterNickname={game.nickname}
-        onRegister={handleRegister}
-        onComplete={() => setScriptDone((s) => (s[day.day] ? s : { ...s, [day.day]: true }))}
+        onRegisterClue={handleRegister}
       />
 
-      {game.isAdmin && <AdminGmConsole key={`gm-${day.day}`} day={day.day} beats={day.script} />}
+      {game.isAdmin && <AdminGmConsole key={`console-${day.day}`} day={day.day} />}
 
-      {showClosing && (
+      {!showClosing[day.day] && (
+        <button
+          type="button"
+          onClick={() => setShowClosing((s) => ({ ...s, [day.day]: true }))}
+          className="tablet-btn tablet-btn-ghost self-center rounded-lg px-4 py-2 text-xs font-bold"
+        >
+          하루 마무리 보기
+        </button>
+      )}
+
+      {showClosing[day.day] && (
         <>
-          <div className="rounded-sm border border-ink-700/15 bg-paper-100/60 p-3.5 text-sm leading-relaxed text-ink-900">
-            {day.closing}
+          <div className="flex flex-col gap-1.5 rounded-sm border border-ink-700/15 bg-paper-100/60 p-3.5 text-sm leading-relaxed text-ink-900">
+            {day.closing.map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
           </div>
 
-          {day.finalDeduction && <FinalDeduction onSolved={() => game.setDeductionSolved(true)} />}
+          {day.finalDay && <FinalDeduction notebookEntries={entries} onSolved={() => game.setDeductionSolved(true)} />}
 
-          {selectedDay === game.currentDay && game.currentDay < 5 && (
+          {!day.finalDay && selectedDay === game.currentDay && game.currentDay < 5 && (
             <button
               type="button"
               onClick={() => {

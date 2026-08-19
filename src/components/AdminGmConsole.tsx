@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { CHARACTERS } from '../data/investigation/characters';
-import { eligibleBeats } from '../data/investigation/scriptUtils';
-import type { ClueDef, ScriptBeat } from '../data/investigation/types';
-import { advanceSession, chooseOption, listenSessionState, resetSession, sendAdlib, type SessionState } from '../firebase/session';
+import type { ClueDef } from '../data/investigation/types';
+import { sendAdlib } from '../firebase/session';
 
 const NARRATOR = { id: 'narrator', name: '상황 설명' };
 const INK_OPTIONS: { id: ClueDef['ink']; label: string }[] = [
@@ -11,23 +10,13 @@ const INK_OPTIONS: { id: ClueDef['ink']; label: string }[] = [
   { id: 'indigo', label: '남색' },
 ];
 
-export default function AdminGmConsole({ day, beats }: { day: number; beats: ScriptBeat[] }) {
-  const [state, setState] = useState<SessionState>({ revealedCount: 0, choices: {} });
+export default function AdminGmConsole({ day }: { day: number }) {
   const [speakerId, setSpeakerId] = useState(NARRATOR.id);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [clueMode, setClueMode] = useState(false);
   const [clueTitle, setClueTitle] = useState('');
   const [clueInk, setClueInk] = useState<ClueDef['ink']>('black');
-
-  useEffect(() => listenSessionState(day, setState), [day]);
-
-  const eligible = eligibleBeats(beats, state.choices);
-  const revealed = eligible.slice(0, state.revealedCount);
-  const lastRevealed = revealed[revealed.length - 1];
-  const pendingChoice = lastRevealed?.type === 'choice' && !state.choices[lastRevealed.id] ? lastRevealed : null;
-  const done = state.revealedCount >= eligible.length && eligible.length > 0;
-  const next = !pendingChoice && !done ? eligible[state.revealedCount] : null;
 
   async function send() {
     const text = message.trim();
@@ -50,116 +39,68 @@ export default function AdminGmConsole({ day, beats }: { day: number; beats: Scr
 
   return (
     <div className="flex flex-col gap-3 rounded-sm border border-seal-500/40 bg-paper-100 p-3.5">
-      <p className="font-mono text-[11px] font-bold tracking-wide text-seal-600">관리자 진행 콘솔</p>
+      <p className="font-mono text-[11px] font-bold tracking-wide text-seal-600">관리자 콘솔 — 직접 대사 보내기 (Roll20 스타일)</p>
+      <p className="text-xs text-ink-700/70">
+        플레이어가 자유롭게 조사하는 동안, 상황 설명이나 특정 NPC의 대사를 직접 보내 즉흥으로 반응할 수 있습니다. 아래 GM 채널에 모두에게 즉시 표시됩니다.
+      </p>
 
-      <div>
-        <p className="text-xs text-ink-700/70">
-          진행: {state.revealedCount} / {eligible.length}
-          {pendingChoice && <span className="ml-1 text-seal-600">(선택 대기 중)</span>}
-          {done && <span className="ml-1 text-seal-600">(대본 완료)</span>}
-        </p>
-        {next && (
-          <p className="mt-1 text-[11px] text-ink-500/60">
-            다음: {next.type === 'choice' ? `[선택지] ${next.options?.map((o) => o.text).join(' / ')}` : next.text}
-          </p>
-        )}
-
-        {pendingChoice ? (
-          <div className="mt-1.5 flex flex-col gap-1">
-            {pendingChoice.options?.map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                onClick={() => chooseOption(day, pendingChoice.id, o.id)}
-                className="tablet-tab rounded-lg px-3 py-1.5 text-left text-xs font-medium text-ink-900"
-              >
-                {o.text}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-1.5 flex gap-2">
-            <button
-              type="button"
-              onClick={() => advanceSession(day, state.revealedCount + 1)}
-              disabled={done}
-              className="tablet-btn tablet-btn-dark flex-1 rounded-lg px-3 py-1.5 text-xs font-bold disabled:opacity-40"
-            >
-              다음 →
-            </button>
-            <button
-              type="button"
-              onClick={() => resetSession(day)}
-              className="tablet-btn tablet-btn-ghost flex-none rounded-lg px-3 py-1.5 text-xs font-bold"
-            >
-              초기화
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="h-px bg-ink-700/10" />
-
-      <div>
-        <p className="mb-1.5 text-xs font-bold text-ink-700/70">직접 대사 보내기 (Roll20 스타일)</p>
-        <div className="flex flex-col gap-1.5">
-          <select
-            value={speakerId}
-            onChange={(e) => setSpeakerId(e.target.value)}
-            className="rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
+      <div className="flex flex-col gap-1.5">
+        <select
+          value={speakerId}
+          onChange={(e) => setSpeakerId(e.target.value)}
+          className="rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
+        >
+          <option value={NARRATOR.id}>{NARRATOR.name}</option>
+          {CHARACTERS.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <div className="flex items-center gap-2">
+          <input
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !clueMode && send()}
+            placeholder="대사나 상황 설명을 입력하세요"
+            className="flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+          />
+          <button
+            type="button"
+            onClick={send}
+            disabled={!message.trim() || sending || (clueMode && !clueTitle.trim())}
+            className="flex-none rounded-lg bg-ink-black px-3 py-1.5 text-xs font-bold text-paper-50 disabled:opacity-40"
           >
-            <option value={NARRATOR.id}>{NARRATOR.name}</option>
-            {CHARACTERS.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            {sending ? '전송 중…' : '보내기'}
+          </button>
+        </div>
+
+        <label className="flex items-center gap-1.5 text-xs text-ink-700/70">
+          <input type="checkbox" checked={clueMode} onChange={(e) => setClueMode(e.target.checked)} />
+          단서 제목 지정 (플레이어가 수첩에 등록할 때 사용됨)
+        </label>
+
+        {clueMode && (
           <div className="flex items-center gap-2">
             <input
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !clueMode && send()}
-              placeholder="대사나 상황 설명을 입력하세요"
-              className="flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+              value={clueTitle}
+              onChange={(e) => setClueTitle(e.target.value)}
+              placeholder="단서 제목 (예: E01. 현장 사진)"
+              className="flex-1 rounded-lg border border-seal-500/40 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
             />
-            <button
-              type="button"
-              onClick={send}
-              disabled={!message.trim() || sending || (clueMode && !clueTitle.trim())}
-              className="flex-none rounded-lg bg-ink-black px-3 py-1.5 text-xs font-bold text-paper-50 disabled:opacity-40"
+            <select
+              value={clueInk}
+              onChange={(e) => setClueInk(e.target.value as ClueDef['ink'])}
+              className="flex-none rounded-lg border border-ink-700/20 bg-paper-50 px-2 py-1.5 text-xs text-ink-900 outline-none focus:border-seal-500"
             >
-              {sending ? '전송 중…' : '보내기'}
-            </button>
+              {INK_OPTIONS.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
           </div>
-
-          <label className="flex items-center gap-1.5 text-xs text-ink-700/70">
-            <input type="checkbox" checked={clueMode} onChange={(e) => setClueMode(e.target.checked)} />
-            단서 제목 지정 (플레이어가 수첩에 등록할 때 사용됨)
-          </label>
-
-          {clueMode && (
-            <div className="flex items-center gap-2">
-              <input
-                value={clueTitle}
-                onChange={(e) => setClueTitle(e.target.value)}
-                placeholder="단서 제목 (예: E01. 현장 사진)"
-                className="flex-1 rounded-lg border border-seal-500/40 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
-              />
-              <select
-                value={clueInk}
-                onChange={(e) => setClueInk(e.target.value as ClueDef['ink'])}
-                className="flex-none rounded-lg border border-ink-700/20 bg-paper-50 px-2 py-1.5 text-xs text-ink-900 outline-none focus:border-seal-500"
-              >
-                {INK_OPTIONS.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

@@ -21,14 +21,24 @@ const INK_DOT: Record<NotebookEntry['ink'], string> = {
   indigo: 'bg-ink-indigo',
 };
 
-interface SuspectBubbleProps {
+interface NarrationBubbleProps {
   m: AdlibMessage;
   onHold: (m: AdlibMessage) => void;
 }
 
-function SuspectBubble({ m, onHold }: SuspectBubbleProps) {
+/** Any admin-sent narration line (suspect dialogue or plain situation text) — long-press or right-click to register it as a clue. */
+function NarrationBubble({ m, onHold }: NarrationBubbleProps) {
   const longPress = useLongPress(() => onHold(m));
-  const avatarSrc = avatarFor(m.speaker);
+  const avatarSrc = m.speaker ? avatarFor(m.speaker) : undefined;
+
+  if (!m.speaker) {
+    return (
+      <div {...longPress} className="flex select-none flex-col items-center [-webkit-touch-callout:none]">
+        <p className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">{m.text}</p>
+        <span className="mt-0.5 font-mono text-[10px] text-ink-500/40">{formatTime(m.at)}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex max-w-[90%] items-start gap-2">
@@ -47,6 +57,50 @@ function SuspectBubble({ m, onHold }: SuspectBubbleProps) {
           <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>
           {m.text}
         </span>
+        <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
+      </div>
+    </div>
+  );
+}
+
+interface OptionsBubbleProps {
+  m: AdlibMessage;
+  onHold: (m: AdlibMessage) => void;
+  onPick: (text: string) => void;
+}
+
+function OptionsBubble({ m, onHold, onPick }: OptionsBubbleProps) {
+  const longPress = useLongPress(() => onHold(m));
+  const avatarSrc = m.speaker ? avatarFor(m.speaker) : undefined;
+
+  return (
+    <div className="flex max-w-[90%] items-start gap-2">
+      {m.speaker ? (
+        avatarSrc ? (
+          <img src={avatarSrc} alt="" className="h-8 w-8 flex-none rounded-full border border-ink-700/20 object-cover" />
+        ) : (
+          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-ink-black text-[11px] font-bold text-paper-50">
+            {m.speaker[0]}
+          </span>
+        )
+      ) : null}
+      <div
+        {...longPress}
+        className="flex select-none flex-col items-start gap-1.5 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-2 text-sm text-ink-900 [-webkit-touch-callout:none]"
+      >
+        {m.text && (
+          <span>
+            {m.speaker && <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>}
+            {m.text}
+          </span>
+        )}
+        <div className="flex flex-wrap gap-1.5">
+          {(m.options ?? []).map((opt, i) => (
+            <button key={i} type="button" onClick={() => onPick(opt)} className="tablet-btn rounded-lg px-2.5 py-1 text-xs font-bold">
+              {opt}
+            </button>
+          ))}
+        </div>
         <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
       </div>
     </div>
@@ -99,7 +153,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
   return (
     <div className="flex flex-col gap-3">
       <p className="text-xs font-bold text-ink-700/70">
-        조사실 채팅 — 다 함께 대화하고, 관리자의 서술과 제시된 증거도 여기 표시됩니다. 용의자의 말풍선을 꾹 누르면(웹은 우클릭) 단서로 등록할 수 있습니다.
+        조사실 채팅 — 다 함께 대화하고, 관리자의 서술과 제시된 증거도 여기 표시됩니다. 관리자가 보낸 말풍선을 꾹 누르면(웹은 우클릭) 단서로 등록할 수 있습니다.
       </p>
 
       <div ref={listRef} className="flex max-h-72 flex-col gap-2.5 overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
@@ -119,41 +173,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
           }
 
           if (m.kind === 'options') {
-            const avatarSrc = m.speaker ? avatarFor(m.speaker) : undefined;
-            return (
-              <div key={m.id} className="flex max-w-[90%] items-start gap-2">
-                {m.speaker ? (
-                  avatarSrc ? (
-                    <img src={avatarSrc} alt="" className="h-8 w-8 flex-none rounded-full border border-ink-700/20 object-cover" />
-                  ) : (
-                    <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-ink-black text-[11px] font-bold text-paper-50">
-                      {m.speaker[0]}
-                    </span>
-                  )
-                ) : null}
-                <div className="flex flex-col items-start gap-1.5 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-2 text-sm text-ink-900">
-                  {m.text && (
-                    <span>
-                      {m.speaker && <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>}
-                      {m.text}
-                    </span>
-                  )}
-                  <div className="flex flex-wrap gap-1.5">
-                    {(m.options ?? []).map((opt, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => handleSendChat(opt)}
-                        className="tablet-btn rounded-lg px-2.5 py-1 text-xs font-bold"
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                  <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
-                </div>
-              </div>
-            );
+            return <OptionsBubble key={m.id} m={m} onHold={setRegisterTarget} onPick={handleSendChat} />;
           }
 
           if (m.kind === 'chat') {
@@ -184,16 +204,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
             );
           }
 
-          if (m.speaker) {
-            return <SuspectBubble key={m.id} m={m} onHold={setRegisterTarget} />;
-          }
-
-          return (
-            <div key={m.id} className="flex flex-col items-center">
-              <p className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">{m.text}</p>
-              <span className="mt-0.5 font-mono text-[10px] text-ink-500/40">{formatTime(m.at)}</span>
-            </div>
-          );
+          return <NarrationBubble key={m.id} m={m} onHold={setRegisterTarget} />;
         })}
       </div>
 

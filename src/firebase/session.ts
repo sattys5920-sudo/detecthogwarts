@@ -4,7 +4,7 @@ import { db, isFirebaseConfigured } from './config';
 
 export interface AdlibMessage {
   id: string;
-  kind: 'narration' | 'evidence';
+  kind: 'narration' | 'evidence' | 'chat';
   speaker: string;
   text: string;
   clue?: ClueDef;
@@ -49,7 +49,7 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
           const data = docSnap.data();
           return {
             id: docSnap.id,
-            kind: data.kind === 'evidence' ? 'evidence' : 'narration',
+            kind: data.kind === 'evidence' || data.kind === 'chat' ? data.kind : 'narration',
             speaker: data.speaker,
             text: data.text,
             clue: data.clue,
@@ -67,6 +67,17 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
 
 export async function sendAdlib(day: number, speaker: string, text: string, clue?: ClueDef): Promise<void> {
   const payload = { kind: 'narration' as const, speaker, text, ...(clue ? { clue } : {}) };
+  if (isFirebaseConfigured && db) {
+    await addDoc(adlibCollectionRef(day), { ...payload, at: serverTimestamp() });
+    return;
+  }
+  const messages = readAdlibDemo(day);
+  messages.push({ ...payload, id: crypto.randomUUID(), at: Date.now() });
+  writeAdlibDemo(day, messages);
+}
+
+export async function sendChatMessage(day: number, nickname: string, text: string): Promise<void> {
+  const payload = { kind: 'chat' as const, speaker: nickname, text };
   if (isFirebaseConfigured && db) {
     await addDoc(adlibCollectionRef(day), { ...payload, at: serverTimestamp() });
     return;

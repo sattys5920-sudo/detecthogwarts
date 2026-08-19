@@ -41,7 +41,7 @@ export default function AdminGmConsole({ day }: { day: number }) {
     <div className="flex flex-col gap-3 rounded-sm border border-seal-500/40 bg-paper-100 p-3.5">
       <p className="font-mono text-[11px] font-bold tracking-wide text-seal-600">관리자 콘솔 — 직접 대사 보내기 (Roll20 스타일)</p>
       <p className="text-xs text-ink-700/70">
-        플레이어가 자유롭게 조사하는 동안, 상황 설명이나 특정 NPC의 대사를 직접 보내 즉흥으로 반응할 수 있습니다. 아래 GM 채널에 모두에게 즉시 표시됩니다.
+        플레이어가 자유롭게 조사하는 동안, 상황 설명이나 특정 NPC의 대사를 직접 보내 즉흥으로 반응할 수 있습니다. 아래 조사실 채팅에 모두에게 즉시 표시됩니다.
       </p>
 
       <div className="flex flex-col gap-1.5">

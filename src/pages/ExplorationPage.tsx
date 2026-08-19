@@ -2,7 +2,7 @@ import { useState } from 'react';
 import AdminGmConsole from '../components/AdminGmConsole';
 import DayExplorer from '../components/DayExplorer';
 import FinalDeduction from '../components/FinalDeduction';
-import GmChannel from '../components/GmChannel';
+import InvestigationChat from '../components/InvestigationChat';
 import Letterhead from '../components/Letterhead';
 import { useGame } from '../context/GameContext';
 import { DAYS } from '../data/investigation/days';
@@ -62,11 +62,11 @@ export default function ExplorationPage() {
 
       <div className="h-px bg-ink-700/10" />
 
-      <GmChannel
-        key={`gm-${day.day}`}
+      <InvestigationChat
+        key={`chat-${day.day}`}
         day={day.day}
         notebookEntries={entries}
-        presenterNickname={game.nickname}
+        nickname={game.nickname}
         onRegisterClue={handleRegister}
       />
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { type AdlibMessage, listenAdlibs, presentEvidence } from '../firebase/session';
+import Composer from './Composer';
+import { type AdlibMessage, listenAdlibs, presentEvidence, sendChatMessage } from '../firebase/session';
 import type { NotebookEntry } from '../hooks/useNotebook';
 
 const INK_DOT: Record<NotebookEntry['ink'], string> = {
@@ -8,14 +9,14 @@ const INK_DOT: Record<NotebookEntry['ink'], string> = {
   indigo: 'bg-ink-indigo',
 };
 
-interface GmChannelProps {
+interface InvestigationChatProps {
   day: number;
   notebookEntries: NotebookEntry[];
-  presenterNickname: string;
+  nickname: string;
   onRegisterClue: (sourceId: string, clue: NonNullable<AdlibMessage['clue']>) => void;
 }
 
-export default function GmChannel({ day, notebookEntries, presenterNickname, onRegisterClue }: GmChannelProps) {
+export default function InvestigationChat({ day, notebookEntries, nickname, onRegisterClue }: InvestigationChatProps) {
   const [adlibs, setAdlibs] = useState<AdlibMessage[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [presenting, setPresenting] = useState(false);
@@ -32,20 +33,24 @@ export default function GmChannel({ day, notebookEntries, presenterNickname, onR
   async function handlePresent(entry: NotebookEntry) {
     setPresenting(true);
     try {
-      await presentEvidence(day, presenterNickname, { title: entry.title, ink: entry.ink });
+      await presentEvidence(day, nickname, { title: entry.title, ink: entry.ink });
       setPickerOpen(false);
     } finally {
       setPresenting(false);
     }
   }
 
+  function handleSendChat(text: string) {
+    sendChatMessage(day, nickname, text);
+  }
+
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs font-bold text-ink-700/70">GM 채널 — 관리자의 즉흥 서술과 제시된 증거</p>
+      <p className="text-xs font-bold text-ink-700/70">조사실 채팅 — 다 함께 대화하고, 관리자의 서술과 제시된 증거도 여기 표시됩니다</p>
 
       <div ref={listRef} className="flex max-h-72 flex-col gap-2.5 overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
         {adlibs.length === 0 && (
-          <p className="py-6 text-center text-xs text-ink-500/50">아직 관리자의 메시지가 없습니다.</p>
+          <p className="py-6 text-center text-xs text-ink-500/50">아직 대화가 없습니다. 첫 메시지를 남겨보세요.</p>
         )}
         {adlibs.map((m) => {
           if (m.kind === 'evidence') {
@@ -54,6 +59,21 @@ export default function GmChannel({ day, notebookEntries, presenterNickname, onR
                 <span>
                   <b>{m.speaker}</b>이(가) {m.text}
                 </span>
+              </div>
+            );
+          }
+          if (m.kind === 'chat') {
+            const isMe = m.speaker === nickname;
+            return (
+              <div key={m.id} className={`flex max-w-[85%] flex-col ${isMe ? 'ml-auto items-end' : 'items-start'}`}>
+                <span className="mb-0.5 text-[10px] font-bold text-ink-700/60">{m.speaker}</span>
+                <p
+                  className={`rounded-lg border px-3 py-1.5 text-sm text-ink-900 ${
+                    isMe ? 'border-ink-700/25 bg-paper-200/60' : 'border-ink-700/15 bg-paper-100/60'
+                  }`}
+                >
+                  {m.text}
+                </p>
               </div>
             );
           }
@@ -91,6 +111,8 @@ export default function GmChannel({ day, notebookEntries, presenterNickname, onR
           );
         })}
       </div>
+
+      <Composer onSubmit={handleSendChat} placeholder="다른 플레이어에게 메시지를 보내세요" submitLabel="전송" />
 
       <div className="flex flex-col gap-1.5">
         <button

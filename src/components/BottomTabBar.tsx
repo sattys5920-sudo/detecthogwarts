@@ -11,7 +11,7 @@ const TABS = [
 export default function BottomTabBar() {
   return (
     <nav
-      className="tab-bar-shell fixed inset-x-0 bottom-0 z-30 rounded-t-2xl px-2.5 pt-3"
+      className="tab-bar-shell relative z-30 flex-none rounded-t-2xl px-2.5 pt-3"
       style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}
     >
       <div className="mx-auto flex max-w-md items-stretch justify-between gap-2">

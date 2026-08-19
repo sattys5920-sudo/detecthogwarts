@@ -46,11 +46,25 @@ body,
   height: 100%;
 }
 
+html {
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
 body {
   background: var(--color-paper-50);
   color: var(--color-ink-900);
   font-family: var(--font-sans);
   min-height: 100svh;
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
+/* form controls must render at 16px+ or iOS Safari auto-zooms the page on focus */
+input,
+textarea,
+select {
+  font-size: 16px !important;
 }
 
 ::selection {
@@ -170,6 +184,14 @@ body {
   box-shadow:
     0 -8px 20px rgba(23, 19, 15, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.top-bar-shell {
+  background: linear-gradient(180deg, var(--color-paper-300) 0%, var(--color-paper-100) 100%);
+  border-bottom: 1px solid var(--color-ink-700);
+  box-shadow:
+    0 8px 20px rgba(23, 19, 15, 0.25),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.4);
 }
 
 /* current tab: solid seal fill for strong contrast against the muted tab bar */

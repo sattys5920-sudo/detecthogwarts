@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Card from '../components/Card';
+import DaVinciCodeGame from '../components/DaVinciCodeGame';
 import DormChat from '../components/DormChat';
 import Letterhead from '../components/Letterhead';
 import { useGame, type PlayerStats } from '../context/GameContext';
@@ -16,29 +17,89 @@ interface Room {
 }
 
 const ROOMS: Room[] = [
-  { id: 'library', name: '도서관', desc: '조용히 책을 읽으며 지식을 쌓습니다.', stat: 'intelligence', statLabel: '지능', gain: 5, action: '공부하기' },
+  { id: 'library', name: '도서관', desc: '도서관에 상주하는, 게임을 좋아하는 귀신 크리스토 백작과 게임을 해서 이겨 보세요.' },
   { id: 'forest', name: '숲', desc: '금지된 숲 근처에서 주문을 연습합니다.', stat: 'spellPower', statLabel: '주문 공격력', gain: 5, action: '주문 연습하기' },
   { id: 'pitch', name: '퀴디치 운동장', desc: '빗자루를 타고 체력을 단련합니다.', stat: 'stamina', statLabel: '스태미나', gain: 5, action: '훈련하기' },
   { id: 'herbarium', name: '약초 농장', desc: '온실에서 약초를 돌보며 몸을 회복합니다.', stat: 'hp', statLabel: 'HP', gain: 8, action: '휴식하기' },
   { id: 'dorm', name: '기숙사', desc: '같은 기숙사 친구들과 이야기를 나눕니다.', action: '대화 참여하기' },
 ];
 
+const DAVINCI_MAX_PLAYS = 10;
+
+function davinciPlaysKey(day: number) {
+  return `arcanum-davinci-plays-day${day}`;
+}
+
 export default function RecessPage() {
   const game = useGame();
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const [davinciSession, setDavinciSession] = useState(0);
+  const [davinciPlaying, setDavinciPlaying] = useState(false);
+  const [davinciResult, setDavinciResult] = useState<'win' | 'lose' | null>(null);
+  const [davinciPlays, setDavinciPlays] = useState(() => Number(localStorage.getItem(davinciPlaysKey(game.currentDay)) ?? 0));
   const room = ROOMS.find((r) => r.id === activeRoom);
   const house = HOUSES.find((h) => h.id === game.houseId);
+
+  function startDavinci() {
+    const next = davinciPlays + 1;
+    setDavinciPlays(next);
+    localStorage.setItem(davinciPlaysKey(game.currentDay), String(next));
+    setDavinciResult(null);
+    setDavinciSession((s) => s + 1);
+    setDavinciPlaying(true);
+  }
+
+  function handleDavinciFinished(result: 'win' | 'lose') {
+    setDavinciResult(result);
+    if (result === 'win') game.adjustStat('spellPower', 5);
+  }
+
+  function exitDavinci() {
+    setDavinciPlaying(false);
+    setDavinciResult(null);
+  }
 
   if (room) {
     return (
       <div className="flex flex-col gap-4">
         <Letterhead label={room.name} context={room.desc} meta="휴게시간" />
 
-        <button type="button" onClick={() => setActiveRoom(null)} className="self-start text-xs text-ink-500/60 underline-offset-2 hover:text-ink-700 hover:underline">
+        <button
+          type="button"
+          onClick={() => {
+            if (davinciPlaying) exitDavinci();
+            setActiveRoom(null);
+          }}
+          className="self-start text-xs text-ink-500/60 underline-offset-2 hover:text-ink-700 hover:underline"
+        >
           ← 방 목록으로
         </button>
 
-        {room.id === 'dorm' ? (
+        {room.id === 'library' ? (
+          davinciPlaying ? (
+            <DaVinciCodeGame key={davinciSession} onFinished={handleDavinciFinished} onExit={exitDavinci} />
+          ) : (
+            <Card className="flex flex-col gap-2.5">
+              <p className="text-sm leading-relaxed text-ink-700/80">
+                다빈치 코드 게임으로 크리스토 백작과 승부를 겨룹니다. 승리 시 <b className="text-seal-600">주문력 +5</b>.
+              </p>
+              <p className="font-mono text-[11px] text-ink-500/70">오늘 남은 도전 횟수: {Math.max(0, DAVINCI_MAX_PLAYS - davinciPlays)} / {DAVINCI_MAX_PLAYS}</p>
+              {davinciResult && (
+                <p className={`text-sm font-bold ${davinciResult === 'win' ? 'text-seal-600' : 'text-ink-700'}`}>
+                  {davinciResult === 'win' ? '지난 대결에서 승리했습니다.' : '지난 대결에서 패배했습니다.'}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={startDavinci}
+                disabled={davinciPlays >= DAVINCI_MAX_PLAYS}
+                className="tablet-btn tablet-btn-dark self-start rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40"
+              >
+                {davinciPlays >= DAVINCI_MAX_PLAYS ? '오늘의 도전 횟수 소진' : '게임 시작'}
+              </button>
+            </Card>
+          )
+        ) : room.id === 'dorm' ? (
           <div className="rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
             <p className="mb-2.5 text-center font-mono text-[11px] text-ink-500/70">
               {house ? `${house.name} 단체 대화` : '기숙사 배정 후 이용 가능합니다'}

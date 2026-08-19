@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import Card from '../components/Card';
-import ChatLog, { type ChatMessage } from '../components/ChatLog';
-import Composer from '../components/Composer';
+import DormChat from '../components/DormChat';
 import Letterhead from '../components/Letterhead';
 import { useGame, type PlayerStats } from '../context/GameContext';
 import { HOUSES } from '../data/school';
@@ -24,12 +23,6 @@ const ROOMS: Room[] = [
   { id: 'dorm', name: '기숙사', desc: '같은 기숙사 친구들과 이야기를 나눕니다.', action: '대화 참여하기' },
 ];
 
-const DORM_MESSAGES: ChatMessage[] = [
-  { id: 'd1', name: '유리', initial: '유', who: 'indigo', text: '오늘 수업 다들 어땠어?' },
-  { id: 'd2', name: '서호', initial: '서', who: 'black', text: '숙제가 너무 많아...' },
-  { id: 'd3', name: '불가', initial: '불', who: 'red', text: '주말에 같이 도서관 갈 사람?' },
-];
-
 export default function RecessPage() {
   const game = useGame();
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
@@ -50,16 +43,7 @@ export default function RecessPage() {
             <p className="mb-2.5 text-center font-mono text-[11px] text-ink-500/70">
               {house ? `${house.name} 단체 대화` : '기숙사 배정 후 이용 가능합니다'}
             </p>
-            {house ? (
-              <>
-                <ChatLog messages={DORM_MESSAGES} />
-                <div className="mt-3">
-                  <Composer />
-                </div>
-              </>
-            ) : (
-              <p className="py-6 text-center text-sm text-ink-500/60">아직 기숙사가 배정되지 않았어요.</p>
-            )}
+            {house ? <DormChat houseId={house.id} /> : <p className="py-6 text-center text-sm text-ink-500/60">아직 기숙사가 배정되지 않았어요.</p>}
           </div>
         ) : (
           room.stat &&

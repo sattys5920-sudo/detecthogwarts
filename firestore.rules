@@ -112,5 +112,27 @@ service cloud.firestore {
         allow update, delete: if false;
       }
     }
+
+    // 기숙사 단체 대화: 같은 기숙사로 배정된 플레이어들이 실시간으로 나누는
+    // 채팅입니다. 게시글과 마찬가지로 추가만 가능하고 수정/삭제는 막습니다.
+    match /dormChats/{houseId} {
+      allow read: if true;
+      allow create, update, delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if true;
+
+        allow create: if request.resource.data.keys().hasAll(
+            ['authorPlayerId', 'authorNickname', 'text']
+          )
+          && request.resource.data.authorNickname is string
+          && request.resource.data.authorNickname.size() <= 20
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500;
+
+        allow update, delete: if false;
+      }
+    }
   }
 }

@@ -1,16 +1,36 @@
+import { useState } from 'react';
 import NibIcon from './NibIcon';
 
-export default function Composer() {
+interface ComposerProps {
+  onSubmit: (text: string) => void;
+  placeholder: string;
+  submitLabel: string;
+}
+
+export default function Composer({ onSubmit, placeholder, submitLabel }: ComposerProps) {
+  const [text, setText] = useState('');
+
+  function submit() {
+    if (!text.trim()) return;
+    onSubmit(text.trim());
+    setText('');
+  }
+
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 rounded-full border border-ink-700/20 bg-paper-50 px-3.5 py-2 text-sm text-ink-500/60">
-        메시지를 입력하세요
-      </div>
+      <input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && submit()}
+        placeholder={placeholder}
+        className="flex-1 rounded-full border border-ink-700/20 bg-paper-50 px-3.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+      />
       <button
         type="button"
-        disabled
-        className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-ink-black text-paper-50 disabled:opacity-60"
-        aria-label="보내기"
+        onClick={submit}
+        disabled={!text.trim()}
+        className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-ink-black text-paper-50 disabled:opacity-40"
+        aria-label={submitLabel}
       >
         <NibIcon className="h-4 w-4" />
       </button>

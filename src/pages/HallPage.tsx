@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import Composer from '../components/Composer';
 import Letterhead from '../components/Letterhead';
-import NibIcon from '../components/NibIcon';
 import { useGame } from '../context/GameContext';
 import { SCHOOL_NAME } from '../data/school';
 import {
@@ -32,39 +32,6 @@ function Avatar({ src, name, size = 8 }: { src: string | null; name: string; siz
     >
       {name ? name[0] : '?'}
     </span>
-  );
-}
-
-function Composer({ onSubmit, placeholder, submitLabel }: { onSubmit: (text: string) => void; placeholder: string; submitLabel: string }) {
-  const [text, setText] = useState('');
-  return (
-    <div className="flex items-center gap-2">
-      <input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && text.trim()) {
-            onSubmit(text.trim());
-            setText('');
-          }
-        }}
-        placeholder={placeholder}
-        className="flex-1 rounded-full border border-ink-700/20 bg-paper-50 px-3.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
-      />
-      <button
-        type="button"
-        onClick={() => {
-          if (!text.trim()) return;
-          onSubmit(text.trim());
-          setText('');
-        }}
-        disabled={!text.trim()}
-        className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-ink-black text-paper-50 disabled:opacity-40"
-        aria-label={submitLabel}
-      >
-        <NibIcon className="h-4 w-4" />
-      </button>
-    </div>
   );
 }
 

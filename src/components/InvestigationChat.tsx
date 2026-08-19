@@ -33,7 +33,7 @@ function NarrationBubble({ m, onHold }: NarrationBubbleProps) {
 
   if (!m.speaker) {
     return (
-      <div {...longPress} className="flex select-none flex-col items-center [-webkit-touch-callout:none]">
+      <div {...longPress} className="flex touch-none select-none flex-col items-center [-webkit-touch-callout:none] [-webkit-user-drag:none]">
         <p className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">{m.text}</p>
         <span className="mt-0.5 font-mono text-[10px] text-ink-500/40">{formatTime(m.at)}</span>
       </div>
@@ -51,7 +51,7 @@ function NarrationBubble({ m, onHold }: NarrationBubbleProps) {
       )}
       <div
         {...longPress}
-        className="flex select-none flex-col items-start gap-1 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900 [-webkit-touch-callout:none]"
+        className="flex touch-none select-none flex-col items-start gap-1 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900 [-webkit-touch-callout:none] [-webkit-user-drag:none]"
       >
         <span>
           <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>
@@ -86,7 +86,7 @@ function OptionsBubble({ m, onHold, onPick }: OptionsBubbleProps) {
       ) : null}
       <div
         {...longPress}
-        className="flex select-none flex-col items-start gap-1.5 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-2 text-sm text-ink-900 [-webkit-touch-callout:none]"
+        className="flex touch-none select-none flex-col items-start gap-1.5 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-2 text-sm text-ink-900 [-webkit-touch-callout:none] [-webkit-user-drag:none]"
       >
         {m.text && (
           <span>

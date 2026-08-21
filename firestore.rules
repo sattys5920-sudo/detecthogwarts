@@ -154,5 +154,19 @@ service cloud.firestore {
       allow create, update: if request.resource.data.keys().hasOnly(['locked'])
         && request.resource.data.locked is bool;
     }
+
+    // 관리자가 보내는 전체 팝업 공지(교내 안내)입니다. 최신 한 건만 문서 하나에
+    // 덮어써 저장하고, 각 플레이어 화면은 이 문서를 구독해 새 id가 오면 팝업으로 띄웁니다.
+    match /announcements/{docId} {
+      allow read: if true;
+      allow delete: if false;
+
+      allow create, update: if request.resource.data.keys().hasOnly(['id', 'text', 'sentAt'])
+        && request.resource.data.id is string
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 500
+        && request.resource.data.sentAt is number;
+    }
   }
 }

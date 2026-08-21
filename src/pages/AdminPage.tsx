@@ -6,6 +6,7 @@ import PaperTexture from '../components/PaperTexture';
 import { useGame } from '../context/GameContext';
 import { HOUSES } from '../data/school';
 import type { HouseId } from '../data/sortingTest';
+import { sendAnnouncement } from '../firebase/announcements';
 import { assignHouse, listenAllPlayers, type PlayerRecord } from '../firebase/players';
 
 function houseOf(id: HouseId | null) {
@@ -83,6 +84,54 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
   );
 }
 
+function AnnouncementSender() {
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sentAt, setSentAt] = useState<number | null>(null);
+
+  async function send() {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setSending(true);
+    try {
+      await sendAnnouncement(trimmed);
+      setSentAt(Date.now());
+      setText('');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <Card className="flex flex-col gap-2.5">
+      <div>
+        <p className="font-gothic text-xl text-ink-black">교내 안내 (전체 팝업)</p>
+        <p className="mt-0.5 text-xs text-ink-700/70">보내면 접속 중인 모든 플레이어의 화면에 팝업으로 표시됩니다.</p>
+      </div>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={3}
+        maxLength={500}
+        placeholder="예: 3교시 수업은 5분 뒤 대강당에서 시작합니다."
+        className="w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-2.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+      />
+      <div className="flex items-center justify-between gap-2">
+        {sentAt ? (
+          <p className="text-[11px] text-seal-600">
+            {new Date(sentAt).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' })}에 발송됨
+          </p>
+        ) : (
+          <span />
+        )}
+        <Button onClick={send} disabled={sending || !text.trim()} className="flex-none px-4 py-1.5 text-xs">
+          {sending ? '발송 중…' : '전체 공지 보내기'}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
 export default function AdminPage() {
   const game = useGame();
   const navigate = useNavigate();
@@ -120,6 +169,8 @@ export default function AdminPage() {
             탐사 활동으로 →
           </Button>
         </Card>
+
+        <AnnouncementSender />
 
         <div>
           <p className="font-gothic text-3xl text-ink-black">기숙사 배정 관리</p>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import PaperTexture from '../components/PaperTexture';
@@ -18,6 +18,9 @@ import {
   subscribeRoom,
 } from '../firebase/quidditch';
 import type { PieceType, QuidditchGame, Team } from '../game/quidditchEngine';
+
+const VALID_ROOMS = ['a', 'b', 'c'];
+const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B', c: 'C' };
 
 const TEAM_LABEL: Record<Team, string> = { A: 'A팀', B: 'B팀' };
 const TEAM_CHIP: Record<Team, string> = { A: 'bg-seal-600', B: 'bg-ink-indigo' };
@@ -62,18 +65,23 @@ function LoadingScreen({ text }: { text: string }) {
 export default function QuidditchPage() {
   const game = useGame();
   const navigate = useNavigate();
+  const { roomId = '' } = useParams<{ roomId: string }>();
   const [room, setRoom] = useState<QuidditchGame | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => subscribeRoom(setRoom), []);
+  const roomLabel = ROOM_LABEL[roomId] ?? '';
 
   useEffect(() => {
-    if (!game.playerId) return;
-    joinRoom(game.playerId, game.nickname).catch((e) => {
+    if (!VALID_ROOMS.includes(roomId)) return;
+    return subscribeRoom(roomId, setRoom);
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!game.playerId || !VALID_ROOMS.includes(roomId)) return;
+    joinRoom(roomId, game.playerId, game.nickname).catch((e) => {
       setJoinError(e instanceof RoomFullError ? e.message : '입장에 실패했습니다. 다시 시도해 주세요.');
     });
-  }, [game.playerId, game.nickname]);
+  }, [roomId, game.playerId, game.nickname]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 500);
@@ -84,19 +92,20 @@ export default function QuidditchPage() {
   useEffect(() => {
     if (roomStatus !== 'playing') return;
     const id = setInterval(() => {
-      checkTurnTimeout();
-      checkGameTimeout();
+      checkTurnTimeout(roomId);
+      checkGameTimeout(roomId);
     }, 1000);
     return () => clearInterval(id);
-  }, [roomStatus]);
+  }, [roomId, roomStatus]);
 
   if (!game.hasEntered) return <Navigate to="/" replace />;
+  if (!VALID_ROOMS.includes(roomId)) return <Navigate to="/recess" replace />;
   if (joinError) {
     return (
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         <PaperTexture />
         <Card className="w-full max-w-xs">
-          <p className="font-gothic text-2xl text-ink-black">퀴디치 경기장</p>
+          <p className="font-gothic text-2xl text-ink-black">퀴디치 경기장 {roomLabel}</p>
           <p className="mt-2 text-sm text-ink-700/70">{joinError}</p>
           <Button className="mt-4 w-full" onClick={() => navigate('/recess')}>
             휴게시간으로 돌아가기
@@ -115,7 +124,7 @@ export default function QuidditchPage() {
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         <PaperTexture />
         <Card className="w-full max-w-xs">
-          <p className="font-gothic text-2xl text-ink-black">퀴디치 경기장</p>
+          <p className="font-gothic text-2xl text-ink-black">퀴디치 경기장 {roomLabel}</p>
           <p className="mt-2 text-sm text-ink-700/70">상대 선수를 기다리는 중입니다…</p>
           <div className="mt-4 flex items-center justify-center gap-2">
             <span className={`h-3 w-3 rounded-full ${TEAM_CHIP[mySeat]}`} />
@@ -126,7 +135,7 @@ export default function QuidditchPage() {
             variant="ghost"
             className="mt-5 w-full"
             onClick={async () => {
-              if (game.playerId) await leaveWaitingRoom(game.playerId);
+              if (game.playerId) await leaveWaitingRoom(roomId, game.playerId);
               navigate('/recess');
             }}
           >
@@ -166,7 +175,7 @@ export default function QuidditchPage() {
           <Button
             className="mt-5 w-full"
             onClick={async () => {
-              await leaveFinishedRoom();
+              await leaveFinishedRoom(roomId);
               navigate('/recess');
             }}
           >
@@ -183,7 +192,7 @@ export default function QuidditchPage() {
   async function handleMove(pieceId: string, dest: { row: number; col: number }) {
     if (!game.playerId) return;
     try {
-      await submitMove(game.playerId, pieceId, dest);
+      await submitMove(roomId, game.playerId, pieceId, dest);
     } catch {
       // stale/illegal move (e.g. turn passed while deciding) — board will resync from the next snapshot.
     }
@@ -197,7 +206,7 @@ export default function QuidditchPage() {
     <div className="relative flex min-h-svh flex-col">
       <PaperTexture />
       <div className="px-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-1 text-center">
-        <p className="font-gothic text-lg text-ink-black">HWCF · 퀴디치 경기장</p>
+        <p className="font-gothic text-lg text-ink-black">HWCF · 퀴디치 경기장 {roomLabel}</p>
       </div>
 
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-2.5 overflow-y-auto px-3 pb-6">

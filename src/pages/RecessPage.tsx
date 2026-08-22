@@ -5,7 +5,7 @@ import DaVinciCodeGame from '../components/DaVinciCodeGame';
 import DormChat from '../components/DormChat';
 import Letterhead from '../components/Letterhead';
 import { usePageBack } from '../context/BackContext';
-import { useGame, type PlayerStats } from '../context/GameContext';
+import { useGame } from '../context/GameContext';
 import { HOUSES } from '../data/school';
 import { listenRoomLock, setRoomLock } from '../firebase/locks';
 
@@ -13,29 +13,41 @@ interface Room {
   id: string;
   name: string;
   desc: string;
-  stat?: keyof PlayerStats;
-  statLabel?: string;
-  gain?: number;
-  action?: string;
   lockable?: boolean;
   linkTo?: string;
 }
 
 const ROOMS: Room[] = [
   { id: 'library', name: '도서관', desc: '도서관에 상주하는, 게임을 좋아하는 귀신 크리스토 백작과 게임을 해서 이겨 보세요.' },
-  { id: 'forest', name: '숲', desc: '금지된 숲 근처에서 주문을 연습합니다.', stat: 'spellPower', statLabel: '주문 공격력', gain: 5, action: '주문 연습하기', lockable: true },
   {
-    id: 'forestExpedition',
-    name: '금지된 숲 탐사',
+    id: 'forestExpeditionA',
+    name: '금지된 숲 탐사 A',
     desc: '2~4인 협동 TRPG 탐사. 10단계를 넘어 보스를 처치하면 클리어입니다.',
-    linkTo: '/forest',
+    linkTo: '/forest/a',
   },
-  { id: 'pitch', name: '퀴디치 운동장', desc: '빗자루를 타고 체력을 단련합니다.', stat: 'stamina', statLabel: '스태미나', gain: 5, action: '훈련하기', lockable: true },
   {
-    id: 'quidditchArena',
-    name: '퀴디치 경기장',
+    id: 'forestExpeditionB',
+    name: '금지된 숲 탐사 B',
+    desc: '2~4인 협동 TRPG 탐사. 10단계를 넘어 보스를 처치하면 클리어입니다.',
+    linkTo: '/forest/b',
+  },
+  {
+    id: 'quidditchArenaA',
+    name: '퀴디치 경기장 A',
     desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
-    linkTo: '/quidditch',
+    linkTo: '/quidditch/a',
+  },
+  {
+    id: 'quidditchArenaB',
+    name: '퀴디치 경기장 B',
+    desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
+    linkTo: '/quidditch/b',
+  },
+  {
+    id: 'quidditchArenaC',
+    name: '퀴디치 경기장 C',
+    desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
+    linkTo: '/quidditch/c',
   },
   {
     id: 'herbarium',
@@ -43,7 +55,7 @@ const ROOMS: Room[] = [
     desc: '씨앗을 심고 시간이 지나면 돌아와 수확하세요. 50종의 약초를 도감에 모아보세요.',
     linkTo: '/herbfarm',
   },
-  { id: 'dorm', name: '기숙사', desc: '같은 기숙사 친구들과 이야기를 나눕니다.', action: '대화 참여하기', lockable: true },
+  { id: 'dorm', name: '기숙사', desc: '같은 기숙사 친구들과 이야기를 나눕니다.', lockable: true },
 ];
 
 const DAVINCI_MAX_PLAYS = 10;
@@ -172,27 +184,7 @@ export default function RecessPage() {
             </p>
             {house ? <DormChat houseId={house.id} /> : <p className="py-6 text-center text-sm text-ink-500/60">아직 기숙사가 배정되지 않았어요.</p>}
           </div>
-        ) : (
-          room.stat &&
-          room.gain && (
-            <Card className="flex items-center justify-between gap-3">
-              <div>
-                <p className="font-serif-kr font-semibold text-ink-900">
-                  현재 {room.statLabel}: <span className="font-mono text-ink-red">{game.stats[room.stat]}</span>
-                </p>
-                <p className="mt-0.5 text-xs text-ink-700/70">{room.action} 시 {room.statLabel} +{room.gain}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => game.adjustStat(room.stat!, room.gain!)}
-                disabled={game.stats[room.stat] >= 100}
-                className="flex-none rounded-sm bg-ink-black px-3 py-1.5 text-xs font-bold text-paper-50 disabled:opacity-40"
-              >
-                {room.action}
-              </button>
-            </Card>
-          )
-        )}
+        ) : null}
       </div>
     );
   }

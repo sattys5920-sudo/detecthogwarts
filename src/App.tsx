@@ -91,8 +91,8 @@ export default function App() {
             }
           />
           <Route path="/admin" element={<AdminPage />} />
-          <Route path="/quidditch" element={<QuidditchPage />} />
-          <Route path="/forest" element={<ForestPage />} />
+          <Route path="/quidditch/:roomId" element={<QuidditchPage />} />
+          <Route path="/forest/:roomId" element={<ForestPage />} />
           <Route
             path="/herbfarm"
             element={

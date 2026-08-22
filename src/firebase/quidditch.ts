@@ -12,8 +12,7 @@ import {
 import { db, isFirebaseConfigured } from './config';
 
 const COLLECTION = 'quidditch';
-const DOC_ID = 'room';
-const DEMO_STORAGE_KEY = 'arcanum-quidditch-demo';
+const DEMO_PREFIX = 'arcanum-quidditch-demo-';
 const DEMO_EVENT = 'arcanum-quidditch-demo-changed';
 
 export class RoomFullError extends Error {
@@ -22,18 +21,22 @@ export class RoomFullError extends Error {
   }
 }
 
-function readDemoRoom(): QuidditchGame {
+function demoKey(roomId: string) {
+  return `${DEMO_PREFIX}${roomId}`;
+}
+
+function readDemoRoom(roomId: string): QuidditchGame {
   try {
-    const raw = localStorage.getItem(DEMO_STORAGE_KEY);
+    const raw = localStorage.getItem(demoKey(roomId));
     return raw ? (JSON.parse(raw) as QuidditchGame) : emptyRoom();
   } catch {
     return emptyRoom();
   }
 }
 
-function writeDemoRoom(game: QuidditchGame) {
+function writeDemoRoom(roomId: string, game: QuidditchGame) {
   try {
-    localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(game));
+    localStorage.setItem(demoKey(roomId), JSON.stringify(game));
     window.dispatchEvent(new Event(DEMO_EVENT));
   } catch {
     // localStorage unavailable — silently skip persistence.
@@ -64,13 +67,13 @@ function resolveJoin(game: QuidditchGame, seat: SeatInfo): QuidditchGame {
   throw new RoomFullError();
 }
 
-export function subscribeRoom(callback: (game: QuidditchGame) => void): () => void {
+export function subscribeRoom(roomId: string, callback: (game: QuidditchGame) => void): () => void {
   if (isFirebaseConfigured && db) {
-    return onSnapshot(doc(db, COLLECTION, DOC_ID), (snap) => {
+    return onSnapshot(doc(db, COLLECTION, roomId), (snap) => {
       callback(snap.exists() ? (snap.data() as QuidditchGame) : emptyRoom());
     });
   }
-  const read = () => callback(readDemoRoom());
+  const read = () => callback(readDemoRoom(roomId));
   read();
   window.addEventListener(DEMO_EVENT, read);
   window.addEventListener('storage', read);
@@ -80,11 +83,11 @@ export function subscribeRoom(callback: (game: QuidditchGame) => void): () => vo
   };
 }
 
-export async function joinRoom(playerId: string, nickname: string): Promise<void> {
+export async function joinRoom(roomId: string, playerId: string, nickname: string): Promise<void> {
   const seat: SeatInfo = { playerId, nickname: nickname || '이름 없음' };
 
   if (isFirebaseConfigured && db) {
-    const ref = doc(db, COLLECTION, DOC_ID);
+    const ref = doc(db, COLLECTION, roomId);
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
       const current = snap.exists() ? (snap.data() as QuidditchGame) : emptyRoom();
@@ -94,14 +97,14 @@ export async function joinRoom(playerId: string, nickname: string): Promise<void
     return;
   }
 
-  const next = resolveJoin(readDemoRoom(), seat);
-  writeDemoRoom(next);
+  const next = resolveJoin(readDemoRoom(roomId), seat);
+  writeDemoRoom(roomId, next);
 }
 
 /** Only valid while status is 'waiting' — frees your seat so someone else can take it. */
-export async function leaveWaitingRoom(playerId: string): Promise<void> {
+export async function leaveWaitingRoom(roomId: string, playerId: string): Promise<void> {
   if (isFirebaseConfigured && db) {
-    const ref = doc(db, COLLECTION, DOC_ID);
+    const ref = doc(db, COLLECTION, roomId);
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
       const current = snap.exists() ? (snap.data() as QuidditchGame) : emptyRoom();
@@ -114,26 +117,26 @@ export async function leaveWaitingRoom(playerId: string): Promise<void> {
     return;
   }
 
-  const current = readDemoRoom();
+  const current = readDemoRoom(roomId);
   if (current.status !== 'waiting') return;
   const seats = { ...current.seats };
   if (seats.A?.playerId === playerId) seats.A = null;
   if (seats.B?.playerId === playerId) seats.B = null;
-  writeDemoRoom({ ...current, seats });
+  writeDemoRoom(roomId, { ...current, seats });
 }
 
 /** Resets the pitch back to an empty waiting room after a match has finished. */
-export async function leaveFinishedRoom(): Promise<void> {
+export async function leaveFinishedRoom(roomId: string): Promise<void> {
   if (isFirebaseConfigured && db) {
-    await setDoc(doc(db, COLLECTION, DOC_ID), emptyRoom());
+    await setDoc(doc(db, COLLECTION, roomId), emptyRoom());
     return;
   }
-  writeDemoRoom(emptyRoom());
+  writeDemoRoom(roomId, emptyRoom());
 }
 
-export async function submitMove(playerId: string, pieceId: string, dest: { row: number; col: number }): Promise<void> {
+export async function submitMove(roomId: string, playerId: string, pieceId: string, dest: { row: number; col: number }): Promise<void> {
   if (isFirebaseConfigured && db) {
-    const ref = doc(db, COLLECTION, DOC_ID);
+    const ref = doc(db, COLLECTION, roomId);
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
       if (!snap.exists()) throw new Error('경기를 찾을 수 없습니다.');
@@ -146,16 +149,16 @@ export async function submitMove(playerId: string, pieceId: string, dest: { row:
     return;
   }
 
-  const current = readDemoRoom();
+  const current = readDemoRoom(roomId);
   if (current.status !== 'playing') return;
   if (seatedTeamOf(current, playerId) !== current.currentTeam) return;
-  writeDemoRoom(applyMove(current, pieceId, dest));
+  writeDemoRoom(roomId, applyMove(current, pieceId, dest));
 }
 
 /** Idempotent — safe to call from any connected client on a timer. No-ops unless the deadline has actually passed. */
-export async function checkTurnTimeout(): Promise<void> {
+export async function checkTurnTimeout(roomId: string): Promise<void> {
   if (isFirebaseConfigured && db) {
-    const ref = doc(db, COLLECTION, DOC_ID);
+    const ref = doc(db, COLLECTION, roomId);
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
       if (!snap.exists()) return;
@@ -165,15 +168,15 @@ export async function checkTurnTimeout(): Promise<void> {
     });
     return;
   }
-  const current = readDemoRoom();
+  const current = readDemoRoom(roomId);
   const next = passTurnIfExpired(current);
-  if (next) writeDemoRoom(next);
+  if (next) writeDemoRoom(roomId, next);
 }
 
 /** Idempotent — safe to call from any connected client on a timer. No-ops unless the game clock has actually run out. */
-export async function checkGameTimeout(): Promise<void> {
+export async function checkGameTimeout(roomId: string): Promise<void> {
   if (isFirebaseConfigured && db) {
-    const ref = doc(db, COLLECTION, DOC_ID);
+    const ref = doc(db, COLLECTION, roomId);
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
       if (!snap.exists()) return;
@@ -183,7 +186,7 @@ export async function checkGameTimeout(): Promise<void> {
     });
     return;
   }
-  const current = readDemoRoom();
+  const current = readDemoRoom(roomId);
   const next = finalizeByTimeout(current);
-  if (next) writeDemoRoom(next);
+  if (next) writeDemoRoom(roomId, next);
 }

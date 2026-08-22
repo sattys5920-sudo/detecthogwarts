@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import PaperTexture from '../components/PaperTexture';
@@ -20,6 +20,9 @@ import { currentActingPlayerId, MAX_SEATS, TOTAL_STAGES } from '../game/forest/e
 import { eventById } from '../game/forest/events';
 import { SPELLS, spellDcAtLevel, spellPowerAtLevel } from '../game/forest/spells';
 import type { ForestParty, Player, Spell, SpellCategory } from '../game/forest/types';
+
+const VALID_ROOMS = ['a', 'b'];
+const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B' };
 
 const CATEGORY_SECTION: { category: SpellCategory; label: string }[] = [
   { category: 'attack', label: '개인 공격' },
@@ -137,27 +140,33 @@ function SkillPanel({ player, onUpgrade }: { player: Player; onUpgrade: (spellId
 export default function ForestPage() {
   const game = useGame();
   const navigate = useNavigate();
+  const { roomId = '' } = useParams<{ roomId: string }>();
   const [party, setParty] = useState<ForestParty | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [targetMode, setTargetMode] = useState<{ spell: Spell } | null>(null);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => subscribeParty(setParty), []);
+  const roomLabel = ROOM_LABEL[roomId] ?? '';
 
   useEffect(() => {
-    if (!game.playerId) return;
-    joinParty(game.playerId, game.nickname).catch((e) => {
+    if (!VALID_ROOMS.includes(roomId)) return;
+    return subscribeParty(roomId, setParty);
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!game.playerId || !VALID_ROOMS.includes(roomId)) return;
+    joinParty(roomId, game.playerId, game.nickname).catch((e) => {
       setJoinError(e instanceof ForestFullError ? e.message : '입장에 실패했습니다. 다시 시도해 주세요.');
     });
-  }, [game.playerId, game.nickname]);
+  }, [roomId, game.playerId, game.nickname]);
 
   if (!game.hasEntered) return <Navigate to="/" replace />;
+  if (!VALID_ROOMS.includes(roomId)) return <Navigate to="/recess" replace />;
   if (joinError) {
     return (
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         <PaperTexture />
         <Card className="w-full max-w-xs">
-          <p className="font-gothic text-2xl text-ink-black">🌲 금지된 숲</p>
+          <p className="font-gothic text-2xl text-ink-black">🌲 금지된 숲 {roomLabel}</p>
           <p className="mt-2 text-sm text-ink-700/70">{joinError}</p>
           <Button className="mt-4 w-full" onClick={() => navigate('/recess')}>휴게시간으로 돌아가기</Button>
         </Card>
@@ -200,7 +209,7 @@ export default function ForestPage() {
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         <PaperTexture />
         <Card className="w-full max-w-xs">
-          <p className="font-gothic text-2xl text-ink-black">🌲 금지된 숲</p>
+          <p className="font-gothic text-2xl text-ink-black">🌲 금지된 숲 {roomLabel}</p>
           <p className="mt-1 text-sm text-ink-700/70">2~4인 협동 탐사. 동료가 모이면 시작하세요.</p>
           <div className="mt-4 flex flex-col gap-1.5 text-left">
             {Array.from({ length: MAX_SEATS }).map((_, i) => {
@@ -215,14 +224,14 @@ export default function ForestPage() {
           <Button
             className="mt-4 w-full"
             disabled={seatedCount < 2 || busy}
-            onClick={() => guard(() => startExpedition())}
+            onClick={() => guard(() => startExpedition(roomId))}
           >
             {seatedCount < 2 ? `최소 2명 필요 (${seatedCount}/${MAX_SEATS})` : '탐사 시작'}
           </Button>
           <Button
             variant="ghost"
             className="mt-2 w-full"
-            onClick={() => guard(async () => { await leaveParty(game.playerId!); navigate('/recess'); })}
+            onClick={() => guard(async () => { await leaveParty(roomId, game.playerId!); navigate('/recess'); })}
           >
             나가기
           </Button>
@@ -236,7 +245,7 @@ export default function ForestPage() {
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         <PaperTexture />
         <Card className="w-full max-w-xs">
-          <p className="font-gothic text-2xl text-ink-black">🌲 금지된 숲</p>
+          <p className="font-gothic text-2xl text-ink-black">🌲 금지된 숲 {roomLabel}</p>
           <p className="mt-2 text-sm text-ink-700/70">이미 다른 파티가 탐사를 진행하고 있습니다.</p>
           <Button className="mt-4 w-full" onClick={() => navigate('/recess')}>휴게시간으로 돌아가기</Button>
         </Card>
@@ -253,7 +262,7 @@ export default function ForestPage() {
         <PaperTexture />
         <div className="mx-auto flex max-w-md flex-col gap-3">
           <Card>
-            <p className="font-gothic text-2xl text-ink-black">🌲 금지된 숲</p>
+            <p className="font-gothic text-2xl text-ink-black">🌲 금지된 숲 {roomLabel}</p>
             <p className={`mt-1 font-gothic text-3xl ${cleared ? 'text-seal-600' : 'text-ink-700/60'}`}>{cleared ? '탐사 클리어!' : '탐사 실패'}</p>
             {result && (
               <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-ink-700/80">
@@ -268,8 +277,8 @@ export default function ForestPage() {
             )}
             {cleared && <p className="mt-3 text-xs text-seal-600">보상: 최대 HP 증가 · 스킬 포인트 지급</p>}
           </Card>
-          {me && <SkillPanel player={me} onUpgrade={(spellId) => guard(() => upgradeSpell(game.playerId!, spellId))} />}
-          <Button onClick={() => guard(async () => { await leaveExpedition(); navigate('/recess'); })}>확인하고 나가기</Button>
+          {me && <SkillPanel player={me} onUpgrade={(spellId) => guard(() => upgradeSpell(roomId, game.playerId!, spellId))} />}
+          <Button onClick={() => guard(async () => { await leaveExpedition(roomId); navigate('/recess'); })}>확인하고 나가기</Button>
         </div>
       </div>
     );
@@ -283,7 +292,7 @@ export default function ForestPage() {
         <div className="mx-auto flex max-w-md flex-col gap-3">
           <Card>
             <div className="flex items-center justify-between">
-              <p className="font-gothic text-xl text-ink-black">🌲 금지된 숲 탐사</p>
+              <p className="font-gothic text-xl text-ink-black">🌲 금지된 숲 탐사 {roomLabel}</p>
               <p className="font-mono text-sm font-bold text-seal-600">{party.stage} / {TOTAL_STAGES}</p>
             </div>
           </Card>
@@ -300,7 +309,7 @@ export default function ForestPage() {
                   key={i}
                   type="button"
                   disabled={busy}
-                  onClick={() => guard(() => choosePath(i))}
+                  onClick={() => guard(() => choosePath(roomId, i))}
                   className="text-left"
                 >
                   <Card className="hover:border-seal-500/40">
@@ -311,7 +320,7 @@ export default function ForestPage() {
               ))}
             </div>
           </div>
-          {me && <SkillPanel player={me} onUpgrade={(spellId) => guard(() => upgradeSpell(game.playerId!, spellId))} />}
+          {me && <SkillPanel player={me} onUpgrade={(spellId) => guard(() => upgradeSpell(roomId, game.playerId!, spellId))} />}
           <button
             type="button"
             className="self-center text-xs text-ink-500/40 underline-offset-2 hover:text-ink-700 hover:underline"
@@ -340,7 +349,7 @@ export default function ForestPage() {
               <p key={i} className="text-xs text-ink-700/70">{l.text}</p>
             ))}
           </div>
-          <Button className="mt-4 w-full" disabled={busy} onClick={() => guard(() => confirmEvent())}>확인</Button>
+          <Button className="mt-4 w-full" disabled={busy} onClick={() => guard(() => confirmEvent(roomId))}>확인</Button>
         </Card>
       </div>
     );
@@ -359,7 +368,7 @@ export default function ForestPage() {
 
     async function cast(spell: Spell, targetMonsterIndex?: number, targetPlayerId?: string) {
       setTargetMode(null);
-      await guard(() => submitCombatAction(game.playerId!, { kind: 'spell', spellId: spell.id, targetMonsterIndex, targetPlayerId }));
+      await guard(() => submitCombatAction(roomId, game.playerId!, { kind: 'spell', spellId: spell.id, targetMonsterIndex, targetPlayerId }));
     }
 
     function onSpellClick(spell: Spell) {
@@ -457,7 +466,7 @@ export default function ForestPage() {
                           key={i}
                           type="button"
                           disabled={busy}
-                          onClick={() => guard(() => submitCombatAction(game.playerId!, { kind: 'item', itemName: item }))}
+                          onClick={() => guard(() => submitCombatAction(roomId, game.playerId!, { kind: 'item', itemName: item }))}
                           className="rounded-full bg-ink-black px-2.5 py-1 text-[10px] font-bold text-paper-50"
                         >
                           {item}
@@ -469,7 +478,7 @@ export default function ForestPage() {
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => guard(() => submitCombatAction(game.playerId!, { kind: 'pass' }))}
+                  onClick={() => guard(() => submitCombatAction(roomId, game.playerId!, { kind: 'pass' }))}
                   className="self-center text-xs text-ink-500/50 underline-offset-2 hover:text-ink-700 hover:underline"
                 >
                   턴 넘기기

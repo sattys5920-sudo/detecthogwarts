@@ -54,7 +54,7 @@ function ThreadDetail({ thread, onClose }: { thread: InterrogationThread; onClos
         </button>
       </div>
 
-      <div className="flex max-h-72 flex-col gap-2.5 overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-2.5">
+      <div className="flex max-h-72 flex-col gap-2.5 overflow-x-hidden overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-2.5">
         <ChatLog messages={chatMessages} />
       </div>
 

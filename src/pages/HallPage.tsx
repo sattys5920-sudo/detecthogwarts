@@ -66,7 +66,7 @@ function CommentRow({ comment, postAuthorId, onEdit, onDelete }: {
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && draft.trim() && (onEdit(draft.trim()), setEditing(false))}
-              className="flex-1 rounded-md border border-ink-700/20 bg-paper-50 px-2 py-1 text-sm text-ink-900 outline-none focus:border-seal-500"
+              className="min-w-0 flex-1 rounded-md border border-ink-700/20 bg-paper-50 px-2 py-1 text-sm text-ink-900 outline-none focus:border-seal-500"
               autoFocus
             />
             <button type="button" onClick={() => { if (draft.trim()) { onEdit(draft.trim()); setEditing(false); } }} className="text-xs font-bold text-seal-600">저장</button>
@@ -177,7 +177,7 @@ function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: ()
 
       <div className="flex flex-col gap-3">
         <p className="text-xs font-bold text-ink-700/70">댓글 {comments.length}개</p>
-        <div ref={listRef} className="flex max-h-80 flex-col gap-3 overflow-y-auto">
+        <div ref={listRef} className="flex max-h-80 flex-col gap-3 overflow-x-hidden overflow-y-auto">
           {comments.length === 0 && <p className="py-4 text-center text-xs text-ink-500/50">아직 댓글이 없어요.</p>}
           {comments.map((c) => (
             <CommentRow

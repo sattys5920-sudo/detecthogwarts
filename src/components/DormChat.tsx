@@ -45,7 +45,7 @@ export default function DormChat({ houseId }: { houseId: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div ref={listRef} className="flex max-h-96 flex-col gap-2.5 overflow-y-auto">
+      <div ref={listRef} className="flex max-h-96 flex-col gap-2.5 overflow-x-hidden overflow-y-auto">
         {chatMessages.length === 0 && (
           <p className="py-6 text-center text-xs text-ink-500/50">아직 대화가 없습니다. 첫 메시지를 남겨보세요.</p>
         )}

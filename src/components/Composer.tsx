@@ -23,7 +23,7 @@ export default function Composer({ onSubmit, placeholder, submitLabel }: Compose
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && submit()}
         placeholder={placeholder}
-        className="flex-1 rounded-sm border border-ink-700/30 bg-paper-50 px-3.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+        className="min-w-0 flex-1 rounded-sm border border-ink-700/30 bg-paper-50 px-3.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
       />
       <button
         type="button"

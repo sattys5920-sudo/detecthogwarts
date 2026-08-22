@@ -71,7 +71,7 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
         <select
           value={selected}
           onChange={(e) => setSelected(e.target.value as HouseId)}
-          className="flex-1 rounded-lg border border-ink-700/20 bg-paper-100/60 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
+          className="min-w-0 flex-1 rounded-lg border border-ink-700/20 bg-paper-100/60 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
         >
           {HOUSES.map((h) => (
             <option key={h.id} value={h.id}>
@@ -185,7 +185,7 @@ function DangerZone() {
             value={signupsPhrase}
             onChange={(e) => setSignupsPhrase(e.target.value)}
             placeholder={`확인을 위해 '${RESET_PHRASE}' 입력`}
-            className="flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
+            className="min-w-0 flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
           />
           <Button
             variant="ghost"
@@ -209,7 +209,7 @@ function DangerZone() {
             value={contentPhrase}
             onChange={(e) => setContentPhrase(e.target.value)}
             placeholder={`확인을 위해 '${RESET_PHRASE}' 입력`}
-            className="flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
+            className="min-w-0 flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
           />
           <Button
             variant="ghost"

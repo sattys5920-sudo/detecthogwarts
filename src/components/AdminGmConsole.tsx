@@ -91,7 +91,7 @@ export default function AdminGmConsole({ day }: { day: number }) {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !optionsMode && canSend && send()}
             placeholder={optionsMode ? '선택지 위에 표시할 질문 (선택 사항)' : '대사나 상황 설명을 입력하세요'}
-            className="flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+            className="min-w-0 flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
           />
           <button
             type="button"
@@ -117,7 +117,7 @@ export default function AdminGmConsole({ day }: { day: number }) {
                   onChange={(e) => updateOption(i, e.target.value)}
                   placeholder={`선택지 ${i + 1}`}
                   maxLength={60}
-                  className="flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+                  className="min-w-0 flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
                 />
                 <button
                   type="button"

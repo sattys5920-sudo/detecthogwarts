@@ -169,7 +169,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
         조사실 채팅 — 다 함께 대화하고, 관리자의 서술과 제시된 증거도 여기 표시됩니다. 관리자가 보낸 말풍선 옆의 ⋯ 버튼을 누르면 단서로 등록할 수 있습니다.
       </p>
 
-      <div ref={listRef} className="flex max-h-72 flex-col gap-2.5 overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
+      <div ref={listRef} className="flex max-h-72 flex-col gap-2.5 overflow-x-hidden overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
         {adlibs.length === 0 && (
           <p className="py-6 text-center text-xs text-ink-500/50">아직 대화가 없습니다. 첫 메시지를 남겨보세요.</p>
         )}
@@ -177,10 +177,10 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
           if (m.kind === 'evidence') {
             return (
               <div key={m.id} className="mx-auto flex max-w-[85%] items-center gap-1.5 rounded-lg border border-seal-600/50 bg-seal-600/10 px-3 py-1.5 text-xs text-seal-600">
-                <span>
+                <span className="min-w-0 flex-1">
                   <b>{m.speaker}</b>이(가) {m.text}
                 </span>
-                <span className="font-mono text-[10px] text-seal-600/60">{formatTime(m.at)}</span>
+                <span className="flex-none font-mono text-[10px] text-seal-600/60">{formatTime(m.at)}</span>
               </div>
             );
           }

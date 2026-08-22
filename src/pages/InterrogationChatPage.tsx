@@ -66,7 +66,7 @@ export default function InterrogationChatPage() {
 
       <div
         ref={listRef}
-        className="flex max-h-[55vh] min-h-[35vh] flex-col gap-2.5 overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3"
+        className="flex max-h-[55vh] min-h-[35vh] flex-col gap-2.5 overflow-x-hidden overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3"
       >
         {chatMessages.length === 0 && (
           <p className="py-8 text-center text-xs text-ink-500/50">아직 대화가 없습니다. 궁금한 것을 물어보세요.</p>

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Composer from '../components/Composer';
+import CornerFlourish from '../components/CornerFlourish';
 import Letterhead from '../components/Letterhead';
+import VintageIcon from '../components/VintageIcon';
 import { usePageBack } from '../context/BackContext';
 import { useGame } from '../context/GameContext';
 import { SCHOOL_NAME } from '../data/school';
@@ -299,7 +301,11 @@ export default function HallPage() {
 
         {posts.length > 0 && (
           <button type="button" onClick={() => setOpenId(posts[0].id)} className="text-left">
-            <div className="paper-frame overflow-hidden bg-paper-50 shadow-[0_1px_4px_rgba(42,28,18,0.12)] transition hover:border-seal-500/40">
+            <div className="paper-frame relative overflow-visible bg-paper-50 shadow-[0_1px_4px_rgba(42,28,18,0.12)] transition hover:border-seal-500/40">
+              <CornerFlourish corner="tl" className="pointer-events-none absolute -top-1.5 -left-1.5 h-5 w-5 text-gold-600/70" />
+              <CornerFlourish corner="tr" className="pointer-events-none absolute -top-1.5 -right-1.5 h-5 w-5 text-gold-600/70" />
+              <CornerFlourish corner="bl" className="pointer-events-none absolute -bottom-1.5 -left-1.5 h-5 w-5 text-gold-600/70" />
+              <CornerFlourish corner="br" className="pointer-events-none absolute -bottom-1.5 -right-1.5 h-5 w-5 text-gold-600/70" />
               <div className="h-1.5 bg-seal-600" />
               <div className="p-4">
                 <div className="flex items-center gap-2.5">
@@ -307,12 +313,13 @@ export default function HallPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <p className="text-sm font-bold text-ink-900">{posts[0].authorNickname}</p>
-                      <span className="rounded-full bg-seal-600/10 px-2 py-0.5 text-[10px] font-bold text-seal-600">최신 소식</span>
+                      <span className="rounded-sm border border-seal-600/40 bg-seal-600/10 px-2 py-0.5 text-[10px] font-bold text-seal-600">최신 소식</span>
                     </div>
                     <p className="font-mono text-[10px] text-ink-500/60">
                       {formatTime(posts[0].createdAt)} {posts[0].editedAt && '(수정됨)'}
                     </p>
                   </div>
+                  <VintageIcon name="feather" className="h-5 w-5 flex-none self-start text-gold-600/80" />
                 </div>
                 {posts[0].title && <p className="mt-3 text-base font-bold text-ink-900">{posts[0].title}</p>}
                 <p className="mt-1.5 line-clamp-4 whitespace-pre-wrap text-sm leading-relaxed text-ink-900">{posts[0].content}</p>
@@ -335,6 +342,7 @@ export default function HallPage() {
                         {formatTime(p.createdAt)} {p.editedAt && '(수정됨)'}
                       </p>
                     </div>
+                    <VintageIcon name="feather" className="h-3.5 w-3.5 flex-none text-gold-600/60" />
                   </div>
                   {p.title && <p className="mt-2 text-sm font-bold text-ink-900">{p.title}</p>}
                   <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-ink-900">{p.content}</p>

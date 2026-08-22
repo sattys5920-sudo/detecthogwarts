@@ -141,7 +141,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <Card className="text-center">
+      <Card ornate className="text-center">
         <p className="mb-3 font-mono text-[10px] font-bold tracking-[0.2em] text-gold-600">탐구자 기록부</p>
         <div className="relative mx-auto h-16 w-16">
           <button

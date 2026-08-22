@@ -53,7 +53,15 @@ export default function TopAppBar() {
             <p className="font-gothic text-base tracking-wide text-ink-black">HWCF</p>
             <span className="h-px w-3 bg-gold-500/70" aria-hidden="true" />
           </div>
-          <p className="mt-1 font-mono text-[8px] font-bold tracking-[0.3em] text-ink-500">WIZARDING SCHOOL</p>
+          <div className="mt-1 flex items-center justify-center gap-1">
+            <span className="text-[6px] text-gold-500" aria-hidden="true">
+              ✦
+            </span>
+            <p className="font-mono text-[8px] font-bold tracking-[0.3em] text-ink-500">WIZARDING SCHOOL</p>
+            <span className="text-[6px] text-gold-500" aria-hidden="true">
+              ✦
+            </span>
+          </div>
         </div>
 
         <button

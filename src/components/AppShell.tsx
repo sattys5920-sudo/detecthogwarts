@@ -5,6 +5,7 @@ import { useGame } from '../context/GameContext';
 import AnnouncementPopup from './AnnouncementPopup';
 import BottomTabBar from './BottomTabBar';
 import PaperTexture from './PaperTexture';
+import ScreenFrame from './ScreenFrame';
 import TopAppBar from './TopAppBar';
 
 export default function AppShell({ children }: { children: ReactNode }) {
@@ -15,6 +16,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     <BackProvider>
       <div className="fixed inset-0 flex flex-col overflow-hidden">
         <PaperTexture />
+        <ScreenFrame />
         <AnnouncementPopup />
         <TopAppBar />
         <main className="flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">

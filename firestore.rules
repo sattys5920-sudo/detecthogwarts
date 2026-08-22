@@ -168,5 +168,15 @@ service cloud.firestore {
         && request.resource.data.text.size() <= 500
         && request.resource.data.sentAt is number;
     }
+
+    // 퀴디치 경기장: 단일 방(room) 문서 하나에 좌석/보드/점수 등 전체 대국 상태를
+    // 통째로 저장합니다. 상태가 매우 자주, 다양한 모양으로 바뀌므로(대기/진행/종료)
+    // 필드 단위 검증 대신 status 값만 검증하고 나머지는 클라이언트 로직을 신뢰합니다.
+    match /quidditch/{docId} {
+      allow read: if true;
+      allow delete: if false;
+
+      allow create, update: if request.resource.data.status in ['waiting', 'playing', 'finished'];
+    }
   }
 }

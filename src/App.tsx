@@ -8,6 +8,7 @@ import HallPage from './pages/HallPage';
 import LoadingPage from './pages/LoadingPage';
 import NotebookPage from './pages/NotebookPage';
 import ProfilePage from './pages/ProfilePage';
+import QuidditchPage from './pages/QuidditchPage';
 import RecessPage from './pages/RecessPage';
 
 export default function App() {
@@ -57,6 +58,7 @@ export default function App() {
           }
         />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/quidditch" element={<QuidditchPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </GameProvider>

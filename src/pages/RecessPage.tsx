@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import DaVinciCodeGame from '../components/DaVinciCodeGame';
 import DormChat from '../components/DormChat';
@@ -17,12 +18,19 @@ interface Room {
   gain?: number;
   action?: string;
   lockable?: boolean;
+  linkTo?: string;
 }
 
 const ROOMS: Room[] = [
   { id: 'library', name: '도서관', desc: '도서관에 상주하는, 게임을 좋아하는 귀신 크리스토 백작과 게임을 해서 이겨 보세요.' },
   { id: 'forest', name: '숲', desc: '금지된 숲 근처에서 주문을 연습합니다.', stat: 'spellPower', statLabel: '주문 공격력', gain: 5, action: '주문 연습하기', lockable: true },
   { id: 'pitch', name: '퀴디치 운동장', desc: '빗자루를 타고 체력을 단련합니다.', stat: 'stamina', statLabel: '스태미나', gain: 5, action: '훈련하기', lockable: true },
+  {
+    id: 'quidditchArena',
+    name: '퀴디치 경기장',
+    desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
+    linkTo: '/quidditch',
+  },
   { id: 'herbarium', name: '약초 농장', desc: '온실에서 약초를 돌보며 몸을 회복합니다.', stat: 'hp', statLabel: 'HP', gain: 8, action: '휴식하기', lockable: true },
   { id: 'dorm', name: '기숙사', desc: '같은 기숙사 친구들과 이야기를 나눕니다.', action: '대화 참여하기', lockable: true },
 ];
@@ -35,6 +43,7 @@ function davinciPlaysKey(day: number) {
 
 export default function RecessPage() {
   const game = useGame();
+  const navigate = useNavigate();
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [davinciSession, setDavinciSession] = useState(0);
   const [davinciPlaying, setDavinciPlaying] = useState(false);
@@ -59,6 +68,10 @@ export default function RecessPage() {
   usePageBack(room ? exitRoom : null);
 
   function enterRoom(r: Room) {
+    if (r.linkTo) {
+      navigate(r.linkTo);
+      return;
+    }
     if (r.lockable && roomLocks[r.id] && !game.isAdmin) return;
     setActiveRoom(r.id);
   }

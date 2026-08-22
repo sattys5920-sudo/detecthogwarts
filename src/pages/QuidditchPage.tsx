@@ -6,6 +6,7 @@ import PaperTexture from '../components/PaperTexture';
 import QuidditchBoard from '../components/quidditch/QuidditchBoard';
 import { PieceGlyph, QuaffleGlyph, SnitchGlyph } from '../components/quidditch/QuidditchGlyphs';
 import { useGame } from '../context/GameContext';
+import { QUIDDITCH_RULES } from '../data/quidditchRules';
 import {
   checkGameTimeout,
   checkTurnTimeout,
@@ -58,6 +59,72 @@ function LoadingScreen({ text }: { text: string }) {
     <div className="relative flex min-h-svh flex-col items-center justify-center gap-3 px-6 text-center">
       <PaperTexture />
       <p className="text-sm text-ink-700/70">{text}</p>
+    </div>
+  );
+}
+
+function QuidditchRulesModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-black/60 px-4" role="dialog" aria-modal="true">
+      <div className="deckle-edge flex max-h-[85vh] w-full max-w-sm flex-col border border-seal-500/40 bg-paper-50 p-5">
+        <div className="flex flex-none items-center justify-between">
+          <p className="font-gothic text-xl text-ink-black">🧙‍♂️ 퀴디치 룰</p>
+          <button type="button" onClick={onClose} className="text-xs text-ink-500/70 underline-offset-2 hover:underline">
+            닫기
+          </button>
+        </div>
+        <p className="mt-2 flex-none rounded-sm border border-seal-500/30 bg-paper-100/70 px-2.5 py-1.5 text-[11px] leading-relaxed text-ink-700/80">
+          설계 중인 새 룰 문서입니다. 실제 경기는 아직 기존 방식(기물 잡기 · 골 · 스니치 추격)으로 진행되며, 이 룰이 실제 경기에 적용되면 안내됩니다.
+        </p>
+
+        <div className="mt-3 flex-1 overflow-y-auto pr-0.5">
+          {QUIDDITCH_RULES.map((section, i) => (
+            <div key={section.heading} className={i > 0 ? 'mt-4' : ''}>
+              <p className="font-serif-kr text-sm font-bold text-seal-600">{section.heading}</p>
+              {section.paragraphs?.map((p, pi) => (
+                <p key={pi} className="mt-1.5 text-xs leading-relaxed text-ink-900">
+                  {p}
+                </p>
+              ))}
+              {section.bullets && (
+                <ul className="mt-1.5 flex flex-col gap-1">
+                  {section.bullets.map((b, bi) => (
+                    <li key={bi} className="text-xs leading-relaxed text-ink-900">
+                      · {b}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {section.table && (
+                <div className="mt-1.5 overflow-x-auto">
+                  <table className="w-full border-collapse text-xs">
+                    <thead>
+                      <tr>
+                        {section.table.headers.map((h) => (
+                          <th key={h} className="border-b border-ink-700/20 px-1.5 py-1 text-left font-bold text-ink-700/80">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {section.table.rows.map((row, ri) => (
+                        <tr key={ri}>
+                          {row.map((cell, ci) => (
+                            <td key={ci} className="border-b border-ink-700/10 px-1.5 py-1 text-ink-900">
+                              {cell}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -135,6 +202,7 @@ export default function QuidditchPage() {
   const [room, setRoom] = useState<QuidditchGame | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [showRules, setShowRules] = useState(false);
   const roomLabel = ROOM_LABEL[roomId] ?? '';
 
   useEffect(() => {
@@ -189,6 +257,15 @@ export default function QuidditchPage() {
     return (
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         <PaperTexture />
+        <button
+          type="button"
+          onClick={() => setShowRules(true)}
+          className="tablet-btn absolute right-4 px-2.5 py-1 text-[11px] font-bold"
+          style={{ top: 'calc(env(safe-area-inset-top) + 1rem)' }}
+        >
+          룰
+        </button>
+        {showRules && <QuidditchRulesModal onClose={() => setShowRules(false)} />}
         <Card className="w-full max-w-xs">
           <p className="font-gothic text-2xl text-ink-black">퀴디치 경기장 {roomLabel}</p>
           <p className="mt-2 text-sm text-ink-700/70">상대 선수를 기다리는 중입니다…</p>
@@ -240,9 +317,19 @@ export default function QuidditchPage() {
   return (
     <div className="relative flex min-h-svh flex-col">
       <PaperTexture />
-      <div className="px-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-1 text-center">
-        <p className="font-gothic text-lg text-ink-black">HWCF · 퀴디치 경기장 {roomLabel}</p>
+      <div className="flex items-center justify-between px-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-1">
+        <span className="w-12 flex-none" aria-hidden="true" />
+        <p className="flex-1 text-center font-gothic text-lg text-ink-black">HWCF · 퀴디치 경기장 {roomLabel}</p>
+        <button
+          type="button"
+          onClick={() => setShowRules(true)}
+          className="tablet-btn flex-none px-2.5 py-1 text-[11px] font-bold"
+        >
+          룰
+        </button>
       </div>
+
+      {showRules && <QuidditchRulesModal onClose={() => setShowRules(false)} />}
 
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-2.5 overflow-y-auto px-3 pb-6">
         <div className="flex gap-2">

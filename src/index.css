@@ -85,6 +85,13 @@ select {
   color: var(--color-paper-50);
 }
 
+/* Every custom class below lives in the "components" layer so that any
+   Tailwind utility (e.g. `absolute`, `fixed`) applied alongside it in a
+   className always wins the cascade — plain unlayered CSS after `@import
+   'tailwindcss'` would otherwise outrank the `utilities` layer regardless
+   of class order, silently breaking things like `tablet-btn fixed ...`. */
+@layer components {
+
 .font-display {
   font-family: var(--font-display);
   letter-spacing: 0.02em;
@@ -236,6 +243,8 @@ select {
   border-color: var(--color-seal-700);
   color: var(--color-paper-50);
 }
+
+} /* end @layer components */
 
 /* owl delivery intro: a swooping S-curve path with a couple of wingbeat bobs */
 @keyframes owlFlight {

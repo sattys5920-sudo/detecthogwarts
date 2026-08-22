@@ -167,6 +167,40 @@ export function legalMoves(game: QuidditchGame, pieceId: string): MoveDest[] {
   }
 }
 
+/** Adjacent (8-direction) friendly chasers a quaffle-carrying chaser may pass to instead of moving. */
+export function legalPassTargets(game: QuidditchGame, pieceId: string): string[] {
+  const piece = game.pieces.find((p) => p.id === pieceId);
+  if (!piece || piece.team !== game.currentTeam || game.status !== 'playing') return [];
+  if (piece.type !== 'chaser' || !piece.hasQuaffle) return [];
+  return game.pieces
+    .filter((p) => p.team === piece.team && p.type === 'chaser' && p.id !== piece.id && chebyshev(p, piece) === 1)
+    .map((p) => p.id);
+}
+
+/** Instantly hands the quaffle to an adjacent friendly chaser — no movement, ends the turn like a normal move. */
+export function applyPass(game: QuidditchGame, pieceId: string, targetId: string): QuidditchGame {
+  if (game.status !== 'playing') throw new Error('게임이 진행 중이 아닙니다.');
+  if (!legalPassTargets(game, pieceId).includes(targetId)) throw new Error('패스할 수 없는 대상입니다.');
+
+  const pieces = game.pieces.map((p) => ({ ...p }));
+  const mover = pieces.find((p) => p.id === pieceId)!;
+  const target = pieces.find((p) => p.id === targetId)!;
+  const team = mover.team;
+
+  mover.hasQuaffle = false;
+  target.hasQuaffle = true;
+
+  const log = pushLog(game.log, mkLog(game.turnCount, team, `${team}팀 추격꾼이 동료에게 퀘이플을 패스했습니다.`));
+
+  return endTurn({
+    ...game,
+    pieces,
+    quaffleHolderId: target.id,
+    log,
+    updatedAt: Date.now(),
+  });
+}
+
 const STRIKE_DIR_PRIORITY: [number, number][] = [
   [-1, 0],
   [1, 0],
@@ -358,16 +392,29 @@ export function applyMove(game: QuidditchGame, pieceId: string, dest: { row: num
       quaffleHolderId = null;
       mover.hasQuaffle = false;
     }
-    log = pushLog(log, mkLog(turnCount, team, `${team}팀 ${pieceLabel(mover.type)}가 ${opp}팀 ${pieceLabel(victim.type)}를 제거했습니다! (+${gained})`));
+    log = pushLog(log, mkLog(turnCount, team, `${team}팀 ${withI(pieceLabel(mover.type))} ${opp}팀 ${withEul(pieceLabel(victim.type))} 제거했습니다! (+${gained})`));
   } else if (mover.type === 'beater') {
     mover.row = dest.row;
     mover.col = dest.col;
     const target = findStrikeTarget(survivingPieces, mover);
     if (target) {
       const idx = survivingPieces.findIndex((p) => p.id === target.victim.id);
-      survivingPieces = survivingPieces.map((p, i) => (i === idx ? { ...p, row: target.pushTo.row, col: target.pushTo.col } : p));
+      const victimHadQuaffle = target.victim.hasQuaffle;
+      const droppedAt = { row: target.victim.row, col: target.victim.col };
+      survivingPieces = survivingPieces.map((p, i) =>
+        i === idx ? { ...p, row: target.pushTo.row, col: target.pushTo.col, hasQuaffle: false } : p,
+      );
       scores[team] += SCORES.strike;
-      log = pushLog(log, mkLog(turnCount, team, `${team}팀 타격수가 ${opp}팀 ${pieceLabel(target.victim.type)}를 밀쳐냈습니다! (+2)`));
+      if (victimHadQuaffle) {
+        quafflePos = droppedAt;
+        quaffleHolderId = null;
+        log = pushLog(
+          log,
+          mkLog(turnCount, team, `${team}팀 타격수가 퀘이플을 든 ${opp}팀 ${withEul(pieceLabel(target.victim.type))} 타격해 퀘이플을 떨어뜨렸습니다! (+2)`),
+        );
+      } else {
+        log = pushLog(log, mkLog(turnCount, team, `${team}팀 타격수가 ${opp}팀 ${withEul(pieceLabel(target.victim.type))} 밀쳐냈습니다! (+2)`));
+      }
     } else {
       log = pushLog(log, mkLog(turnCount, team, `${team}팀 타격수가 이동했습니다.`));
     }
@@ -400,7 +447,7 @@ export function applyMove(game: QuidditchGame, pieceId: string, dest: { row: num
         log = pushLog(log, mkLog(turnCount, team, `${team}팀 추격꾼이 이동했습니다.`));
       }
     } else {
-      log = pushLog(log, mkLog(turnCount, team, `${team}팀 ${pieceLabel(mover.type)}가 이동했습니다.`));
+      log = pushLog(log, mkLog(turnCount, team, `${team}팀 ${withI(pieceLabel(mover.type))} 이동했습니다.`));
     }
   }
 
@@ -441,6 +488,21 @@ function pieceLabel(type: PieceType) {
   }
 }
 
+/** True if a Korean word's last syllable has a trailing consonant (받침), for 이/가 · 을/를 particle choice. */
+function hasBatchim(word: string): boolean {
+  const code = word.charCodeAt(word.length - 1) - 0xac00;
+  if (code < 0 || code > 11171) return false;
+  return code % 28 !== 0;
+}
+
+function withI(word: string): string {
+  return `${word}${hasBatchim(word) ? '이' : '가'}`;
+}
+
+function withEul(word: string): string {
+  return `${word}${hasBatchim(word) ? '을' : '를'}`;
+}
+
 export function passTurnIfExpired(game: QuidditchGame): QuidditchGame | null {
   if (game.status !== 'playing') return null;
   if (Date.now() < game.turnDeadline) return null;
@@ -457,7 +519,18 @@ export function finalizeByTimeout(game: QuidditchGame): QuidditchGame | null {
   else if (game.scores.B > game.scores.A) winner = 'B';
   else {
     const holder = game.pieces.find((p) => p.hasQuaffle);
-    winner = holder ? holder.team : 'draw';
+    if (holder) {
+      winner = holder.team;
+    } else {
+      // still tied and nobody's carrying the quaffle — whoever's seeker is closer to the opponent's goal wins.
+      const seekerA = game.pieces.find((p) => p.team === 'A' && p.type === 'seeker');
+      const seekerB = game.pieces.find((p) => p.team === 'B' && p.type === 'seeker');
+      const distA = seekerA ? Math.abs(seekerA.row - goalRowOf('B')) : Infinity;
+      const distB = seekerB ? Math.abs(seekerB.row - goalRowOf('A')) : Infinity;
+      if (distA < distB) winner = 'A';
+      else if (distB < distA) winner = 'B';
+      else winner = 'draw';
+    }
   }
   const log = pushLog(game.log, mkLog(game.turnCount, null, '제한 시간이 종료되었습니다.'));
   return { ...game, status: 'finished', winner, winReason: 'time', log, updatedAt: Date.now() };

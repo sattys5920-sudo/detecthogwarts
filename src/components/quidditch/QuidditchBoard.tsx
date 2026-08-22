@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BOARD_SIZE, legalMoves, type QuidditchGame, type Team } from '../../game/quidditchEngine';
+import { BOARD_SIZE, legalMoves, legalPassTargets, type QuidditchGame, type Team } from '../../game/quidditchEngine';
 import { PieceGlyph, QuaffleGlyph, SnitchGlyph } from './QuidditchGlyphs';
 
 const TEAM_TOKEN: Record<Team, string> = {
@@ -16,22 +16,32 @@ interface Props {
   game: QuidditchGame;
   mySeat: Team;
   onMove: (pieceId: string, dest: { row: number; col: number }) => void;
+  onPass: (pieceId: string, targetId: string) => void;
 }
 
-export default function QuidditchBoard({ game, mySeat, onMove }: Props) {
+export default function QuidditchBoard({ game, mySeat, onMove, onPass }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const canAct = game.status === 'playing' && game.currentTeam === mySeat;
   const dests = selectedId && canAct ? legalMoves(game, selectedId) : [];
+  const passTargets = selectedId && canAct ? legalPassTargets(game, selectedId) : [];
 
   function handleTap(row: number, col: number) {
     if (!canAct) return;
+    const piece = game.pieces.find((p) => p.row === row && p.col === col);
+
+    if (selectedId && piece && passTargets.includes(piece.id)) {
+      onPass(selectedId, piece.id);
+      setSelectedId(null);
+      return;
+    }
+
     const dest = dests.find((d) => d.row === row && d.col === col);
     if (selectedId && dest) {
       onMove(selectedId, { row, col });
       setSelectedId(null);
       return;
     }
-    const piece = game.pieces.find((p) => p.row === row && p.col === col);
+
     if (piece && piece.team === mySeat) {
       setSelectedId((prev) => (prev === piece.id ? null : piece.id));
       return;
@@ -47,6 +57,7 @@ export default function QuidditchBoard({ game, mySeat, onMove }: Props) {
       const isSnitch = game.snitch && game.snitch.row === row && game.snitch.col === col;
       const isQuaffle = game.quafflePos && game.quafflePos.row === row && game.quafflePos.col === col;
       const dest = dests.find((d) => d.row === row && d.col === col);
+      const isPassTarget = Boolean(piece && passTargets.includes(piece.id));
       const isSelected = piece && piece.id === selectedId;
       const dark = (row + col) % 2 === 1;
       const goalRow = row === 0 ? 'A' : row === BOARD_SIZE - 1 ? 'B' : null;
@@ -87,6 +98,9 @@ export default function QuidditchBoard({ game, mySeat, onMove }: Props) {
             <span className={`absolute h-2.5 w-2.5 rounded-full ${dest.capture ? 'bg-seal-600' : 'bg-ink-700/40'}`} />
           )}
           {dest && piece && <span className="pointer-events-none absolute inset-0 rounded-none ring-2 ring-inset ring-seal-600" />}
+          {isPassTarget && (
+            <span className="pointer-events-none absolute inset-0.5 rounded-full border-2 border-dashed border-gold-400" />
+          )}
         </button>,
       );
     }

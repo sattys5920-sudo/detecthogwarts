@@ -16,6 +16,7 @@ import {
   RoomFullError,
   seatedTeamOf,
   submitMove,
+  submitPass,
   subscribeRoom,
 } from '../firebase/quidditch';
 import type { PieceType, QuidditchGame, Team } from '../game/quidditchEngine';
@@ -74,7 +75,7 @@ function QuidditchRulesModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <p className="mt-2 flex-none rounded-sm border border-seal-500/30 bg-paper-100/70 px-2.5 py-1.5 text-[11px] leading-relaxed text-ink-700/80">
-          설계 중인 새 룰 문서입니다. 실제 경기는 아직 기존 방식(기물 잡기 · 골 · 스니치 추격)으로 진행되며, 이 룰이 실제 경기에 적용되면 안내됩니다.
+          지금 진행 중인 경기의 실제 규칙입니다. 아래 내용 그대로 적용됩니다.
         </p>
 
         <div className="mt-3 flex-1 overflow-y-auto pr-0.5">
@@ -310,6 +311,15 @@ export default function QuidditchPage() {
     }
   }
 
+  async function handlePass(pieceId: string, targetId: string) {
+    if (!game.playerId) return;
+    try {
+      await submitPass(roomId, game.playerId, pieceId, targetId);
+    } catch {
+      // stale/illegal pass — board will resync from the next snapshot.
+    }
+  }
+
   const myTurn = room.currentTeam === mySeat;
   const turnMs = room.turnDeadline - now;
   const gameMs = room.gameDeadline - now;
@@ -347,7 +357,12 @@ export default function QuidditchPage() {
           <p className={`font-mono text-xl font-bold ${turnMs < 8000 ? 'text-seal-600' : 'text-ink-900'}`}>{Math.max(0, Math.ceil(turnMs / 1000))}s</p>
         </div>
 
-        <QuidditchBoard game={room} mySeat={mySeat} onMove={handleMove} />
+        <QuidditchBoard game={room} mySeat={mySeat} onMove={handleMove} onPass={handlePass} />
+
+        <p className="flex items-center justify-center gap-1.5 text-[10px] text-ink-700/60">
+          <span className="inline-block h-2.5 w-2.5 rounded-full border-2 border-dashed border-gold-400" aria-hidden="true" />
+          점선 테두리 = 퀘이플을 든 추격꾼이 그 동료에게 패스할 수 있음 (이동 대신 즉시 전달)
+        </p>
 
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-lg border border-ink-700/15 bg-paper-100/50 px-2.5 py-1.5">
           {PIECE_LEGEND.map((p) => (

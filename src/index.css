@@ -1,14 +1,14 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-display: 'East Sea Dokdo', 'Nanum Myeongjo', serif;
-  --font-gothic: 'UnifrakturCook', 'Nanum Myeongjo', serif;
-  --font-serif: 'Noto Sans KR', system-ui, sans-serif;
-  --font-sans: 'Noto Sans KR', system-ui, sans-serif;
+  --font-display: 'Cinzel', 'Nanum Myeongjo', serif;
+  --font-gothic: 'Cinzel', 'Nanum Myeongjo', serif;
+  --font-serif: 'Noto Serif KR', 'Noto Serif', serif;
+  --font-sans: 'Noto Serif KR', 'Noto Serif', serif;
 
   /* aged parchment paper */
-  --color-paper-50: #fdf9ee;
-  --color-paper-100: #f2e6c4;
+  --color-paper-50: #faf3df;
+  --color-paper-100: #f0e2bf;
   --color-paper-200: #e6d3a2;
   --color-paper-300: #d4bb80;
   --color-paper-400: #c2a468;
@@ -52,7 +52,7 @@ html {
 }
 
 body {
-  background: var(--color-paper-50);
+  background: var(--color-paper-100);
   color: var(--color-ink-900);
   font-family: var(--font-sans);
   min-height: 100svh;
@@ -74,8 +74,8 @@ select {
 
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: 0;
-  font-weight: 400;
+  letter-spacing: 0.02em;
+  font-weight: 600;
 }
 
 .font-serif-kr {
@@ -85,6 +85,8 @@ select {
 
 .font-gothic {
   font-family: var(--font-gothic);
+  letter-spacing: 0.03em;
+  font-weight: 600;
 }
 
 /* aged-paper grain, layered as a fixed full-screen overlay */

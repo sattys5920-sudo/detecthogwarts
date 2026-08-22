@@ -114,13 +114,18 @@ select {
     radial-gradient(ellipse 240px 160px at 5% 90%, rgba(120, 85, 45, 0.08), transparent 60%);
 }
 
-/* scroll-ribbon banner shape, torn cloth-edge ends */
-.ribbon {
-  clip-path: polygon(
-    0% 20%, 3% 8%, 1% 0%, 6% 4%, 10% 0%, 94% 0%, 98% 4%, 100% 0%, 97% 8%, 100% 20%,
-    100% 80%, 97% 92%, 100% 100%, 96% 96%, 90% 100%, 10% 100%, 4% 96%, 0% 100%, 3% 92%, 0% 80%
-  );
-  transform: rotate(-1deg);
+/* squared title plate: a flat rectangular seal-colored panel with a thin gold hairline
+   set just inside the outer edge, in place of the old scroll-ribbon cloth-edge shape. */
+.title-plate {
+  border: 1.5px solid var(--color-seal-700);
+}
+
+.title-plate::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(207, 160, 80, 0.6);
+  pointer-events: none;
 }
 
 .deckle-edge {

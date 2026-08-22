@@ -9,6 +9,17 @@ import SectionTitle from '../components/SectionTitle';
 import { useGame } from '../context/GameContext';
 import { HOUSES, SCHOOL_NAME } from '../data/school';
 import { DEFAULT_PREFS, setPref, subscribePrefs, type NotificationPrefs } from '../firebase/notificationPrefs';
+import gryffindorCrest from '../assets/crests/gryffindor.png';
+import hufflepuffCrest from '../assets/crests/hufflepuff.png';
+import ravenclawCrest from '../assets/crests/ravenclaw.png';
+import slytherinCrest from '../assets/crests/slytherin.png';
+
+const HOUSE_CRESTS: Record<string, string> = {
+  flame: gryffindorCrest,
+  moonlight: ravenclawCrest,
+  earth: hufflepuffCrest,
+  wind: slytherinCrest,
+};
 
 const STAT_LABELS: { key: 'hp' | 'intelligence' | 'stamina' | 'spellPower'; label: string }[] = [
   { key: 'hp', label: 'HP' },
@@ -183,8 +194,10 @@ export default function ProfilePage() {
       {game.assignedHouse ? (
         <div>
           <SectionTitle className="mb-2">소속 기숙사</SectionTitle>
-          <Card>
-            <span className="block h-2 w-8 rounded-full" style={{ backgroundColor: house?.color }} />
+          <Card className="text-center">
+            {house && HOUSE_CRESTS[house.id] && (
+              <img src={HOUSE_CRESTS[house.id]} alt={house.name} className="mx-auto h-32 w-auto" />
+            )}
             <p className="mt-2 font-serif-kr font-semibold text-ink-900">{house?.name}</p>
             <p className="text-xs text-ink-500/70">적성 검사를 통해 정식 배정되었습니다.</p>
           </Card>

@@ -4,8 +4,11 @@ import Card from './Card';
 import InterrogationInbox from './InterrogationInbox';
 import { HOUSES } from '../data/school';
 import type { HouseId } from '../data/sortingTest';
+import { resetContent, resetSignups } from '../firebase/adminReset';
 import { sendAnnouncement } from '../firebase/announcements';
 import { assignHouse, listenAllPlayers, type PlayerRecord } from '../firebase/players';
+
+const RESET_PHRASE = '초기화';
 
 const ADMIN_NICKNAME = '관리자';
 
@@ -132,6 +135,98 @@ function AnnouncementSender() {
   );
 }
 
+function DangerZone() {
+  const [signupsPhrase, setSignupsPhrase] = useState('');
+  const [contentPhrase, setContentPhrase] = useState('');
+  const [busy, setBusy] = useState<'signups' | 'content' | null>(null);
+  const [result, setResult] = useState<string | null>(null);
+
+  async function runResetSignups() {
+    if (signupsPhrase !== RESET_PHRASE || busy) return;
+    setBusy('signups');
+    setResult(null);
+    try {
+      const count = await resetSignups();
+      setSignupsPhrase('');
+      setResult(`가입 데이터 ${count}건을 삭제했습니다.`);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function runResetContent() {
+    if (contentPhrase !== RESET_PHRASE || busy) return;
+    setBusy('content');
+    setResult(null);
+    try {
+      await resetContent();
+      setContentPhrase('');
+      setResult('모든 콘텐츠를 초기화했습니다.');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Card className="flex flex-col gap-4 border-seal-600/50">
+      <div>
+        <p className="font-gothic text-2xl text-seal-600">위험 구역</p>
+        <p className="mt-1 text-xs leading-relaxed text-ink-700/70">
+          아래 작업은 되돌릴 수 없습니다. 각 플레이어 기기에 저장된 진행 상태(이름·현재 날짜 등)는 서버에 없어 자동으로
+          초기화되지 않습니다 — 필요하면 각자 처음 화면에서 &lsquo;다른 이름으로 시작하기&rsquo;를 눌러야 합니다.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-lg border border-ink-700/15 bg-paper-100/50 p-3">
+        <p className="text-sm font-bold text-ink-900">가입 데이터 초기화</p>
+        <p className="text-xs text-ink-700/70">가입자 목록(닉네임 · 적성검사 결과 · 기숙사 배정)을 전부 삭제합니다.</p>
+        <div className="flex items-center gap-2">
+          <input
+            value={signupsPhrase}
+            onChange={(e) => setSignupsPhrase(e.target.value)}
+            placeholder={`확인을 위해 '${RESET_PHRASE}' 입력`}
+            className="flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
+          />
+          <Button
+            variant="ghost"
+            disabled={signupsPhrase !== RESET_PHRASE || busy !== null}
+            onClick={runResetSignups}
+            className="flex-none border-seal-600 px-4 py-1.5 text-xs text-seal-600"
+          >
+            {busy === 'signups' ? '삭제 중…' : '가입 데이터 삭제'}
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-lg border border-ink-700/15 bg-paper-100/50 p-3">
+        <p className="text-sm font-bold text-ink-900">전체 콘텐츠 초기화</p>
+        <p className="text-xs text-ink-700/70">
+          연회장 게시글 · 댓글, 기숙사 대화, 탐사 활동 로그(잠금 해제 포함), 탐문 대화, 공지, 퀴디치 · 금지된 숲 진행
+          상태, 약초 농장, 알림/설정, 리더보드를 전부 삭제 · 초기화합니다.
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            value={contentPhrase}
+            onChange={(e) => setContentPhrase(e.target.value)}
+            placeholder={`확인을 위해 '${RESET_PHRASE}' 입력`}
+            className="flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
+          />
+          <Button
+            variant="ghost"
+            disabled={contentPhrase !== RESET_PHRASE || busy !== null}
+            onClick={runResetContent}
+            className="flex-none border-seal-600 px-4 py-1.5 text-xs text-seal-600"
+          >
+            {busy === 'content' ? '초기화 중…' : '콘텐츠 초기화'}
+          </Button>
+        </div>
+      </div>
+
+      {result && <p className="text-xs font-bold text-seal-600">{result}</p>}
+    </Card>
+  );
+}
+
 export default function AdminPanel() {
   const [players, setPlayers] = useState<PlayerRecord[]>([]);
   const members = players.filter((p) => p.nickname !== ADMIN_NICKNAME);
@@ -156,6 +251,8 @@ export default function AdminPanel() {
           <PlayerRow key={p.id} player={p} />
         ))}
       </div>
+
+      <DangerZone />
     </div>
   );
 }

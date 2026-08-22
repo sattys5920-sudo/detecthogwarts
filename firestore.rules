@@ -18,7 +18,10 @@ service cloud.firestore {
         && request.resource.data.elapsedSeconds >= 0
         && request.resource.data.solved is bool;
 
-      allow update, delete: if false;
+      allow update: if false;
+      // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 지울 수 있도록 삭제를
+      // 허용합니다.
+      allow delete: if true;
     }
 
     // 기숙사 배정 테스트 결과: 응시자 본인이 결과를 생성할 수 있고, 관리자 페이지가
@@ -41,7 +44,11 @@ service cloud.firestore {
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assignedHouse', 'assignedAt'])
         && request.resource.data.assignedHouse in ['flame', 'moonlight', 'earth', 'wind'];
 
-      allow delete: if false;
+      // 관리자 페이지의 "가입 데이터 초기화" 버튼이 지워야 하므로 삭제를
+      // 허용합니다. 이 프로젝트엔 로그인이 없어 이 허용은 관리자 여부와
+      // 무관하게 모든 클라이언트에 적용됩니다 — 신뢰 모델은 이미 다른
+      // 관리자 기능들과 동일합니다(패스코드는 클라이언트에서만 검사).
+      allow delete: if true;
     }
 
     // 연회장 피드/댓글: 이 프로젝트는 아직 로그인(Firebase Auth) 없이 동작하므로
@@ -118,7 +125,10 @@ service cloud.firestore {
               && request.resource.data.options.size() >= 1
               && request.resource.data.options.size() <= 5));
 
-        allow update, delete: if false;
+        allow update: if false;
+        // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 하루치 진행 로그를
+        // 지울 수 있도록 삭제를 허용합니다.
+        allow delete: if true;
       }
     }
 
@@ -140,7 +150,10 @@ service cloud.firestore {
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 500;
 
-        allow update, delete: if false;
+        allow update: if false;
+        // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 기숙사 대화 로그를
+        // 지울 수 있도록 삭제를 허용합니다.
+        allow delete: if true;
       }
     }
 
@@ -159,7 +172,9 @@ service cloud.firestore {
     // 덮어써 저장하고, 각 플레이어 화면은 이 문서를 구독해 새 id가 오면 팝업으로 띄웁니다.
     match /announcements/{docId} {
       allow read: if true;
-      allow delete: if false;
+      // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 최신 공지를 지울 수
+      // 있도록 삭제를 허용합니다(빈 text로 덮어쓰는 건 위 검증 규칙상 불가).
+      allow delete: if true;
 
       allow create, update: if request.resource.data.keys().hasOnly(['id', 'text', 'sentAt'])
         && request.resource.data.id is string
@@ -194,7 +209,9 @@ service cloud.firestore {
     // 로그인이 없음), 최소한 모양은 검증합니다.
     match /herbFarms/{playerId} {
       allow read: if true;
-      allow delete: if false;
+      // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 지울 수 있도록 삭제를
+      // 허용합니다.
+      allow delete: if true;
 
       allow create, update: if request.resource.data.playerId is string
         && request.resource.data.slots is list
@@ -223,7 +240,9 @@ service cloud.firestore {
     // bool"만 검증합니다.
     match /notificationPrefs/{playerId} {
       allow read: if true;
-      allow delete: if false;
+      // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 지울 수 있도록 삭제를
+      // 허용합니다.
+      allow delete: if true;
 
       allow create, update: if
         (!('master' in request.resource.data) || request.resource.data.master is bool) &&
@@ -239,7 +258,9 @@ service cloud.firestore {
     // isRead만 바꿀 수 있습니다.
     match /notifications/{notifId} {
       allow read: if true;
-      allow delete: if false;
+      // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 지울 수 있도록 삭제를
+      // 허용합니다.
+      allow delete: if true;
 
       allow create: if request.resource.data.keys().hasAll(
           ['playerId', 'type', 'title', 'body', 'targetUrl', 'targetId', 'isRead', 'createdAt']
@@ -263,7 +284,9 @@ service cloud.firestore {
     // 대화 내용은 메시지 서브컬렉션에 추가만 가능한 형태로 저장합니다.
     match /interrogationThreads/{threadId} {
       allow read: if true;
-      allow delete: if false;
+      // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 지울 수 있도록 삭제를
+      // 허용합니다.
+      allow delete: if true;
 
       allow create, update: if request.resource.data.playerId is string
         && request.resource.data.npcId is string
@@ -273,7 +296,9 @@ service cloud.firestore {
 
       match /messages/{messageId} {
         allow read: if true;
-        allow delete: if false;
+        // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 대화 내용을 지울 수
+        // 있도록 삭제를 허용합니다.
+        allow delete: if true;
 
         allow create: if request.resource.data.keys().hasAll(['sender', 'text', 'createdAt'])
           && request.resource.data.sender in ['player', 'admin']

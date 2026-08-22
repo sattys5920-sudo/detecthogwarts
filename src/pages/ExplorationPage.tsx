@@ -26,7 +26,7 @@ export default function ExplorationPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label={`Day ${day.day} / 5`} context={day.title} meta="탐사 활동" />
+      <Letterhead label={`Day ${day.day} / 5`} meta="탐사 활동" />
 
       {game.isAdmin && (
         <div className="flex items-center justify-between gap-2 rounded-sm bg-ink-black px-2.5 py-1.5">

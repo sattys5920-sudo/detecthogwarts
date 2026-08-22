@@ -4,6 +4,7 @@ import AdminPanel from '../components/AdminPanel';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Letterhead from '../components/Letterhead';
+import SectionTitle from '../components/SectionTitle';
 import { useGame } from '../context/GameContext';
 import { HOUSES, SCHOOL_NAME } from '../data/school';
 import { DEFAULT_PREFS, setPref, subscribePrefs, type NotificationPrefs } from '../firebase/notificationPrefs';
@@ -56,8 +57,8 @@ function PrefRow({ label, value, onChange }: { label: string; value: boolean; on
       <button
         type="button"
         onClick={() => onChange(!value)}
-        className={`rounded-full px-3 py-1 font-mono text-[11px] font-bold transition-colors ${
-          value ? 'bg-seal-600 text-paper-50' : 'bg-paper-200 text-ink-700/60'
+        className={`rounded-sm border px-3 py-1 font-mono text-[11px] font-bold transition-colors ${
+          value ? 'border-seal-700 bg-seal-600 text-paper-50' : 'border-ink-700/25 bg-paper-200 text-ink-700/60'
         }`}
       >
         {value ? 'ON' : 'OFF'}
@@ -140,6 +141,7 @@ export default function ProfilePage() {
       )}
 
       <Card className="text-center">
+        <p className="mb-3 font-mono text-[10px] font-bold tracking-[0.2em] text-gold-600">탐구자 기록부</p>
         <div className="relative mx-auto h-16 w-16">
           <button
             type="button"
@@ -188,10 +190,10 @@ export default function ProfilePage() {
         )}
 
         <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
-          <span className="rounded-full border border-ink-700/20 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
+          <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
             {house ? house.name : '기숙사 미배정'}
           </span>
-          <span className="rounded-full border border-ink-700/20 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
+          <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
             탐구자
           </span>
         </div>
@@ -228,7 +230,7 @@ export default function ProfilePage() {
 
       {game.assignedHouse ? (
         <div>
-          <p className="mb-2 text-xs font-bold text-ink-700/70">소속 기숙사</p>
+          <SectionTitle className="mb-2">소속 기숙사</SectionTitle>
           <Card>
             <span className="block h-2 w-8 rounded-full" style={{ backgroundColor: house?.color }} />
             <p className="mt-2 font-serif-kr font-semibold text-ink-900">{house?.name}</p>
@@ -237,7 +239,7 @@ export default function ProfilePage() {
         </div>
       ) : (
         <div>
-          <p className="mb-2 text-xs font-bold text-ink-700/70">소속 기숙사 · 임시 선택</p>
+          <SectionTitle className="mb-2">소속 기숙사 · 임시 선택</SectionTitle>
           <p className="mb-2 text-[11px] text-ink-500/60">정식 배정 전까지 임시로 골라둘 수 있어요.</p>
           <div className="grid grid-cols-4 gap-2">
             {HOUSES.map((h) => {
@@ -261,7 +263,7 @@ export default function ProfilePage() {
       )}
 
       <div>
-        <p className="mb-2 text-xs font-bold text-ink-700/70">알림 설정</p>
+        <SectionTitle className="mb-2">알림 설정</SectionTitle>
         <Card className="flex flex-col divide-y divide-ink-700/10">
           <PrefRow label="전체 알림" value={prefs.master} onChange={(v) => updatePref('master', v)} />
           <PrefRow label="새 팝업 · 피드 · 이벤트" value={prefs.event} onChange={(v) => updatePref('event', v)} />
@@ -275,7 +277,7 @@ export default function ProfilePage() {
 
       {game.isAdmin && (
         <div>
-          <p className="mb-2 text-xs font-bold text-ink-700/70">관리자 기능</p>
+          <SectionTitle className="mb-2">관리자 기능</SectionTitle>
           <AdminPanel />
         </div>
       )}

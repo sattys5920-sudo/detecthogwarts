@@ -431,7 +431,7 @@ export default function DaVinciCodeGame({ onFinished, onExit }: DaVinciCodeGameP
       )}
 
       {justGuessedCorrectly && state.pendingId === null && (
-        <button type="button" onClick={passTurn} className="tablet-btn tablet-btn-ghost self-center rounded-lg px-4 py-1.5 text-xs font-bold">
+        <button type="button" onClick={passTurn} className="tablet-btn tablet-btn-ghost self-center px-4 py-1.5 text-xs font-bold">
           차례 넘기기
         </button>
       )}
@@ -464,7 +464,7 @@ export default function DaVinciCodeGame({ onFinished, onExit }: DaVinciCodeGameP
       )}
 
       {state.turn === 'player' && state.phase === 'awaitingDraw' && (
-        <button type="button" onClick={handleDraw} className="tablet-btn tablet-btn-dark self-center rounded-lg px-5 py-2.5 text-sm font-bold">
+        <button type="button" onClick={handleDraw} className="tablet-btn tablet-btn-dark self-center px-5 py-2.5 text-sm font-bold">
           카드 가져오기
         </button>
       )}
@@ -474,7 +474,7 @@ export default function DaVinciCodeGame({ onFinished, onExit }: DaVinciCodeGameP
           <p className="font-serif-kr text-base font-bold text-ink-900">
             {state.winner === 'player' ? '승리했습니다! 주문력 +5' : '크리스토 백작에게 패배했습니다.'}
           </p>
-          <button type="button" onClick={onExit} className="tablet-btn tablet-btn-dark rounded-lg px-5 py-2 text-sm font-bold">
+          <button type="button" onClick={onExit} className="tablet-btn tablet-btn-dark px-5 py-2 text-sm font-bold">
             도서관 나가기
           </button>
         </div>

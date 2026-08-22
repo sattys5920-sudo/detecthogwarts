@@ -98,7 +98,7 @@ export default function ExplorationPage() {
         <button
           type="button"
           onClick={() => setShowClosing((s) => ({ ...s, [day.day]: true }))}
-          className="tablet-btn tablet-btn-ghost self-center rounded-lg px-4 py-2 text-xs font-bold"
+          className="tablet-btn tablet-btn-ghost self-center px-4 py-2 text-xs font-bold"
         >
           하루 마무리 보기
         </button>
@@ -122,7 +122,7 @@ export default function ExplorationPage() {
                 game.advanceDay();
                 setSelectedDay(next);
               }}
-              className="tablet-btn tablet-btn-dark self-center rounded-lg px-5 py-2.5 text-sm font-bold"
+              className="tablet-btn tablet-btn-dark self-center px-5 py-2.5 text-sm font-bold"
             >
               다음 날로 →
             </button>

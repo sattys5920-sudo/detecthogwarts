@@ -54,7 +54,7 @@ function SlotCard({
           type="button"
           onClick={onPlant}
           disabled={busy}
-          className="tablet-btn rounded-lg px-3 py-1.5 text-xs font-bold disabled:opacity-40"
+          className="tablet-btn px-3 py-1.5 text-xs font-bold disabled:opacity-40"
         >
           약초 심기
         </button>
@@ -73,7 +73,7 @@ function SlotCard({
           type="button"
           onClick={onHarvest}
           disabled={busy}
-          className="tablet-btn tablet-btn-dark mt-1 rounded-lg px-3 py-1.5 text-xs font-bold disabled:opacity-40"
+          className="tablet-btn tablet-btn-dark mt-1 px-3 py-1.5 text-xs font-bold disabled:opacity-40"
         >
           수확하기
         </button>
@@ -177,7 +177,7 @@ function HarvestPopup({ results, onClose }: { results: HarvestResult[]; onClose:
           ))}
         </div>
         {results.length > 1 && <p className="mt-3 font-mono text-[11px] text-ink-500/70">총 HP +{totalHeal}</p>}
-        <button type="button" onClick={onClose} className="tablet-btn tablet-btn-dark mt-5 w-full rounded-lg px-4 py-2 text-xs font-bold">
+        <button type="button" onClick={onClose} className="tablet-btn tablet-btn-dark mt-5 w-full px-4 py-2 text-xs font-bold">
           확인
         </button>
       </div>
@@ -289,7 +289,7 @@ export default function HerbFarmPage() {
             type="button"
             onClick={handleHarvestAll}
             disabled={busyAll}
-            className="tablet-btn tablet-btn-dark flex-none rounded-lg px-3 py-1.5 text-xs font-bold disabled:opacity-40"
+            className="tablet-btn tablet-btn-dark flex-none px-3 py-1.5 text-xs font-bold disabled:opacity-40"
           >
             모두 수확
           </button>

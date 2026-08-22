@@ -35,16 +35,17 @@ export default function BottomTabBar() {
             {({ isActive }) => (
               <>
                 <span className="relative">
-                  <TabIcon name={tab.icon} className={`h-6 w-6 ${isActive ? 'text-seal-600' : 'text-ink-700/45'}`} />
+                  <TabIcon name={tab.icon} className={`h-6 w-6 ${isActive ? 'text-gold-600' : 'text-ink-700/45'}`} />
                   {tab.icon === 'interrogation' && unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full border border-paper-50 bg-seal-600 px-0.5 text-[8px] font-bold leading-none text-paper-50">
+                    <span className="gold-badge absolute -top-1 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-0.5 text-[8px] font-bold leading-none">
                       {unreadCount}
                     </span>
                   )}
                 </span>
-                <span className={`text-center text-[10px] leading-tight font-bold ${isActive ? 'text-seal-600' : 'text-ink-700/45'}`}>
+                <span className={`text-center text-[10px] leading-tight font-bold ${isActive ? 'text-gold-600' : 'text-ink-700/45'}`}>
                   {tab.label}
                 </span>
+                <span className={`h-1 w-1 rounded-full ${isActive ? 'bg-gold-500' : 'bg-transparent'}`} aria-hidden="true" />
               </>
             )}
           </NavLink>

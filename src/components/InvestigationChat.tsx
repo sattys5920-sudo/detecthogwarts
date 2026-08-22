@@ -106,7 +106,7 @@ function OptionsBubble({ m, onRegister, onPick }: OptionsBubbleProps) {
         )}
         <div className="flex flex-wrap gap-1.5">
           {(m.options ?? []).map((opt, i) => (
-            <button key={i} type="button" onClick={() => onPick(opt)} className="tablet-btn rounded-lg px-2.5 py-1 text-xs font-bold">
+            <button key={i} type="button" onClick={() => onPick(opt)} className="tablet-btn px-2.5 py-1 text-xs font-bold">
               {opt}
             </button>
           ))}
@@ -227,7 +227,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
         <button
           type="button"
           onClick={() => setPickerOpen((v) => !v)}
-          className="tablet-btn tablet-btn-ghost self-center rounded-lg px-4 py-1.5 text-xs font-bold"
+          className="tablet-btn tablet-btn-ghost self-center px-4 py-1.5 text-xs font-bold"
         >
           증거 제시{pickerOpen ? ' 닫기' : ''}
         </button>

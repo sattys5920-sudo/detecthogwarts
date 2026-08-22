@@ -43,7 +43,7 @@ export default function FinalDeduction({ notebookEntries, onSolved }: { notebook
         <button
           type="button"
           onClick={() => setReviewing(false)}
-          className="tablet-btn tablet-btn-ghost self-start rounded-lg px-4 py-2 text-sm font-bold"
+          className="tablet-btn tablet-btn-ghost self-start px-4 py-2 text-sm font-bold"
         >
           되돌아가기
         </button>
@@ -60,14 +60,14 @@ export default function FinalDeduction({ notebookEntries, onSolved }: { notebook
           <button
             type="button"
             onClick={accuse}
-            className="tablet-btn tablet-btn-dark rounded-lg px-4 py-2 text-sm font-bold"
+            className="tablet-btn tablet-btn-dark px-4 py-2 text-sm font-bold"
           >
             파울을 범인으로 지목한다
           </button>
           <button
             type="button"
             onClick={() => setReviewing(true)}
-            className="tablet-btn tablet-btn-ghost rounded-lg px-4 py-2 text-sm font-bold"
+            className="tablet-btn tablet-btn-ghost px-4 py-2 text-sm font-bold"
           >
             모든 증거를 다시 확인한다
           </button>
@@ -95,7 +95,7 @@ export default function FinalDeduction({ notebookEntries, onSolved }: { notebook
           <button
             type="button"
             onClick={() => setSubmitted(false)}
-            className="tablet-btn tablet-btn-ghost self-start rounded-lg px-4 py-1.5 text-xs font-bold"
+            className="tablet-btn tablet-btn-ghost self-start px-4 py-1.5 text-xs font-bold"
           >
             다시 지목하기
           </button>

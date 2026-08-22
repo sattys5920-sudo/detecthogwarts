@@ -23,13 +23,13 @@ export default function Composer({ onSubmit, placeholder, submitLabel }: Compose
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && submit()}
         placeholder={placeholder}
-        className="flex-1 rounded-full border border-ink-700/20 bg-paper-50 px-3.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
+        className="flex-1 rounded-sm border border-ink-700/30 bg-paper-50 px-3.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
       />
       <button
         type="button"
         onClick={submit}
         disabled={!text.trim()}
-        className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-ink-black text-paper-50 disabled:opacity-40"
+        className="flex h-9 w-9 flex-none items-center justify-center rounded-full border border-seal-700 bg-seal-600 text-paper-50 disabled:opacity-40"
         aria-label={submitLabel}
       >
         <NibIcon className="h-4 w-4" />

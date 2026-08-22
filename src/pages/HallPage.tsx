@@ -299,8 +299,8 @@ export default function HallPage() {
 
         {posts.length > 0 && (
           <button type="button" onClick={() => setOpenId(posts[0].id)} className="text-left">
-            <div className="overflow-hidden rounded-2xl border border-ink-700/12 bg-paper-50 shadow-[0_4px_18px_rgba(42,28,18,0.1)] transition hover:shadow-[0_6px_22px_rgba(42,28,18,0.16)]">
-              <div className="h-1.5 bg-gradient-to-r from-seal-600 to-seal-400" />
+            <div className="paper-frame overflow-hidden bg-paper-50 shadow-[0_1px_4px_rgba(42,28,18,0.12)] transition hover:border-seal-500/40">
+              <div className="h-1.5 bg-seal-600" />
               <div className="p-4">
                 <div className="flex items-center gap-2.5">
                   <Avatar src={posts[0].authorAvatar} name={posts[0].authorNickname} size={10} />
@@ -326,7 +326,7 @@ export default function HallPage() {
           <div className="flex flex-col gap-2.5">
             {posts.slice(1).map((p) => (
               <button key={p.id} type="button" onClick={() => setOpenId(p.id)} className="text-left">
-                <div className="rounded-xl border border-ink-700/12 bg-paper-50 p-3.5 shadow-[0_2px_8px_rgba(42,28,18,0.06)] transition hover:border-ink-700/25">
+                <div className="paper-frame bg-paper-50 p-3.5 transition hover:border-seal-500/40">
                   <div className="flex items-center gap-2">
                     <Avatar src={p.authorAvatar} name={p.authorNickname} />
                     <div className="min-w-0 flex-1">
@@ -349,7 +349,7 @@ export default function HallPage() {
         <button
           type="button"
           onClick={() => setComposerOpen(true)}
-          className="fixed bottom-24 right-4 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-seal-600 text-2xl font-bold text-paper-50 shadow-lg"
+          className="tablet-btn tablet-btn-dark fixed bottom-24 right-4 z-20 flex h-12 w-12 items-center justify-center text-2xl font-bold"
           aria-label="피드 작성"
         >
           +

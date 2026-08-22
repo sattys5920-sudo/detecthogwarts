@@ -93,7 +93,7 @@ export default function QuidditchBoard({ game, mySeat, onMove }: Props) {
   }
 
   return (
-    <div className="deckle-edge grid grid-cols-8 overflow-hidden border border-ink-700/30 bg-paper-50 shadow-[0_2px_10px_rgba(42,28,18,0.14),inset_0_0_0_3px_var(--color-paper-50),inset_0_0_0_4px_rgba(184,134,58,0.55)]">
+    <div className="paper-frame grid grid-cols-8 overflow-hidden bg-paper-50">
       {cells}
     </div>
   );

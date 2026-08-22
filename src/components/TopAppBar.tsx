@@ -48,7 +48,11 @@ export default function TopAppBar() {
         </button>
 
         <div className="text-center leading-none">
-          <p className="font-gothic text-base tracking-wide text-ink-black">HWCF</p>
+          <div className="flex items-center justify-center gap-1.5">
+            <span className="h-px w-3 bg-gold-500/70" aria-hidden="true" />
+            <p className="font-gothic text-base tracking-wide text-ink-black">HWCF</p>
+            <span className="h-px w-3 bg-gold-500/70" aria-hidden="true" />
+          </div>
           <p className="mt-1 font-mono text-[8px] font-bold tracking-[0.3em] text-ink-500">WIZARDING SCHOOL</p>
         </div>
 
@@ -70,7 +74,7 @@ export default function TopAppBar() {
             <path fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M4 7.2 12 13l8-5.8" />
           </svg>
           {unreadNotifications > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border border-paper-50 bg-seal-600 px-1 text-[9px] font-bold leading-none text-paper-50">
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center gold-badge rounded-full px-1 text-[9px] font-bold leading-none">
               {unreadNotifications}
             </span>
           )}
@@ -94,7 +98,7 @@ export default function TopAppBar() {
             <path fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" d="M13.7 21a2 2 0 0 1-3.4 0" />
           </svg>
           {unresolved > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border border-paper-50 bg-seal-600 px-1 text-[9px] font-bold leading-none text-paper-50">
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center gold-badge rounded-full px-1 text-[9px] font-bold leading-none">
               {unresolved}
             </span>
           )}

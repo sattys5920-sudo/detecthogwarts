@@ -127,7 +127,7 @@ export default function RecessPage() {
             <button
               type="button"
               onClick={() => setRoomLock(room.id, !locked)}
-              className={`rounded-full px-2.5 py-1 font-mono text-[11px] font-bold ${
+              className={`rounded-sm px-2.5 py-1 font-mono text-[11px] font-bold ${
                 locked ? 'bg-seal-600 text-paper-50' : 'bg-paper-100 text-ink-900'
               }`}
             >
@@ -159,7 +159,7 @@ export default function RecessPage() {
                 type="button"
                 onClick={startDavinci}
                 disabled={davinciPlays >= DAVINCI_MAX_PLAYS}
-                className="tablet-btn tablet-btn-dark self-start rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-40"
+                className="tablet-btn tablet-btn-dark self-start px-4 py-2 text-xs font-bold disabled:opacity-40"
               >
                 {davinciPlays >= DAVINCI_MAX_PLAYS ? '오늘의 도전 횟수 소진' : '게임 시작'}
               </button>

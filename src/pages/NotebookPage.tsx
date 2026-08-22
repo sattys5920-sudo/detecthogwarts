@@ -57,7 +57,7 @@ export default function NotebookPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative overflow-hidden rounded-sm border border-ink-700/20 bg-paper-50 pl-8 pr-4 py-5 shadow-[0_2px_10px_rgba(42,28,18,0.15)]">
+      <div className="paper-frame relative overflow-hidden bg-paper-50 pl-8 pr-4 py-5">
         <Spiral />
 
         {open ? (
@@ -93,7 +93,7 @@ export default function NotebookPage() {
                   key={ink}
                   type="button"
                   onClick={() => setInk(open.id, ink)}
-                  className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold transition ${
+                  className={`flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-[11px] font-bold transition ${
                     open.ink === ink ? 'border-ink-700/40 bg-paper-200' : 'border-ink-700/15 text-ink-500/50 hover:border-ink-700/30'
                   }`}
                 >

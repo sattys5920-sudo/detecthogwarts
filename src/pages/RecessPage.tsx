@@ -114,7 +114,7 @@ export default function RecessPage() {
 
   function handleDavinciFinished(result: 'win' | 'lose') {
     setDavinciResult(result);
-    if (result === 'win') game.adjustStat('spellPower', 5);
+    if (result === 'win') game.adjustStat('intelligence', 3);
   }
 
   function exitDavinci() {
@@ -159,7 +159,7 @@ export default function RecessPage() {
           ) : (
             <Card className="flex flex-col gap-2.5">
               <p className="text-sm leading-relaxed text-ink-700/80">
-                다빈치 코드 게임으로 크리스토 백작과 승부를 겨룹니다. 승리 시 <b className="text-seal-600">주문력 +5</b>.
+                다빈치 코드 게임으로 크리스토 백작과 승부를 겨룹니다. 승리 시 <b className="text-seal-600">지능 +3</b>.
               </p>
               <p className="font-mono text-[11px] text-ink-500/70">오늘 남은 도전 횟수: {Math.max(0, DAVINCI_MAX_PLAYS - davinciPlays)} / {DAVINCI_MAX_PLAYS}</p>
               {davinciResult && (

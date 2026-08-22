@@ -62,6 +62,72 @@ function LoadingScreen({ text }: { text: string }) {
   );
 }
 
+function rewardKey(roomId: string, gameDeadline: number) {
+  return `arcanum-quidditch-reward-${roomId}-${gameDeadline}`;
+}
+
+function QuidditchResultScreen({
+  room,
+  roomId,
+  roomLabel,
+  iWon,
+  isDraw,
+}: {
+  room: QuidditchGame;
+  roomId: string;
+  roomLabel: string;
+  iWon: boolean;
+  isDraw: boolean;
+}) {
+  const game = useGame();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!iWon) return;
+    const key = rewardKey(roomId, room.gameDeadline);
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, 'true');
+    game.adjustStat('hp', 5);
+  }, [iWon, roomId, room.gameDeadline, game]);
+
+  return (
+    <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
+      <PaperTexture />
+      <Card className="w-full max-w-xs">
+        <p className="font-gothic text-2xl text-ink-black">경기 종료</p>
+        <p className={`mt-2 font-gothic text-3xl ${isDraw ? 'text-ink-700' : iWon ? 'text-seal-600' : 'text-ink-700/60'}`}>
+          {isDraw ? '무승부' : iWon ? '승리!' : '패배'}
+        </p>
+        <p className="mt-1 text-xs text-ink-500/70">
+          {room.winReason === 'snitch' ? '황금 스니치 포획으로 경기가 종료되었습니다.' : '제한 시간 종료로 경기가 종료되었습니다.'}
+        </p>
+        {iWon && <p className="mt-1 text-xs font-bold text-seal-600">보상: 최대 체력 +5</p>}
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <div className="text-center">
+            <p className="font-mono text-2xl font-bold text-ink-900">{room.scores.A}</p>
+            <p className="text-[10px] text-ink-500/60">{room.seats.A?.nickname ?? 'A팀'}</p>
+          </div>
+          <p className="text-ink-500/40">:</p>
+          <div className="text-center">
+            <p className="font-mono text-2xl font-bold text-ink-900">{room.scores.B}</p>
+            <p className="text-[10px] text-ink-500/60">{room.seats.B?.nickname ?? 'B팀'}</p>
+          </div>
+        </div>
+        <Button
+          className="mt-5 w-full"
+          onClick={async () => {
+            await leaveFinishedRoom(roomId);
+            navigate('/recess');
+          }}
+        >
+          확인하고 나가기
+        </Button>
+      </Card>
+      <p className="font-mono text-[10px] text-ink-500/40">퀴디치 경기장 {roomLabel}</p>
+    </div>
+  );
+}
+
 export default function QuidditchPage() {
   const game = useGame();
   const navigate = useNavigate();
@@ -151,38 +217,7 @@ export default function QuidditchPage() {
     const iWon = room.winner === mySeat;
     const isDraw = room.winner === 'draw';
     return (
-      <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
-        <PaperTexture />
-        <Card className="w-full max-w-xs">
-          <p className="font-gothic text-2xl text-ink-black">경기 종료</p>
-          <p className={`mt-2 font-gothic text-3xl ${isDraw ? 'text-ink-700' : iWon ? 'text-seal-600' : 'text-ink-700/60'}`}>
-            {isDraw ? '무승부' : iWon ? '승리!' : '패배'}
-          </p>
-          <p className="mt-1 text-xs text-ink-500/70">
-            {room.winReason === 'snitch' ? '황금 스니치 포획으로 경기가 종료되었습니다.' : '제한 시간 종료로 경기가 종료되었습니다.'}
-          </p>
-          <div className="mt-4 flex items-center justify-center gap-3">
-            <div className="text-center">
-              <p className="font-mono text-2xl font-bold text-ink-900">{room.scores.A}</p>
-              <p className="text-[10px] text-ink-500/60">{room.seats.A?.nickname ?? 'A팀'}</p>
-            </div>
-            <p className="text-ink-500/40">:</p>
-            <div className="text-center">
-              <p className="font-mono text-2xl font-bold text-ink-900">{room.scores.B}</p>
-              <p className="text-[10px] text-ink-500/60">{room.seats.B?.nickname ?? 'B팀'}</p>
-            </div>
-          </div>
-          <Button
-            className="mt-5 w-full"
-            onClick={async () => {
-              await leaveFinishedRoom(roomId);
-              navigate('/recess');
-            }}
-          >
-            확인하고 나가기
-          </Button>
-        </Card>
-      </div>
+      <QuidditchResultScreen key={`${roomId}-${room.gameDeadline}`} room={room} roomId={roomId} roomLabel={roomLabel} iWon={iWon} isDraw={isDraw} />
     );
   }
 

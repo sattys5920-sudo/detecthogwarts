@@ -159,6 +159,14 @@ export default function ForestPage() {
     });
   }, [roomId, game.playerId, game.nickname]);
 
+  useEffect(() => {
+    if (!party || party.status !== 'cleared' || !party.seats.some((p) => p?.id === game.playerId)) return;
+    const key = `arcanum-forest-reward-${roomId}-${party.updatedAt}`;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, 'true');
+    game.adjustStat('spellPower', 3);
+  }, [party, roomId, game]);
+
   if (!game.hasEntered) return <Navigate to="/" replace />;
   if (!VALID_ROOMS.includes(roomId)) return <Navigate to="/recess" replace />;
   if (joinError) {
@@ -275,7 +283,7 @@ export default function ForestPage() {
                 {result.bossName && <p className="col-span-2">보스: {result.bossName}</p>}
               </div>
             )}
-            {cleared && <p className="mt-3 text-xs text-seal-600">보상: 최대 HP 증가 · 스킬 포인트 지급</p>}
+            {cleared && <p className="mt-3 text-xs text-seal-600">보상: 참여자 전원 주문 공격력 +3</p>}
           </Card>
           {me && <SkillPanel player={me} onUpgrade={(spellId) => guard(() => upgradeSpell(roomId, game.playerId!, spellId))} />}
           <Button onClick={() => guard(async () => { await leaveExpedition(roomId); navigate('/recess'); })}>확인하고 나가기</Button>

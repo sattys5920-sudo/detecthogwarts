@@ -8,20 +8,20 @@ export interface Npc {
 export const NPCS: Npc[] = [
   {
     id: 'quinix',
-    name: '퀴닉스 교수',
-    role: '호그와트 교수',
+    name: '퀴닉스 교장',
+    role: '호그와트 교장',
     desc: '학교 및 사건에 대한 정보를 알고 있다.',
   },
   {
     id: 'monia',
     name: '모니아',
-    role: '후플푸프 소속 기자 선배',
+    role: '교내 신문부 · 후플푸프 12학년',
     desc: '학생들의 소문이나 학교 내부 정보를 알고 있다.',
   },
   {
     id: 'wood',
     name: '우드 사장님',
-    role: '호그스미드의 정보통 술집 운영자',
+    role: '호그스미드 호프 사장',
     desc: '호그스미드 및 외부 인물에 대한 정보를 알고 있다.',
   },
   {

@@ -178,5 +178,15 @@ service cloud.firestore {
 
       allow create, update: if request.resource.data.status in ['waiting', 'playing', 'finished'];
     }
+
+    // 금지된 숲 탐사: 단일 방(party) 문서 하나에 좌석(2~4)/스테이지/전투 상태를
+    // 통째로 저장합니다. 퀴디치와 마찬가지로 상태 모양이 매우 다양해서 status
+    // 값만 검증하고 나머지는 클라이언트 로직을 신뢰합니다.
+    match /forest/{docId} {
+      allow read: if true;
+      allow delete: if false;
+
+      allow create, update: if request.resource.data.status in ['lobby', 'exploring', 'event', 'combat', 'cleared', 'failed'];
+    }
   }
 }

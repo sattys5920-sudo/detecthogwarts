@@ -4,6 +4,7 @@ import SvgDefs from './components/SvgDefs';
 import { GameProvider } from './context/GameContext';
 import AdminPage from './pages/AdminPage';
 import ExplorationPage from './pages/ExplorationPage';
+import ForestPage from './pages/ForestPage';
 import HallPage from './pages/HallPage';
 import LoadingPage from './pages/LoadingPage';
 import NotebookPage from './pages/NotebookPage';
@@ -59,6 +60,7 @@ export default function App() {
         />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/quidditch" element={<QuidditchPage />} />
+        <Route path="/forest" element={<ForestPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </GameProvider>

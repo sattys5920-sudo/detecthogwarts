@@ -24,6 +24,12 @@ interface Room {
 const ROOMS: Room[] = [
   { id: 'library', name: '도서관', desc: '도서관에 상주하는, 게임을 좋아하는 귀신 크리스토 백작과 게임을 해서 이겨 보세요.' },
   { id: 'forest', name: '숲', desc: '금지된 숲 근처에서 주문을 연습합니다.', stat: 'spellPower', statLabel: '주문 공격력', gain: 5, action: '주문 연습하기', lockable: true },
+  {
+    id: 'forestExpedition',
+    name: '금지된 숲 탐사',
+    desc: '2~4인 협동 TRPG 탐사. 10단계를 넘어 보스를 처치하면 클리어입니다.',
+    linkTo: '/forest',
+  },
   { id: 'pitch', name: '퀴디치 운동장', desc: '빗자루를 타고 체력을 단련합니다.', stat: 'stamina', statLabel: '스태미나', gain: 5, action: '훈련하기', lockable: true },
   {
     id: 'quidditchArena',

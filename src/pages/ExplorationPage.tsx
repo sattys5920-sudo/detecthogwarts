@@ -65,12 +65,6 @@ export default function ExplorationPage() {
         })}
       </div>
 
-      {day.objective && (
-        <p className="rounded-sm border border-seal-500/30 bg-paper-100 px-3 py-2 text-xs font-bold text-seal-600">
-          {day.objective}
-        </p>
-      )}
-
       {locked && !game.isAdmin ? (
         <div className="rounded-sm border border-ink-700/15 bg-paper-100/60 py-10 text-center">
           <p className="text-sm font-bold text-ink-700/70">아직 조사창이 잠겨 있습니다.</p>

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AdminPanel from '../components/AdminPanel';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Letterhead from '../components/Letterhead';
@@ -230,6 +231,13 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {game.isAdmin && (
+        <div>
+          <p className="mb-2 text-xs font-bold text-ink-700/70">관리자 기능</p>
+          <AdminPanel />
+        </div>
+      )}
+
       <Button
         variant="ghost"
         onClick={() => {
@@ -239,14 +247,6 @@ export default function ProfilePage() {
       >
         로그아웃
       </Button>
-
-      <button
-        type="button"
-        onClick={() => navigate('/admin')}
-        className="mt-1 self-center text-xs text-ink-500/40 underline-offset-2 hover:text-ink-700 hover:underline"
-      >
-        관리자 페이지
-      </button>
     </div>
   );
 }

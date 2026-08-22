@@ -4,6 +4,7 @@ import AdminPanel from '../components/AdminPanel';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Letterhead from '../components/Letterhead';
+import PushSetup from '../components/PushSetup';
 import SectionTitle from '../components/SectionTitle';
 import { useGame } from '../context/GameContext';
 import { HOUSES, SCHOOL_NAME } from '../data/school';
@@ -273,6 +274,13 @@ export default function ProfilePage() {
         {!prefs.master && (
           <p className="mt-1.5 text-[11px] text-ink-500/60">전체 알림이 꺼져 있어 모든 알림이 차단됩니다. 개별 설정은 그대로 유지돼요.</p>
         )}
+      </div>
+
+      <div>
+        <SectionTitle className="mb-2">모바일 푸시 알림</SectionTitle>
+        <Card>
+          <PushSetup />
+        </Card>
       </div>
 
       {game.isAdmin && (

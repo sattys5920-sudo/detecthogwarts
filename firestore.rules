@@ -201,6 +201,22 @@ service cloud.firestore {
         && request.resource.data.dex is map;
     }
 
+    // 모바일 푸시 구독: 브라우저의 PushSubscription(endpoint/키)을 저장합니다.
+    // endpoint/키는 민감한 값이라 클라이언트가 다시 읽을 필요가 없으므로(구독
+    // 객체는 브라우저가 이미 들고 있음) 읽기는 막고, Cloud Functions(관리자
+    // SDK, 규칙 미적용)에서만 조회해 실제 발송에 사용합니다.
+    match /pushSubscriptions/{subId} {
+      allow read: if false;
+      allow delete: if false;
+
+      allow create, update: if
+        (!('playerId' in request.resource.data) || request.resource.data.playerId is string) &&
+        (!('endpoint' in request.resource.data) || request.resource.data.endpoint is string) &&
+        (!('p256dh' in request.resource.data) || request.resource.data.p256dh is string) &&
+        (!('auth' in request.resource.data) || request.resource.data.auth is string) &&
+        (!('active' in request.resource.data) || request.resource.data.active is bool);
+    }
+
     // 알림 설정: 플레이어 1인당 문서 하나. 클라이언트가 토글마다 필드 하나씩
     // 부분 병합(merge)으로 쓰기 때문에, 매 쓰기마다 4개 필드가 전부 있으라고
     // 요구하면 첫 토글에서 막혀버립니다. 그래서 "존재하는 필드는 반드시

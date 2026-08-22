@@ -10,6 +10,7 @@ import { useGame } from '../context/GameContext';
 import { type HouseId, topHouse } from '../data/sortingTest';
 
 const ADMIN_PASSCODE = '316316316';
+const ADMIN_NICKNAME = '관리자';
 const ZERO_SCORES: Record<HouseId, number> = { flame: 0, moonlight: 0, earth: 0, wind: 0 };
 
 export default function LoadingPage() {
@@ -22,7 +23,6 @@ export default function LoadingPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const [adminGateOpen, setAdminGateOpen] = useState(false);
-  const [adminNickname, setAdminNickname] = useState('');
   const [adminPasscode, setAdminPasscode] = useState('');
   const [adminError, setAdminError] = useState('');
   const [adminSubmitting, setAdminSubmitting] = useState(false);
@@ -55,7 +55,6 @@ export default function LoadingPage() {
 
   function closeAdminGate() {
     setAdminGateOpen(false);
-    setAdminNickname('');
     setAdminPasscode('');
     setAdminError('');
   }
@@ -65,22 +64,10 @@ export default function LoadingPage() {
       setAdminError('암호가 올바르지 않습니다.');
       return;
     }
-    let trimmed = '';
-    if (!game.hasEntered) {
-      trimmed = adminNickname.trim();
-      if (!trimmed) {
-        setAdminError('이름을 입력해 주세요.');
-        return;
-      }
-      if (trimmed.length > 12) {
-        setAdminError('이름은 12자 이내로 입력해 주세요.');
-        return;
-      }
-    }
     setAdminSubmitting(true);
     try {
       if (!game.hasEntered) {
-        await game.completeSignup(trimmed, ZERO_SCORES, 'moonlight');
+        await game.completeSignup(ADMIN_NICKNAME, ZERO_SCORES, 'moonlight');
       }
       game.unlockAdmin();
       navigate('/hall');
@@ -104,25 +91,9 @@ export default function LoadingPage() {
         <Card className="relative w-full max-w-xs text-left">
           <p className="font-mono text-[11px] tracking-wide text-seal-600">관리자 입장</p>
           <p className="mt-1 font-serif-kr text-sm text-ink-700/80">
-            암호를 입력하면 적성 검사 없이 바로 입장합니다. 화면은 플레이어와 동일하되, 진행을 조작할 수 있는 권한이 함께 켜집니다.
+            암호만 입력하면 적성 검사와 이름 입력 없이 바로 입장합니다. 화면은 플레이어와 동일하되, 진행을 조작할 수 있는 권한이 함께 켜집니다.
           </p>
-          {!game.hasEntered && (
-            <label className="mt-4 block font-serif-kr text-sm text-ink-700/80">
-              이름
-              <input
-                value={adminNickname}
-                onChange={(e) => {
-                  setAdminNickname(e.target.value);
-                  setAdminError('');
-                }}
-                onKeyDown={(e) => e.key === 'Enter' && handleAdminEnter()}
-                placeholder="이름을 입력하세요"
-                maxLength={12}
-                className="mt-1.5 w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-3 py-2 text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
-              />
-            </label>
-          )}
-          <label className="mt-3 block font-serif-kr text-sm text-ink-700/80">
+          <label className="mt-4 block font-serif-kr text-sm text-ink-700/80">
             관리자 암호
             <input
               type="password"

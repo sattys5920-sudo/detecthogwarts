@@ -132,10 +132,13 @@ function AnnouncementSender() {
   );
 }
 
+const ADMIN_NICKNAME = '관리자';
+
 export default function AdminPage() {
   const game = useGame();
   const navigate = useNavigate();
   const [players, setPlayers] = useState<PlayerRecord[]>([]);
+  const members = players.filter((p) => p.nickname !== ADMIN_NICKNAME);
 
   useEffect(() => {
     if (!game.isAdmin) return;
@@ -173,14 +176,14 @@ export default function AdminPage() {
         <AnnouncementSender />
 
         <div>
-          <p className="font-gothic text-3xl text-ink-black">기숙사 배정 관리</p>
-          <p className="mt-1 text-sm text-ink-700/70">응시자 {players.length}명 · 추천 기숙사를 확인하고 배정을 발송하세요.</p>
+          <p className="font-gothic text-3xl text-ink-black">가입자 목록 · 기숙사 배정</p>
+          <p className="mt-1 text-sm text-ink-700/70">응시자 {members.length}명 · 추천 기숙사를 확인하고 배정을 발송하세요.</p>
         </div>
 
-        {players.length === 0 && <Card className="text-center text-sm text-ink-500/60">아직 응시한 사람이 없습니다.</Card>}
+        {members.length === 0 && <Card className="text-center text-sm text-ink-500/60">아직 응시한 사람이 없습니다.</Card>}
 
         <div className="flex flex-col gap-3">
-          {players.map((p) => (
+          {members.map((p) => (
             <PlayerRow key={p.id} player={p} />
           ))}
         </div>

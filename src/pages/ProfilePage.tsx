@@ -92,7 +92,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label="HWCF" context={SCHOOL_NAME} meta="2026.08.18 · 초승달 · 수업 3교시" />
+      <Letterhead label="내 정보" context={SCHOOL_NAME} meta="2026.08.18 · 초승달 · 수업 3교시" />
 
       {game.justAssigned && house && (
         <div className="deckle-edge flex items-center justify-between gap-3 border border-seal-500/40 bg-paper-100 p-3.5">

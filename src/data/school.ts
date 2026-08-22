@@ -1,6 +1,6 @@
 import type { House } from '../types/game';
 
-export const SCHOOL_NAME = '아르카눔 마법학교';
+export const SCHOOL_NAME = 'HWCF';
 
 export const HOUSES: House[] = [
   { id: 'flame', name: 'G', element: '용기와 열정', color: '#a34b28', accent: '#c9603a' },

@@ -6,6 +6,7 @@ import AdminPage from './pages/AdminPage';
 import ExplorationPage from './pages/ExplorationPage';
 import ForestPage from './pages/ForestPage';
 import HallPage from './pages/HallPage';
+import HerbFarmPage from './pages/HerbFarmPage';
 import LoadingPage from './pages/LoadingPage';
 import NotebookPage from './pages/NotebookPage';
 import ProfilePage from './pages/ProfilePage';
@@ -61,6 +62,14 @@ export default function App() {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/quidditch" element={<QuidditchPage />} />
         <Route path="/forest" element={<ForestPage />} />
+        <Route
+          path="/herbfarm"
+          element={
+            <AppShell>
+              <HerbFarmPage />
+            </AppShell>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </GameProvider>

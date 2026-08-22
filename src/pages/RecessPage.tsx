@@ -37,7 +37,12 @@ const ROOMS: Room[] = [
     desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch',
   },
-  { id: 'herbarium', name: '약초 농장', desc: '온실에서 약초를 돌보며 몸을 회복합니다.', stat: 'hp', statLabel: 'HP', gain: 8, action: '휴식하기', lockable: true },
+  {
+    id: 'herbarium',
+    name: '약초 농장',
+    desc: '씨앗을 심고 시간이 지나면 돌아와 수확하세요. 50종의 약초를 도감에 모아보세요.',
+    linkTo: '/herbfarm',
+  },
   { id: 'dorm', name: '기숙사', desc: '같은 기숙사 친구들과 이야기를 나눕니다.', action: '대화 참여하기', lockable: true },
 ];
 

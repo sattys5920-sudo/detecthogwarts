@@ -188,5 +188,17 @@ service cloud.firestore {
 
       allow create, update: if request.resource.data.status in ['lobby', 'exploring', 'event', 'combat', 'cleared', 'failed'];
     }
+
+    // 약초 농장: 플레이어 1인당 문서 하나(슬롯/도감)를 저장하는 방치형 재배
+    // 콘텐츠입니다. 문서 ID가 곧 playerId라 소유권 검증은 없지만(이 프로젝트에
+    // 로그인이 없음), 최소한 모양은 검증합니다.
+    match /herbFarms/{playerId} {
+      allow read: if true;
+      allow delete: if false;
+
+      allow create, update: if request.resource.data.playerId is string
+        && request.resource.data.slots is list
+        && request.resource.data.dex is map;
+    }
   }
 }

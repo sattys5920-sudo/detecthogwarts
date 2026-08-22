@@ -17,40 +17,6 @@ const STAT_LABELS: { key: 'hp' | 'intelligence' | 'stamina' | 'spellPower'; labe
   { key: 'spellPower', label: '주문 공격력' },
 ];
 
-const ITEMS = [
-  { name: '나침반', count: 1 },
-  { name: '부적', count: 2 },
-  { name: '마법약', count: 2 },
-  { name: '촛불', count: 1 },
-];
-
-function ItemGlyph({ name, className = '' }: { name: string; className?: string }) {
-  const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
-      {name === '나침반' && (
-        <>
-          <circle cx="12" cy="12" r="8" {...stroke} />
-          <path d="M14 9l-1.3 4.3L9 15l1.3-4.3L14 9Z" fill="currentColor" />
-        </>
-      )}
-      {name === '부적' && <path d="M12 3 20 12 12 21 4 12Z" fill="currentColor" />}
-      {name === '마법약' && (
-        <>
-          <path d="M9 3h6M10 3v5l-4.5 8a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 8V3" {...stroke} />
-          <path d="M7.5 14h9" {...stroke} />
-        </>
-      )}
-      {name === '촛불' && (
-        <>
-          <path d="M9 21h6M10 21V9h4v12" {...stroke} />
-          <path d="M12 3c1.5 1.8 1.5 3.2 0 4.5C10.5 6.2 10.5 4.8 12 3Z" fill="currentColor" />
-        </>
-      )}
-    </svg>
-  );
-}
-
 function PrefRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="flex items-center justify-between gap-2 py-2">
@@ -209,21 +175,6 @@ export default function ProfilePage() {
                 <div className="h-full bg-ink-black transition-all duration-300" style={{ width: `${game.stats[s.key]}%` }} />
               </div>
               <span className="w-6 flex-none text-right font-mono text-ink-red">{game.stats[s.key]}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="my-4 h-px bg-ink-700/10" />
-
-        <div className="grid grid-cols-4 gap-2">
-          {ITEMS.map((it) => (
-            <div
-              key={it.name}
-              className="flex flex-col items-center gap-1 rounded-lg border-2 border-ink-700/25 bg-paper-100 py-2.5 shadow-[inset_0_0_0_2px_var(--color-paper-50)]"
-            >
-              <ItemGlyph name={it.name} className="h-6 w-6 text-seal-600" />
-              <span className="text-center text-[10px] leading-tight font-bold text-ink-900">{it.name}</span>
-              <span className="font-mono text-[10px] text-ink-red">x{it.count}</span>
             </div>
           ))}
         </div>

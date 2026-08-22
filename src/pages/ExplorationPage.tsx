@@ -14,7 +14,6 @@ export default function ExplorationPage() {
   const game = useGame();
   const { entries, register } = useNotebook();
   const [selectedDay, setSelectedDay] = useState(game.currentDay);
-  const [showClosing, setShowClosing] = useState<Record<number, boolean>>({});
   const [locked, setLocked] = useState(false);
 
   const day = DAYS.find((d) => d.day === selectedDay) ?? DAYS[0];
@@ -44,7 +43,7 @@ export default function ExplorationPage() {
         </div>
       )}
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
+      <div className="grid grid-cols-5 gap-1">
         {DAYS.map((d) => {
           const dayLocked = !game.isAdmin && d.day > game.currentDay;
           const active = d.day === selectedDay;
@@ -54,12 +53,12 @@ export default function ExplorationPage() {
               type="button"
               disabled={dayLocked}
               onClick={() => setSelectedDay(d.day)}
-              className={`tablet-tab flex-none rounded-lg px-3 py-2 text-xs font-bold ${
+              className={`tablet-tab flex flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-2 text-[11px] font-bold leading-none ${
                 active ? 'tablet-tab-active text-seal-600' : dayLocked ? 'text-ink-500/40' : 'text-ink-700/70'
               }`}
             >
-              Day {d.day}
-              {dayLocked ? ' (잠김)' : ''}
+              <span>Day {d.day}</span>
+              {dayLocked && <span className="text-[9px] font-normal">잠김</span>}
             </button>
           );
         })}
@@ -88,34 +87,20 @@ export default function ExplorationPage() {
         </>
       )}
 
-      {!showClosing[day.day] && (
+      {day.finalDay && <FinalDeduction notebookEntries={entries} onSolved={() => game.setDeductionSolved(true)} />}
+
+      {game.isAdmin && !day.finalDay && selectedDay === game.currentDay && game.currentDay < 5 && (
         <button
           type="button"
-          onClick={() => setShowClosing((s) => ({ ...s, [day.day]: true }))}
-          className="tablet-btn tablet-btn-ghost self-center px-4 py-2 text-xs font-bold"
+          onClick={() => {
+            const next = day.day + 1;
+            game.advanceDay();
+            setSelectedDay(next);
+          }}
+          className="tablet-btn tablet-btn-dark self-center px-5 py-2.5 text-sm font-bold"
         >
-          하루 마무리 보기
+          다음 날로 →
         </button>
-      )}
-
-      {showClosing[day.day] && (
-        <>
-          {day.finalDay && <FinalDeduction notebookEntries={entries} onSolved={() => game.setDeductionSolved(true)} />}
-
-          {game.isAdmin && !day.finalDay && selectedDay === game.currentDay && game.currentDay < 5 && (
-            <button
-              type="button"
-              onClick={() => {
-                const next = day.day + 1;
-                game.advanceDay();
-                setSelectedDay(next);
-              }}
-              className="tablet-btn tablet-btn-dark self-center px-5 py-2.5 text-sm font-bold"
-            >
-              다음 날로 →
-            </button>
-          )}
-        </>
       )}
     </div>
   );

@@ -20,7 +20,7 @@ export default function InterrogationPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label="탐문" context="궁금한 NPC를 골라 질문해 보세요" />
+      <Letterhead label="탐문" />
 
       <div className="flex flex-col gap-3">
         {NPCS.map((npc) => (

@@ -165,10 +165,6 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs font-bold text-ink-700/70">
-        조사실 채팅 — 다 함께 대화하고, 관리자의 서술과 제시된 증거도 여기 표시됩니다. 관리자가 보낸 말풍선 옆의 ⋯ 버튼을 누르면 단서로 등록할 수 있습니다.
-      </p>
-
       <div ref={listRef} className="flex max-h-72 flex-col gap-2.5 overflow-x-hidden overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
         {adlibs.length === 0 && (
           <p className="py-6 text-center text-xs text-ink-500/50">아직 대화가 없습니다. 첫 메시지를 남겨보세요.</p>

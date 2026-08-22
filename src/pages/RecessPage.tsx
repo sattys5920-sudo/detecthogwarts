@@ -191,7 +191,7 @@ export default function RecessPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label="휴게시간" context="갈 곳을 골라보세요" meta="쉬는 시간 · 10분 남음" />
+      <Letterhead label="휴게시간" meta="쉬는 시간 · 10분 남음" />
 
       <div className="flex flex-col gap-3">
         {ROOMS.map((r) => {

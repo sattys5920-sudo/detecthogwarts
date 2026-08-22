@@ -39,7 +39,7 @@ export default function ChatLog({ sysline, messages }: { sysline?: string; messa
         <p className="my-1 text-center font-mono text-[11px] text-ink-500/70">{sysline}</p>
       )}
       {messages.map((m) => (
-        <div key={m.id} className="flex items-start gap-2">
+        <div key={m.id} className={`flex max-w-[85%] items-start gap-2 ${m.me ? 'ml-auto flex-row-reverse' : ''}`}>
           {m.avatar ? (
             <img src={m.avatar} alt="" className="h-6 w-6 flex-none rounded-full border border-ink-700/20 object-cover" />
           ) : (
@@ -49,7 +49,7 @@ export default function ChatLog({ sysline, messages }: { sysline?: string; messa
               {m.initial}
             </span>
           )}
-          <div className="min-w-0 flex-1">
+          <div className={`flex min-w-0 flex-1 flex-col ${m.me ? 'items-end' : 'items-start'}`}>
             <p className={`mb-0.5 text-[11px] font-bold ${WHO_TEXT[m.who]}`}>{m.name}</p>
             <p
               className={`rounded-sm border border-ink-700/15 px-2.5 py-1.5 text-sm text-ink-900 ${

@@ -200,5 +200,34 @@ service cloud.firestore {
         && request.resource.data.slots is list
         && request.resource.data.dex is map;
     }
+
+    // 탐문: 플레이어와 NPC 사이의 1:1 개인 채팅방입니다. NPC는 공용이지만
+    // 대화방은 (playerId, npcId) 조합으로 개인마다 분리됩니다. 답변은 항상
+    // 관리자가 직접 작성하며(AI 자동 응답 없음), 각 스레드에는 최신 메시지
+    // 요약/상태(WAITING·ANSWERED)와 플레이어 읽음 여부만 저장합니다. 실제
+    // 대화 내용은 메시지 서브컬렉션에 추가만 가능한 형태로 저장합니다.
+    match /interrogationThreads/{threadId} {
+      allow read: if true;
+      allow delete: if false;
+
+      allow create, update: if request.resource.data.playerId is string
+        && request.resource.data.npcId is string
+        && request.resource.data.status in ['WAITING', 'ANSWERED']
+        && request.resource.data.lastSender in ['player', 'admin']
+        && request.resource.data.playerUnread is bool;
+
+      match /messages/{messageId} {
+        allow read: if true;
+        allow delete: if false;
+
+        allow create: if request.resource.data.keys().hasAll(['sender', 'text', 'createdAt'])
+          && request.resource.data.sender in ['player', 'admin']
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000;
+
+        allow update: if false;
+      }
+    }
   }
 }

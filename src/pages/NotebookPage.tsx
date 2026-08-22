@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { usePageBack } from '../context/BackContext';
 import { useNotebook, type NotebookEntry } from '../hooks/useNotebook';
 
@@ -43,7 +43,8 @@ export default function NotebookPage() {
   const open = entries.find((e) => e.id === openId);
   const unresolved = entries.filter((e) => e.status !== '확인됨').length;
 
-  usePageBack(open ? () => setOpenId(null) : null);
+  const closeEntry = useCallback(() => setOpenId(null), []);
+  usePageBack(open ? closeEntry : null);
 
   function openEntry(id: string) {
     setOpenId(id);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Composer from '../components/Composer';
 import Letterhead from '../components/Letterhead';
 import { usePageBack } from '../context/BackContext';
@@ -217,7 +217,8 @@ export default function HallPage() {
 
   const openPost = posts.find((p) => p.id === openId);
 
-  usePageBack(openPost ? () => setOpenId(null) : null);
+  const closePost = useCallback(() => setOpenId(null), []);
+  usePageBack(openPost ? closePost : null);
 
   function handleCreatePost() {
     const trimmed = draft.trim();

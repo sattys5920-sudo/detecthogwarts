@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import DaVinciCodeGame from '../components/DaVinciCodeGame';
@@ -71,10 +71,10 @@ export default function RecessPage() {
     return () => unsubs.forEach((u) => u());
   }, []);
 
-  function exitRoom() {
+  const exitRoom = useCallback(() => {
     if (davinciPlaying) exitDavinci();
     setActiveRoom(null);
-  }
+  }, [davinciPlaying]);
 
   usePageBack(room ? exitRoom : null);
 

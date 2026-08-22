@@ -7,6 +7,8 @@ import ExplorationPage from './pages/ExplorationPage';
 import ForestPage from './pages/ForestPage';
 import HallPage from './pages/HallPage';
 import HerbFarmPage from './pages/HerbFarmPage';
+import InterrogationChatPage from './pages/InterrogationChatPage';
+import InterrogationPage from './pages/InterrogationPage';
 import LoadingPage from './pages/LoadingPage';
 import NotebookPage from './pages/NotebookPage';
 import ProfilePage from './pages/ProfilePage';
@@ -32,6 +34,22 @@ export default function App() {
           element={
             <AppShell>
               <ExplorationPage />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/interrogation"
+          element={
+            <AppShell>
+              <InterrogationPage />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/interrogation/:npcId"
+          element={
+            <AppShell>
+              <InterrogationChatPage />
             </AppShell>
           }
         />

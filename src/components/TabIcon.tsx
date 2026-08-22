@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-export type TabIconName = 'hall' | 'exploration' | 'recess' | 'notebook' | 'profile';
+export type TabIconName = 'hall' | 'exploration' | 'interrogation' | 'recess' | 'notebook' | 'profile';
 
 const COMMON = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
@@ -20,6 +20,16 @@ function ExplorationGlyph() {
     <>
       <circle {...COMMON} cx="10.5" cy="10.5" r="6.5" />
       <path {...COMMON} d="M15.2 15.2 20 20" />
+    </>
+  );
+}
+
+function InterrogationGlyph() {
+  return (
+    <>
+      <path {...COMMON} d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9A1.5 1.5 0 0 1 18.5 16H9l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5v-9Z" />
+      <path {...COMMON} d="M8.3 8.6h7.4" />
+      <path {...COMMON} d="M8.3 11.6h4.6" />
     </>
   );
 }
@@ -57,6 +67,7 @@ function ProfileGlyph() {
 const GLYPHS: Record<TabIconName, () => JSX.Element> = {
   hall: HallGlyph,
   exploration: ExplorationGlyph,
+  interrogation: InterrogationGlyph,
   recess: RecessGlyph,
   notebook: NotebookGlyph,
   profile: ProfileGlyph,

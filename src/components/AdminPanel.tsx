@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Button from './Button';
 import Card from './Card';
+import InterrogationInbox from './InterrogationInbox';
 import { HOUSES } from '../data/school';
 import type { HouseId } from '../data/sortingTest';
 import { sendAnnouncement } from '../firebase/announcements';
@@ -140,6 +141,8 @@ export default function AdminPanel() {
   return (
     <div className="flex flex-col gap-4">
       <AnnouncementSender />
+
+      <InterrogationInbox />
 
       <div>
         <p className="font-gothic text-3xl text-ink-black">가입자 목록 · 기숙사 배정</p>

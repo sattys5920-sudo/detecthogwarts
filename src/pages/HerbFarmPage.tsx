@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import Letterhead from '../components/Letterhead';
@@ -195,7 +195,7 @@ export default function HerbFarmPage() {
   const [busySlot, setBusySlot] = useState<number | null>(null);
   const [busyAll, setBusyAll] = useState(false);
 
-  usePageBack(() => navigate('/recess'));
+  usePageBack(useCallback(() => navigate('/recess'), [navigate]));
 
   useEffect(() => {
     if (!game.playerId) return;

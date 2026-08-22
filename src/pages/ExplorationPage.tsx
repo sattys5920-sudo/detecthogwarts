@@ -100,12 +100,6 @@ export default function ExplorationPage() {
 
       {showClosing[day.day] && (
         <>
-          <div className="flex flex-col gap-1.5 rounded-sm border border-ink-700/15 bg-paper-100/60 p-3.5 text-sm leading-relaxed text-ink-900">
-            {day.closing.map((line, i) => (
-              <p key={i}>{line}</p>
-            ))}
-          </div>
-
           {day.finalDay && <FinalDeduction notebookEntries={entries} onSolved={() => game.setDeductionSolved(true)} />}
 
           {game.isAdmin && !day.finalDay && selectedDay === game.currentDay && game.currentDay < 5 && (

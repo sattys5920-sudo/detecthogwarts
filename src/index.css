@@ -114,20 +114,6 @@ select {
     radial-gradient(ellipse 240px 160px at 5% 90%, rgba(120, 85, 45, 0.08), transparent 60%);
 }
 
-/* squared title plate: a flat rectangular seal-colored panel with a thin gold hairline
-   set just inside the outer edge, in place of the old scroll-ribbon cloth-edge shape. */
-.title-plate {
-  border: 1.5px solid var(--color-seal-700);
-}
-
-.title-plate::before {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border: 1px solid rgba(207, 160, 80, 0.6);
-  pointer-events: none;
-}
-
 .deckle-edge {
   border-radius: 2px 4px 3px 5px;
 }

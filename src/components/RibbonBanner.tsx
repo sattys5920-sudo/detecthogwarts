@@ -13,7 +13,7 @@ interface RibbonBannerProps {
 
 export default function RibbonBanner({ children, size = 'md', className = '' }: RibbonBannerProps) {
   return (
-    <div className={`title-plate relative inline-block bg-seal-600 shadow-[0_3px_8px_rgba(42,28,18,0.35)] ${SIZES[size]} ${className}`}>
+    <div className={`tablet-btn tablet-btn-dark relative inline-block ${SIZES[size]} ${className}`}>
       <span
         className="font-gothic block whitespace-nowrap leading-none tracking-[0.08em] text-paper-50"
         style={{ textShadow: '0 1px 0 rgba(0,0,0,0.35)', fontWeight: 700 }}

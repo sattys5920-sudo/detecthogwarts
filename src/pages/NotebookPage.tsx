@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import RibbonBanner from '../components/RibbonBanner';
 import { usePageBack } from '../context/BackContext';
 import { useNotebook, type NotebookEntry } from '../hooks/useNotebook';
 
@@ -116,7 +117,7 @@ export default function NotebookPage() {
           </div>
         ) : (
           <div className="notebook-page">
-            <h2 className="font-display text-3xl text-ink-900">탐사 수첩</h2>
+            <RibbonBanner size="lg">탐사 수첩</RibbonBanner>
             <p className="mt-1 font-mono text-[11px] text-ink-500/70">
               단서 {entries.length}건 · 미해결 {unresolved}건
             </p>

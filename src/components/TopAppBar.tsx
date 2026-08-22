@@ -37,7 +37,7 @@ export default function TopAppBar() {
         </button>
 
         <div className="text-center leading-none">
-          <p className="font-gothic text-base tracking-wide text-ink-black">아르카눔</p>
+          <p className="font-gothic text-base tracking-wide text-ink-black">HWCF</p>
           <p className="mt-1 font-mono text-[8px] font-bold tracking-[0.3em] text-ink-500">WIZARDING SCHOOL</p>
         </div>
 

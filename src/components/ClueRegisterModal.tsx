@@ -22,7 +22,7 @@ export default function ClueRegisterModal({ sourceText, alreadyRegistered, onCon
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xs rounded-lg border border-ink-700/20 bg-paper-50 p-4 shadow-[0_8px_30px_rgba(23,19,15,0.35)]"
+        className="flex max-h-[85vh] w-full max-w-xs flex-col overflow-y-auto rounded-lg border border-ink-700/20 bg-paper-50 p-4 shadow-[0_8px_30px_rgba(23,19,15,0.35)]"
         onClick={(e) => e.stopPropagation()}
       >
         <p className="font-mono text-[11px] font-bold text-seal-600">조사 수첩에 등록</p>
@@ -42,7 +42,7 @@ export default function ClueRegisterModal({ sourceText, alreadyRegistered, onCon
           className="mt-3 w-full rounded-lg border border-ink-700/20 bg-paper-100/60 px-2.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
         />
 
-        <div className="mt-3 flex justify-end gap-3">
+        <div className="mt-3 flex flex-none justify-end gap-3">
           <button type="button" onClick={onClose} className="text-xs text-ink-500/60 hover:underline">
             취소
           </button>

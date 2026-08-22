@@ -60,6 +60,7 @@ body,
 html {
   overscroll-behavior: none;
   touch-action: pan-y;
+  overflow-x: hidden;
 }
 
 body {
@@ -69,6 +70,7 @@ body {
   min-height: 100svh;
   overscroll-behavior: none;
   touch-action: pan-y;
+  overflow-x: hidden;
 }
 
 /* form controls must render at 16px+ or iOS Safari auto-zooms the page on focus */

@@ -162,9 +162,9 @@ function HarvestPopup({ results, onClose }: { results: HarvestResult[]; onClose:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-black/60 px-6" role="alertdialog" aria-modal="true">
-      <div className="deckle-edge w-full max-w-xs border border-seal-500/40 bg-paper-50 p-5 text-center">
-        {anyNew && <p className="font-mono text-[10px] font-bold tracking-widest text-seal-600">✨ 새로운 약초 발견!</p>}
-        <div className="mt-3 flex flex-col gap-3">
+      <div className="deckle-edge flex max-h-[85vh] w-full max-w-xs flex-col border border-seal-500/40 bg-paper-50 p-5 text-center">
+        {anyNew && <p className="flex-none font-mono text-[10px] font-bold tracking-widest text-seal-600">✨ 새로운 약초 발견!</p>}
+        <div className="mt-3 flex flex-1 flex-col gap-3 overflow-y-auto">
           {results.map((r, i) => (
             <div key={`${r.herb.id}-${i}`} className="flex flex-col items-center gap-1">
               <span className="text-2xl">🌿</span>
@@ -176,8 +176,8 @@ function HarvestPopup({ results, onClose }: { results: HarvestResult[]; onClose:
             </div>
           ))}
         </div>
-        {results.length > 1 && <p className="mt-3 font-mono text-[11px] text-ink-500/70">총 HP +{totalHeal}</p>}
-        <button type="button" onClick={onClose} className="tablet-btn tablet-btn-dark mt-5 w-full px-4 py-2 text-xs font-bold">
+        {results.length > 1 && <p className="mt-3 flex-none font-mono text-[11px] text-ink-500/70">총 HP +{totalHeal}</p>}
+        <button type="button" onClick={onClose} className="tablet-btn tablet-btn-dark mt-5 w-full flex-none px-4 py-2 text-xs font-bold">
           확인
         </button>
       </div>

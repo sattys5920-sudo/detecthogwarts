@@ -17,23 +17,11 @@ export default function BottomTabBar() {
     >
       <div className="mx-auto flex max-w-md items-start justify-between gap-1">
         {TABS.map((tab) => (
-          <NavLink key={tab.to} to={tab.to} className="flex flex-1 flex-col items-center gap-1 py-1">
+          <NavLink key={tab.to} to={tab.to} className="flex flex-1 flex-col items-center gap-1.5 py-1.5">
             {({ isActive }) => (
               <>
-                <span
-                  className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
-                    isActive
-                      ? 'border-seal-700 bg-seal-600 text-paper-50 shadow-[0_2px_4px_rgba(42,28,18,0.35)]'
-                      : 'border-ink-700/20 bg-paper-50/60 text-ink-700/60'
-                  }`}
-                >
-                  <TabIcon name={tab.icon} className="h-[19px] w-[19px]" />
-                </span>
-                <span
-                  className={`text-center text-[10px] leading-tight font-bold ${
-                    isActive ? 'text-seal-600' : 'text-ink-700/60'
-                  }`}
-                >
+                <TabIcon name={tab.icon} className={`h-6 w-6 ${isActive ? 'text-seal-600' : 'text-ink-700/45'}`} />
+                <span className={`text-center text-[10px] leading-tight font-bold ${isActive ? 'text-seal-600' : 'text-ink-700/45'}`}>
                   {tab.label}
                 </span>
               </>

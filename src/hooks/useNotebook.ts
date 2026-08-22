@@ -12,6 +12,7 @@ export interface NotebookEntry {
 }
 
 const STORAGE_KEY = 'arcanum-notebook';
+const SYNC_EVENT = 'arcanum-notebook-sync';
 
 const SEED: NotebookEntry[] = [
   {
@@ -49,32 +50,57 @@ function load(): NotebookEntry[] {
   }
 }
 
+function persist(entries: NotebookEntry[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    window.dispatchEvent(new Event(SYNC_EVENT));
+  } catch {
+    // localStorage unavailable (private mode, etc.) — silently skip persistence.
+  }
+}
+
 export function useNotebook() {
   const [entries, setEntries] = useState<NotebookEntry[]>(load);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-  }, [entries]);
+    const sync = () => setEntries(load());
+    window.addEventListener(SYNC_EVENT, sync);
+    return () => window.removeEventListener(SYNC_EVENT, sync);
+  }, []);
 
   const register = useCallback((entry: Omit<NotebookEntry, 'id' | 'registeredAt'>) => {
     setEntries((prev) => {
       if (entry.sourceId && prev.some((e) => e.sourceId === entry.sourceId)) return prev;
       if (!entry.sourceId && prev.some((e) => e.title === entry.title)) return prev;
       const created: NotebookEntry = { ...entry, id: crypto.randomUUID(), registeredAt: Date.now() };
-      return [created, ...prev];
+      const next = [created, ...prev];
+      persist(next);
+      return next;
     });
   }, []);
 
   const remove = useCallback((id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+    setEntries((prev) => {
+      const next = prev.filter((e) => e.id !== id);
+      persist(next);
+      return next;
+    });
   }, []);
 
   const setInk = useCallback((id: string, ink: NotebookEntry['ink']) => {
-    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ink } : e)));
+    setEntries((prev) => {
+      const next = prev.map((e) => (e.id === id ? { ...e, ink } : e));
+      persist(next);
+      return next;
+    });
   }, []);
 
   const setMemo = useCallback((id: string, memo: string) => {
-    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, memo } : e)));
+    setEntries((prev) => {
+      const next = prev.map((e) => (e.id === id ? { ...e, memo } : e));
+      persist(next);
+      return next;
+    });
   }, []);
 
   return { entries, register, remove, setInk, setMemo };

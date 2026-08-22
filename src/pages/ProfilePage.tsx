@@ -20,6 +20,33 @@ const ITEMS = [
   { name: '촛불', count: 1 },
 ];
 
+function ItemGlyph({ name, className = '' }: { name: string; className?: string }) {
+  const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      {name === '나침반' && (
+        <>
+          <circle cx="12" cy="12" r="8" {...stroke} />
+          <path d="M14 9l-1.3 4.3L9 15l1.3-4.3L14 9Z" fill="currentColor" />
+        </>
+      )}
+      {name === '부적' && <path d="M12 3 20 12 12 21 4 12Z" fill="currentColor" />}
+      {name === '마법약' && (
+        <>
+          <path d="M9 3h6M10 3v5l-4.5 8a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 8V3" {...stroke} />
+          <path d="M7.5 14h9" {...stroke} />
+        </>
+      )}
+      {name === '촛불' && (
+        <>
+          <path d="M9 21h6M10 21V9h4v12" {...stroke} />
+          <path d="M12 3c1.5 1.8 1.5 3.2 0 4.5C10.5 6.2 10.5 4.8 12 3Z" fill="currentColor" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 export default function ProfilePage() {
   const game = useGame();
   const navigate = useNavigate();
@@ -155,10 +182,15 @@ export default function ProfilePage() {
 
         <div className="my-4 h-px bg-ink-700/10" />
 
-        <div className="grid grid-cols-2 gap-2 text-left text-sm">
+        <div className="grid grid-cols-4 gap-2">
           {ITEMS.map((it) => (
-            <div key={it.name} className="rounded-sm border border-ink-700/15 bg-paper-100 px-2.5 py-1.5">
-              {it.name} <b className="font-mono text-ink-red">x{it.count}</b>
+            <div
+              key={it.name}
+              className="flex flex-col items-center gap-1 rounded-lg border-2 border-ink-700/25 bg-paper-100 py-2.5 shadow-[inset_0_0_0_2px_var(--color-paper-50)]"
+            >
+              <ItemGlyph name={it.name} className="h-6 w-6 text-seal-600" />
+              <span className="text-center text-[10px] leading-tight font-bold text-ink-900">{it.name}</span>
+              <span className="font-mono text-[10px] text-ink-red">x{it.count}</span>
             </div>
           ))}
         </div>
@@ -177,19 +209,20 @@ export default function ProfilePage() {
         <div>
           <p className="mb-2 text-xs font-bold text-ink-700/70">소속 기숙사 · 임시 선택</p>
           <p className="mb-2 text-[11px] text-ink-500/60">정식 배정 전까지 임시로 골라둘 수 있어요.</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             {HOUSES.map((h) => {
               const selected = game.houseId === h.id;
               return (
-                <button key={h.id} type="button" onClick={() => game.setHouse(h.id)} className="text-left">
-                  <Card
-                    className={`transition-colors ${selected ? 'ring-2 ring-seal-500/50' : 'hover:border-ink-700/30'}`}
-                    style={selected ? { borderColor: h.color } : undefined}
+                <button key={h.id} type="button" onClick={() => game.setHouse(h.id)} className="flex flex-col items-center gap-1.5">
+                  <span
+                    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 font-gothic text-base text-paper-50 transition-shadow ${
+                      selected ? 'shadow-[0_0_0_3px_var(--color-paper-50),0_0_0_5px_var(--color-seal-500)]' : ''
+                    }`}
+                    style={{ backgroundColor: h.color, borderColor: 'rgba(42,28,18,0.4)' }}
                   >
-                    <span className="block h-2 w-8 rounded-full" style={{ backgroundColor: h.color }} />
-                    <p className="mt-2 font-serif-kr font-semibold text-ink-900">{h.name}</p>
-                    <p className="text-xs text-ink-500/70">{h.element}</p>
-                  </Card>
+                    {h.name}
+                  </span>
+                  <span className={`text-[11px] font-bold ${selected ? 'text-seal-600' : 'text-ink-700/60'}`}>{h.element}</span>
                 </button>
               );
             })}

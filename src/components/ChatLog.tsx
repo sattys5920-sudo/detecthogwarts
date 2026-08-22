@@ -2,6 +2,7 @@ export interface ChatMessage {
   id: string;
   name: string;
   initial: string;
+  avatar?: string;
   who: 'black' | 'red' | 'indigo';
   text: string;
   me?: boolean;
@@ -39,11 +40,15 @@ export default function ChatLog({ sysline, messages }: { sysline?: string; messa
       )}
       {messages.map((m) => (
         <div key={m.id} className="flex items-start gap-2">
-          <span
-            className={`flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-paper-50 ${WHO_BG[m.who]}`}
-          >
-            {m.initial}
-          </span>
+          {m.avatar ? (
+            <img src={m.avatar} alt="" className="h-6 w-6 flex-none rounded-full border border-ink-700/20 object-cover" />
+          ) : (
+            <span
+              className={`flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-paper-50 ${WHO_BG[m.who]}`}
+            >
+              {m.initial}
+            </span>
+          )}
           <div className="min-w-0 flex-1">
             <p className={`mb-0.5 text-[11px] font-bold ${WHO_TEXT[m.who]}`}>{m.name}</p>
             <p

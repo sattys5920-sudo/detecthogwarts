@@ -51,6 +51,7 @@ export default function InterrogationChatPage() {
     id: m.id,
     name: m.sender === 'player' ? game.nickname || '나' : npc.name,
     initial: m.sender === 'player' ? (game.nickname ? game.nickname[0] : '나') : npc.name[0],
+    avatar: m.sender === 'player' ? undefined : npc.avatar,
     who: m.sender === 'player' ? 'indigo' : 'red',
     text: m.text,
     me: m.sender === 'player',
@@ -58,6 +59,9 @@ export default function InterrogationChatPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex justify-center">
+        <img src={npc.avatar} alt="" className="h-16 w-16 rounded-full border border-ink-700/20 object-cover" />
+      </div>
       <Letterhead label={npc.name} context={npc.role} meta="탐문" />
 
       <div

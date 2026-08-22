@@ -26,9 +26,7 @@ export default function InterrogationPage() {
         {NPCS.map((npc) => (
           <button key={npc.id} type="button" onClick={() => navigate(`/interrogation/${npc.id}`)} className="text-left">
             <Card className="flex items-center gap-3 hover:border-ink-700/30">
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-ink-black text-sm font-bold text-paper-50">
-                {npc.name[0]}
-              </span>
+              <img src={npc.avatar} alt="" className="h-10 w-10 flex-none rounded-full border border-ink-700/20 object-cover" />
               <div className="min-w-0 flex-1">
                 <p className="font-serif-kr font-semibold text-ink-900">{npc.name}</p>
                 <p className="text-xs text-ink-700/70">{npc.role}</p>

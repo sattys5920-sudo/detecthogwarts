@@ -30,6 +30,7 @@ function ThreadDetail({ thread, onClose }: { thread: InterrogationThread; onClos
     id: m.id,
     name: m.sender === 'player' ? thread.playerNickname : (npc?.name ?? thread.npcId),
     initial: m.sender === 'player' ? thread.playerNickname[0] || '?' : npc?.name[0] || '?',
+    avatar: m.sender === 'player' ? undefined : npc?.avatar,
     who: m.sender === 'player' ? 'indigo' : 'red',
     text: m.text,
     me: m.sender === 'admin',

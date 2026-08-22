@@ -240,26 +240,11 @@ export default function ProfilePage() {
         </div>
       ) : (
         <div>
-          <SectionTitle className="mb-2">소속 기숙사 · 임시 선택</SectionTitle>
-          <p className="mb-2 text-[11px] text-ink-500/60">정식 배정 전까지 임시로 골라둘 수 있어요.</p>
-          <div className="grid grid-cols-4 gap-2">
-            {HOUSES.map((h) => {
-              const selected = game.houseId === h.id;
-              return (
-                <button key={h.id} type="button" onClick={() => game.setHouse(h.id)} className="flex flex-col items-center gap-1.5">
-                  <span
-                    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 font-gothic text-base text-paper-50 transition-shadow ${
-                      selected ? 'shadow-[0_0_0_3px_var(--color-paper-50),0_0_0_5px_var(--color-seal-500)]' : ''
-                    }`}
-                    style={{ backgroundColor: h.color, borderColor: 'rgba(42,28,18,0.4)' }}
-                  >
-                    {h.name}
-                  </span>
-                  <span className={`text-[11px] font-bold ${selected ? 'text-seal-600' : 'text-ink-700/60'}`}>{h.element}</span>
-                </button>
-              );
-            })}
-          </div>
+          <SectionTitle className="mb-2">소속 기숙사</SectionTitle>
+          <Card>
+            <p className="text-sm text-ink-700/70">아직 기숙사가 배정되지 않았습니다.</p>
+            <p className="mt-1 text-xs text-ink-500/60">관리자가 배정하면 여기에 표시됩니다.</p>
+          </Card>
         </div>
       )}
 

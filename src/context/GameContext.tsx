@@ -60,7 +60,6 @@ interface GameContextValue extends PlayerState {
   unlockAdmin: () => void;
   clearJustAssigned: () => void;
   completeSignup: (nickname: string, testScores: Record<HouseId, number>, computedHouse: HouseId) => Promise<void>;
-  setHouse: (houseId: string) => void;
   setNickname: (nickname: string) => void;
   setAvatar: (dataUrl: string | null) => void;
   adjustStat: (key: keyof PlayerStats, delta: number) => void;
@@ -106,10 +105,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
-
-  const setHouse = useCallback((houseId: string) => {
-    setState((prev) => ({ ...prev, houseId }));
-  }, []);
 
   const setNickname = useCallback((nickname: string) => {
     setState((prev) => ({ ...prev, nickname }));
@@ -159,7 +154,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     unlockAdmin,
     clearJustAssigned,
     completeSignup,
-    setHouse,
     setNickname,
     setAvatar,
     adjustStat,

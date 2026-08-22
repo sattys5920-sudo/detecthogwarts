@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminPanel from '../components/AdminPanel';
 import Button from '../components/Button';
@@ -6,6 +6,7 @@ import Card from '../components/Card';
 import Letterhead from '../components/Letterhead';
 import { useGame } from '../context/GameContext';
 import { HOUSES, SCHOOL_NAME } from '../data/school';
+import { DEFAULT_PREFS, setPref, subscribePrefs, type NotificationPrefs } from '../firebase/notificationPrefs';
 
 const STAT_LABELS: { key: 'hp' | 'intelligence' | 'stamina' | 'spellPower'; label: string }[] = [
   { key: 'hp', label: 'HP' },
@@ -48,6 +49,23 @@ function ItemGlyph({ name, className = '' }: { name: string; className?: string 
   );
 }
 
+function PrefRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-2 py-2">
+      <span className="text-sm text-ink-900">{label}</span>
+      <button
+        type="button"
+        onClick={() => onChange(!value)}
+        className={`rounded-full px-3 py-1 font-mono text-[11px] font-bold transition-colors ${
+          value ? 'bg-seal-600 text-paper-50' : 'bg-paper-200 text-ink-700/60'
+        }`}
+      >
+        {value ? 'ON' : 'OFF'}
+      </button>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const game = useGame();
   const navigate = useNavigate();
@@ -56,6 +74,17 @@ export default function ProfilePage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(game.nickname);
+  const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
+
+  useEffect(() => {
+    if (!game.playerId) return;
+    return subscribePrefs(game.playerId, setPrefs);
+  }, [game.playerId]);
+
+  function updatePref(key: keyof NotificationPrefs, value: boolean) {
+    if (!game.playerId) return;
+    setPref(game.playerId, key, value);
+  }
 
   function handlePickPhoto() {
     fileRef.current?.click();
@@ -230,6 +259,19 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      <div>
+        <p className="mb-2 text-xs font-bold text-ink-700/70">알림 설정</p>
+        <Card className="flex flex-col divide-y divide-ink-700/10">
+          <PrefRow label="전체 알림" value={prefs.master} onChange={(v) => updatePref('master', v)} />
+          <PrefRow label="새 팝업 · 피드 · 이벤트" value={prefs.event} onChange={(v) => updatePref('event', v)} />
+          <PrefRow label="전체 대화" value={prefs.chat} onChange={(v) => updatePref('chat', v)} />
+          <PrefRow label="태그 알림" value={prefs.mention} onChange={(v) => updatePref('mention', v)} />
+        </Card>
+        {!prefs.master && (
+          <p className="mt-1.5 text-[11px] text-ink-500/60">전체 알림이 꺼져 있어 모든 알림이 차단됩니다. 개별 설정은 그대로 유지돼요.</p>
+        )}
+      </div>
 
       {game.isAdmin && (
         <div>

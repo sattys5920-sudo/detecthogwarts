@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useDeclareActiveView } from '../context/ActiveViewContext';
 import { useGame } from '../context/GameContext';
 import { type DormMessage, listenDormMessages, sendDormMessage } from '../firebase/dormChat';
 import ChatLog, { type ChatMessage } from './ChatLog';
@@ -17,6 +18,7 @@ export default function DormChat({ houseId }: { houseId: string }) {
   const [messages, setMessages] = useState<DormMessage[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
 
+  useDeclareActiveView(`dorm:${houseId}`);
   useEffect(() => listenDormMessages(houseId, setMessages), [houseId]);
 
   useEffect(() => {

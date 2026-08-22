@@ -201,6 +201,45 @@ service cloud.firestore {
         && request.resource.data.dex is map;
     }
 
+    // 알림 설정: 플레이어 1인당 문서 하나. 클라이언트가 토글마다 필드 하나씩
+    // 부분 병합(merge)으로 쓰기 때문에, 매 쓰기마다 4개 필드가 전부 있으라고
+    // 요구하면 첫 토글에서 막혀버립니다. 그래서 "존재하는 필드는 반드시
+    // bool"만 검증합니다.
+    match /notificationPrefs/{playerId} {
+      allow read: if true;
+      allow delete: if false;
+
+      allow create, update: if
+        (!('master' in request.resource.data) || request.resource.data.master is bool) &&
+        (!('event' in request.resource.data) || request.resource.data.event is bool) &&
+        (!('chat' in request.resource.data) || request.resource.data.chat is bool) &&
+        (!('mention' in request.resource.data) || request.resource.data.mention is bool);
+    }
+
+    // 알림 센터: 웹앱이 열려 있는 동안 공지/피드/기숙사 대화/태그를 감지해
+    // 만드는 인앱 알림 기록입니다(1단계 — 실제 모바일 OS 푸시는 별도
+    // 인프라가 필요해 이후 단계). 문서 id 자체가 (playerId, type, targetId)
+    // 조합의 고유 키라 같은 이벤트가 중복 생성되지 않습니다. 생성 이후에는
+    // isRead만 바꿀 수 있습니다.
+    match /notifications/{notifId} {
+      allow read: if true;
+      allow delete: if false;
+
+      allow create: if request.resource.data.keys().hasAll(
+          ['playerId', 'type', 'title', 'body', 'targetUrl', 'targetId', 'isRead', 'createdAt']
+        )
+        && request.resource.data.playerId is string
+        && request.resource.data.type in ['POPUP', 'FEED', 'CHAT', 'MENTION']
+        && request.resource.data.title is string
+        && request.resource.data.body is string
+        && request.resource.data.targetUrl is string
+        && request.resource.data.targetId is string
+        && request.resource.data.isRead is bool;
+
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead'])
+        && request.resource.data.isRead is bool;
+    }
+
     // 탐문: 플레이어와 NPC 사이의 1:1 개인 채팅방입니다. NPC는 공용이지만
     // 대화방은 (playerId, npcId) 조합으로 개인마다 분리됩니다. 답변은 항상
     // 관리자가 직접 작성하며(AI 자동 응답 없음), 각 스레드에는 최신 메시지

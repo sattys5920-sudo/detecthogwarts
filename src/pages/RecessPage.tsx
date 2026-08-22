@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Card from '../components/Card';
 import DaVinciCodeGame from '../components/DaVinciCodeGame';
 import DormChat from '../components/DormChat';
@@ -55,7 +55,11 @@ function davinciPlaysKey(day: number) {
 export default function RecessPage() {
   const game = useGame();
   const navigate = useNavigate();
-  const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const [activeRoom, setActiveRoom] = useState<string | null>(() => {
+    const room = searchParams.get('room');
+    return room && ROOMS.some((r) => r.id === room && !r.linkTo) ? room : null;
+  });
   const [davinciSession, setDavinciSession] = useState(0);
   const [davinciPlaying, setDavinciPlaying] = useState(false);
   const [davinciResult, setDavinciResult] = useState<'win' | 'lose' | null>(null);

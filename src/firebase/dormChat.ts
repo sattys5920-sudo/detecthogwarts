@@ -61,7 +61,11 @@ export function listenDormMessages(houseId: string, callback: (messages: DormMes
   const read = () => callback(readDemo(houseId));
   read();
   window.addEventListener(DEMO_EVENT, read);
-  return () => window.removeEventListener(DEMO_EVENT, read);
+  window.addEventListener('storage', read);
+  return () => {
+    window.removeEventListener(DEMO_EVENT, read);
+    window.removeEventListener('storage', read);
+  };
 }
 
 export async function sendDormMessage(houseId: string, input: Omit<DormMessage, 'id' | 'createdAt'>): Promise<void> {

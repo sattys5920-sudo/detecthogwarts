@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBackContext } from '../context/BackContext';
+import { useGame } from '../context/GameContext';
+import { subscribeNotifications, type AppNotification } from '../firebase/notifications';
 import { useNotebook } from '../hooks/useNotebook';
 
 export default function TopAppBar() {
@@ -7,6 +10,14 @@ export default function TopAppBar() {
   const { handler } = useBackContext();
   const { entries } = useNotebook();
   const unresolved = entries.filter((e) => e.status !== '확인됨').length;
+  const game = useGame();
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const unreadNotifications = notifications.filter((n) => !n.isRead).length;
+
+  useEffect(() => {
+    if (!game.playerId) return;
+    return subscribeNotifications(game.playerId, setNotifications);
+  }, [game.playerId]);
 
   function handleBack() {
     if (handler) handler();
@@ -18,7 +29,7 @@ export default function TopAppBar() {
       className="top-bar-shell relative z-30 flex-none px-3"
       style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.6rem)' }}
     >
-      <div className="mx-auto grid max-w-md grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 pb-2.5">
+      <div className="mx-auto grid max-w-md grid-cols-[2.25rem_1fr_2.25rem_2.25rem] items-center gap-1.5 pb-2.5">
         <button
           type="button"
           onClick={handleBack}
@@ -40,6 +51,30 @@ export default function TopAppBar() {
           <p className="font-gothic text-base tracking-wide text-ink-black">HWCF</p>
           <p className="mt-1 font-mono text-[8px] font-bold tracking-[0.3em] text-ink-500">WIZARDING SCHOOL</p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => navigate('/notifications')}
+          aria-label="알림"
+          className="relative flex h-9 w-9 flex-none items-center justify-center text-ink-700/80 hover:text-ink-900"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+            <path
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4.5 6.5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z"
+            />
+            <path fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" d="M4 7.2 12 13l8-5.8" />
+          </svg>
+          {unreadNotifications > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border border-paper-50 bg-seal-600 px-1 text-[9px] font-bold leading-none text-paper-50">
+              {unreadNotifications}
+            </span>
+          )}
+        </button>
 
         <button
           type="button"

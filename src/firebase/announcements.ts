@@ -47,5 +47,9 @@ export function listenAnnouncement(callback: (a: Announcement | null) => void): 
   const read = () => callback(readDemo());
   read();
   window.addEventListener(DEMO_EVENT, read);
-  return () => window.removeEventListener(DEMO_EVENT, read);
+  window.addEventListener('storage', read);
+  return () => {
+    window.removeEventListener(DEMO_EVENT, read);
+    window.removeEventListener('storage', read);
+  };
 }

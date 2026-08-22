@@ -115,7 +115,11 @@ export function listenPosts(callback: (posts: Post[]) => void): () => void {
   const read = () => callback(readDemo().posts.slice().sort((a, b) => b.createdAt - a.createdAt));
   read();
   window.addEventListener(DEMO_EVENT, read);
-  return () => window.removeEventListener(DEMO_EVENT, read);
+  window.addEventListener('storage', read);
+  return () => {
+    window.removeEventListener(DEMO_EVENT, read);
+    window.removeEventListener('storage', read);
+  };
 }
 
 export async function createComment(postId: string, input: NewComment): Promise<string> {

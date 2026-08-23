@@ -2,8 +2,19 @@ import CornerFlourish from './CornerFlourish';
 import { useGame } from '../context/GameContext';
 import { HOUSES } from '../data/school';
 import { patronusById } from '../game/forest/patronus';
+import gryffindorCrest from '../assets/crests/gryffindor.png';
+import hufflepuffCrest from '../assets/crests/hufflepuff.png';
+import ravenclawCrest from '../assets/crests/ravenclaw.png';
+import slytherinCrest from '../assets/crests/slytherin.png';
 
-function PopupShell({ label, lines, onConfirm }: { label: string; lines: string[]; onConfirm: () => void }) {
+const HOUSE_CRESTS: Record<string, string> = {
+  flame: gryffindorCrest,
+  moonlight: ravenclawCrest,
+  earth: hufflepuffCrest,
+  wind: slytherinCrest,
+};
+
+function PopupShell({ label, image, lines, onConfirm }: { label: string; image?: string; lines: string[]; onConfirm: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-black/60 px-6" role="alertdialog" aria-modal="true">
       <div className="deckle-edge relative flex max-h-[85vh] w-full max-w-xs flex-col border border-seal-500/40 bg-paper-50 p-5 text-center shadow-[0_4px_20px_rgba(23,19,15,0.35)]">
@@ -12,6 +23,7 @@ function PopupShell({ label, lines, onConfirm }: { label: string; lines: string[
         <CornerFlourish corner="bl" className="pointer-events-none absolute -bottom-1.5 -left-1.5 h-5 w-5 text-gold-600/70" />
         <CornerFlourish corner="br" className="pointer-events-none absolute -bottom-1.5 -right-1.5 h-5 w-5 text-gold-600/70" />
         <p className="flex-none font-mono text-[10px] font-bold tracking-widest text-seal-600">{label}</p>
+        {image && <img src={image} alt="" className="mx-auto mt-3 h-24 w-auto flex-none" />}
         <div className="mt-3 flex-1 overflow-y-auto">
           {lines.map((line, i) => (
             <p key={i} className={`font-serif-kr text-sm leading-relaxed text-ink-900 ${i > 0 ? 'mt-3' : ''}`}>
@@ -41,6 +53,7 @@ export default function AssignmentPopup() {
       return (
         <PopupShell
           label="기숙사 배정"
+          image={HOUSE_CRESTS[house.id]}
           lines={['기숙사 배정 모자가 고민 끝에 입을 열었습니다.', `${game.nickname}, 당신은...... ${house.name}!`]}
           onConfirm={game.clearJustAssigned}
         />

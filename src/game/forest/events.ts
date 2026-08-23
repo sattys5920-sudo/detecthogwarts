@@ -128,18 +128,18 @@ function buildIntelligence(): ForestEvent[] {
   });
 }
 
-function buildDefense(): ForestEvent[] {
+function buildAgility(): ForestEvent[] {
   return DEFENSE_TITLES.map((title, i) => {
     const id = `E${String(i + 36).padStart(3, '0')}`;
     return {
       id,
       title,
-      description: `${title}. 몸이 한결 단단해진 느낌이다.`,
-      category: 'defense' as EventCategory,
+      description: `${title}. 몸놀림이 한결 가벼워진 느낌이다.`,
+      category: 'agility' as EventCategory,
       rarity: 'common' as const,
       minStage: 1,
       maxStage: 10,
-      effect: { defense: randInt(id, 1, 1, 3) },
+      effect: { agility: randInt(id, 1, 1, 3) },
     };
   });
 }
@@ -213,11 +213,11 @@ function buildPenalty(): ForestEvent[] {
       };
     }
     if (kind === 1) {
-      const useDefense = i % 8 === 5;
+      const useAgility = i % 8 === 5;
       return {
         id, title, description: `${title}. 힘이 조금 빠져나가는 느낌이다.`,
         category: 'penalty' as EventCategory, rarity: 'common' as const, minStage: 1, maxStage: 10,
-        effect: useDefense ? { defense: -randInt(id, 1, 1, 2) } : { spellPower: -randInt(id, 1, 1, 2) },
+        effect: useAgility ? { agility: -randInt(id, 1, 1, 2) } : { spellPower: -randInt(id, 1, 1, 2) },
       };
     }
     if (kind === 2) {
@@ -279,7 +279,7 @@ export const FOREST_EVENTS: ForestEvent[] = [
   ...buildHeal(),
   ...buildSpellPower(),
   ...buildIntelligence(),
-  ...buildDefense(),
+  ...buildAgility(),
   ...buildBuff(),
   ...buildNeutral(),
   ...buildPenalty(),

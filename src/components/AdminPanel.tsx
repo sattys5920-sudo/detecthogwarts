@@ -6,7 +6,9 @@ import { HOUSES } from '../data/school';
 import type { HouseId } from '../data/sortingTest';
 import { resetContent, resetSignups } from '../firebase/adminReset';
 import { sendAnnouncement } from '../firebase/announcements';
-import { assignHouse, listenAllPlayers, type PlayerRecord } from '../firebase/players';
+import { assignHouse, assignPatronus, listenAllPlayers, type PlayerRecord } from '../firebase/players';
+import { PATRONUS_LIST } from '../game/forest/patronus';
+import type { PatronusId } from '../game/forest/types';
 
 const RESET_PHRASE = '초기화';
 
@@ -24,9 +26,12 @@ function formatTime(ms: number) {
 function PlayerRow({ player }: { player: PlayerRecord }) {
   const [selected, setSelected] = useState<HouseId>(player.assignedHouse ?? player.computedHouse ?? 'flame');
   const [sending, setSending] = useState(false);
+  const [selectedPatronus, setSelectedPatronus] = useState<PatronusId>(player.patronus ?? PATRONUS_LIST[0].id);
+  const [sendingPatronus, setSendingPatronus] = useState(false);
   const computed = houseOf(player.computedHouse);
   const assigned = houseOf(player.assignedHouse);
   const testDone = player.computedHouse !== null;
+  const currentPatronus = PATRONUS_LIST.find((p) => p.id === player.patronus) ?? null;
 
   async function send() {
     setSending(true);
@@ -34,6 +39,15 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
       await assignHouse(player.id, selected);
     } finally {
       setSending(false);
+    }
+  }
+
+  async function sendPatronus() {
+    setSendingPatronus(true);
+    try {
+      await assignPatronus(player.id, selectedPatronus);
+    } finally {
+      setSendingPatronus(false);
     }
   }
 
@@ -94,6 +108,28 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
       ) : (
         <p className="text-xs text-ink-500/60">아직 적성 검사 · 입학 서류를 진행 중입니다.</p>
       )}
+
+      <div className="flex flex-col gap-1.5 border-t border-ink-700/10 pt-3">
+        <p className="text-xs text-ink-700/70">
+          패트로누스: {currentPatronus ? <b className="text-seal-600">{currentPatronus.name} ({currentPatronus.effectLabel})</b> : <b className="text-ink-500/60">미지정</b>}
+        </p>
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedPatronus}
+            onChange={(e) => setSelectedPatronus(e.target.value as PatronusId)}
+            className="min-w-0 flex-1 rounded-lg border border-ink-700/20 bg-paper-100/60 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
+          >
+            {PATRONUS_LIST.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} — {p.effectLabel}
+              </option>
+            ))}
+          </select>
+          <Button onClick={sendPatronus} disabled={sendingPatronus} className="flex-none px-4 py-1.5 text-xs">
+            {sendingPatronus ? '지정 중…' : currentPatronus ? '재지정' : '패트로누스 지정'}
+          </Button>
+        </div>
+      </div>
     </Card>
   );
 }

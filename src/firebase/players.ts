@@ -1,5 +1,6 @@
 import { collection, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import type { HouseId } from '../data/sortingTest';
+import type { PatronusId } from '../game/forest/types';
 import { db, isFirebaseConfigured } from './config';
 
 export interface PlayerRecord {
@@ -11,6 +12,8 @@ export interface PlayerRecord {
   computedHouse: HouseId | null;
   assignedHouse: HouseId | null;
   assignedAt: number | null;
+  /** Admin-assigned Patronus species, settable any time after signup — used by the 금지된 숲 익스펙토 패트로눔 skill. */
+  patronus: PatronusId | null;
   createdAt: number;
 }
 
@@ -48,6 +51,7 @@ function fromFirestoreDoc(id: string, data: Record<string, unknown>): PlayerReco
     computedHouse: (data.computedHouse as HouseId | null) ?? null,
     assignedHouse: (data.assignedHouse as HouseId | null) ?? null,
     assignedAt: assignedAt?.toMillis?.() ?? null,
+    patronus: (data.patronus as PatronusId | null) ?? null,
     createdAt: createdAt?.toMillis?.() ?? 0,
   };
 }
@@ -63,6 +67,7 @@ export async function createPlayerRecord(id: string, username: string): Promise<
       computedHouse: null,
       assignedHouse: null,
       assignedAt: null,
+      patronus: null,
       createdAt: serverTimestamp(),
     });
     return;
@@ -78,6 +83,7 @@ export async function createPlayerRecord(id: string, username: string): Promise<
     computedHouse: null,
     assignedHouse: null,
     assignedAt: null,
+    patronus: null,
     createdAt: Date.now(),
   });
   writeDemoPlayers(players);
@@ -121,6 +127,20 @@ export async function assignHouse(id: string, houseId: HouseId): Promise<void> {
   const idx = players.findIndex((p) => p.id === id);
   if (idx >= 0) {
     players[idx] = { ...players[idx], assignedHouse: houseId, assignedAt: Date.now() };
+    writeDemoPlayers(players);
+  }
+}
+
+export async function assignPatronus(id: string, patronus: PatronusId): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, COLLECTION_NAME, id), { patronus });
+    return;
+  }
+
+  const players = readDemoPlayers();
+  const idx = players.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    players[idx] = { ...players[idx], patronus };
     writeDemoPlayers(players);
   }
 }

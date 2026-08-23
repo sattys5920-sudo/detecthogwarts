@@ -2,6 +2,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useR
 import { createAccount, verifyAccount } from '../firebase/accounts';
 import { createPlayerRecord, getPlayerOnce, listenPlayer, submitProfile, submitTestResult } from '../firebase/players';
 import type { HouseId } from '../data/sortingTest';
+import type { PatronusId } from '../game/forest/types';
 
 export interface PlayerStats {
   hp: number;
@@ -20,6 +21,7 @@ interface PlayerState {
   playerId: string | null;
   testScores: Record<HouseId, number> | null;
   computedHouse: HouseId | null;
+  patronus: PatronusId | null;
   stats: PlayerStats;
   currentDay: number;
   deductionSolved: boolean;
@@ -44,6 +46,7 @@ const emptyState: PlayerState = {
   playerId: null,
   testScores: null,
   computedHouse: null,
+  patronus: null,
   stats: defaultStats,
   currentDay: 1,
   deductionSolved: false,
@@ -104,7 +107,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!state.playerId) return;
     const unsubscribe = listenPlayer(state.playerId, (record) => {
-      if (!record || !record.assignedHouse) return;
+      if (!record) return;
+      setState((prev) => (prev.patronus === record.patronus ? prev : { ...prev, patronus: record.patronus }));
+      if (!record.assignedHouse) return;
       setAssignedHouse(record.assignedHouse);
       setState((prev) => (prev.houseId === record.assignedHouse ? prev : { ...prev, houseId: record.assignedHouse }));
 
@@ -139,6 +144,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       grade: player?.grade ?? null,
       testScores: player?.testScores ?? null,
       computedHouse: player?.computedHouse ?? null,
+      patronus: player?.patronus ?? null,
       houseId: player?.assignedHouse ?? prev.houseId,
       joinedAt: prev.joinedAt ?? Date.now(),
     }));

@@ -18,12 +18,13 @@ import {
   startExpedition,
   submitCombatAction,
   subscribeParty,
-  upgradeSpell,
+  upgradeSkill,
 } from '../firebase/forest';
 import { allSeatsReady, currentActingPlayerId, MAX_SEATS, TOTAL_STAGES, VOTE_DURATION_MS } from '../game/forest/engine';
 import { eventById } from '../game/forest/events';
-import { maxMpFor, SPELLS, spellDcAtLevel, spellMpCost, spellPowerAtLevel } from '../game/forest/spells';
-import type { ForestParty, LogEntry, Player, Spell, SpellCategory } from '../game/forest/types';
+import { patronusById } from '../game/forest/patronus';
+import { maxMpFor, skillMpCostAtLevel, skillValueAtLevel, SKILLS } from '../game/forest/skills';
+import type { ForestParty, LogEntry, PatronusDef, Player, SkillDef } from '../game/forest/types';
 
 const VALID_ROOMS = ['a', 'b'];
 const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B' };
@@ -33,18 +34,14 @@ const STATUS_LABEL_TEXT: Record<ForestParty['status'], string> = {
   lobby: '대기 중', exploring: '탐사 중', event: '이벤트', combat: '전투', cleared: '클리어', failed: '실패',
 };
 
-const CATEGORY_SECTION: { category: SpellCategory; label: string }[] = [
-  { category: 'attack', label: '개인 공격' },
-  { category: 'aoeAttack', label: '전체 공격' },
-  { category: 'defense', label: '개인 방어' },
-  { category: 'aoeDefense', label: '전체 방어' },
-  { category: 'heal', label: '개인 치유' },
-  { category: 'aoeHeal', label: '전체 치유' },
-];
-
 const STATUS_LABEL: Record<string, string> = {
   burn: '🔥 화상', bleed: '🩸 출혈', stun: '💫 제압', weaken: '⬇️ 약화', vulnerable: '⚠️ 취약', slow: '🐌 둔화',
+  poison: '☠️ 중독', daze: '💫 동요', intBoost: '🧠 지능 강화', agiBoost: '🐆 민첩 강화', agiDown: '🐌 민첩 저하',
+  critBoost: '✨ 크리티컬 강화', followAttack: '🐦 추가 공격', regenHp: '💚 지속 회복', regenMp: '🔷 MP 회복', charm: '💫 매혹',
 };
+
+type TargetMode = { kind: 'skill'; skill: SkillDef } | { kind: 'patronus'; patronus: PatronusDef };
+type PendingAction = TargetMode & { targetMonsterIndex?: number; targetPlayerId?: string; targetLabel: string };
 
 function HpBar({ hp, maxHp, colorClass = 'bg-seal-600' }: { hp: number; maxHp: number; colorClass?: string }) {
   const pct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
@@ -69,7 +66,7 @@ function PlayerCard({ player, isActing, targetable, onTarget }: { player: Player
       </p>
       <HpBar hp={player.mp} maxHp={maxMp} colorClass="bg-ink-indigo" />
       <p className="font-mono text-[10px] text-ink-500/70">MP {player.mp}/{maxMp}</p>
-      <p className="font-mono text-[10px] text-ink-500/50">지능 {player.intelligence} · 주문력 {player.spellPower} · 방어력 {player.defense}</p>
+      <p className="font-mono text-[10px] text-ink-500/50">지능 {player.intelligence} · 주문력 {player.spellPower} · 민첩 {player.agility}</p>
       <div className="flex flex-wrap gap-1">
         {player.statusEffects.map((s, i) => (
           <span key={i} className="rounded-full bg-paper-200 px-1.5 py-0.5 text-[9px] text-ink-700">{STATUS_LABEL[s.type] ?? s.type}</span>
@@ -115,7 +112,7 @@ function MonsterCard({ name, hp, maxHp, defenseDC, statusEffects, shield, target
   return content;
 }
 
-function SkillPanel({ player, onUpgrade }: { player: Player; onUpgrade: (spellId: string) => void }) {
+function SkillPanel({ player, onUpgrade }: { player: Player; onUpgrade: (skillId: SkillDef['id']) => void }) {
   const [open, setOpen] = useState(false);
   return (
     <Card className="flex flex-col gap-2">
@@ -125,13 +122,13 @@ function SkillPanel({ player, onUpgrade }: { player: Player; onUpgrade: (spellId
       </button>
       {open && (
         <div className="grid grid-cols-1 gap-1.5">
-          {SPELLS.map((s) => {
-            const level = player.spellLevels[s.id] ?? 0;
+          {SKILLS.map((s) => {
+            const level = player.skillLevels[s.id] ?? 0;
             return (
               <div key={s.id} className="flex items-center justify-between gap-2 rounded-lg border border-ink-700/10 bg-paper-100/50 px-2.5 py-1.5">
                 <div>
                   <p className="text-xs font-bold text-ink-900">{s.name} <span className="font-mono text-[10px] text-ink-500/60">Lv.{level}</span></p>
-                  <p className="text-[10px] text-ink-500/60">위력 {spellPowerAtLevel(s, level)} · DC {spellDcAtLevel(s, level)}</p>
+                  <p className="text-[10px] text-ink-500/60">위력 {skillValueAtLevel(s, level)} · MP {skillMpCostAtLevel(s, level)}</p>
                 </div>
                 <button
                   type="button"
@@ -243,8 +240,8 @@ export default function ForestPage() {
   const [party, setParty] = useState<ForestParty | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [targetMode, setTargetMode] = useState<{ spell: Spell } | null>(null);
-  const [pendingAction, setPendingAction] = useState<{ spell: Spell; targetMonsterIndex?: number; targetPlayerId?: string; targetLabel: string } | null>(null);
+  const [targetMode, setTargetMode] = useState<TargetMode | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [busy, setBusy] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'chat' | 'party'>('chat');
   const [nowTick, setNowTick] = useState(() => Date.now());
@@ -261,10 +258,10 @@ export default function ForestPage() {
 
   useEffect(() => {
     if (!game.playerId || !VALID_ROOMS.includes(roomId)) return;
-    joinParty(roomId, game.playerId, game.nickname).catch((e) => {
+    joinParty(roomId, game.playerId, game.nickname, game.patronus).catch((e) => {
       setJoinError(e instanceof ForestFullError ? e.message : '입장에 실패했습니다. 다시 시도해 주세요.');
     });
-  }, [roomId, game.playerId, game.nickname]);
+  }, [roomId, game.playerId, game.nickname, game.patronus]);
 
   useEffect(() => {
     if (!party || party.status !== 'cleared' || !party.seats.some((p) => p?.id === game.playerId)) return;
@@ -456,7 +453,7 @@ export default function ForestPage() {
             )}
             {cleared && <p className="mt-3 text-xs text-seal-600">파티 전원 주문 공격력 +3</p>}
           </Card>
-          {me && <SkillPanel player={me} onUpgrade={(spellId) => guard(() => upgradeSpell(roomId, game.playerId!, spellId))} />}
+          {me && <SkillPanel player={me} onUpgrade={(skillId) => guard(() => upgradeSkill(roomId, game.playerId!, skillId))} />}
           <Button onClick={() => guard(async () => { await leaveExpedition(roomId); navigate('/recess'); })}>
             {cleared ? '계속 탐사' : '탐사 종료'}
           </Button>
@@ -565,7 +562,7 @@ export default function ForestPage() {
             </div>
           )}
 
-          {me && <SkillPanel player={me} onUpgrade={(spellId) => guard(() => upgradeSpell(roomId, game.playerId!, spellId))} />}
+          {me && <SkillPanel player={me} onUpgrade={(skillId) => guard(() => upgradeSkill(roomId, game.playerId!, skillId))} />}
 
           <SidePanel
             tab={sidebarTab}
@@ -668,6 +665,8 @@ export default function ForestPage() {
     const statusContent = party.seats
       .filter((p): p is Player => !!p)
       .map((p) => <PlayerCard key={p.id} player={p} isActing={p.id === actingId} targetable={false} />);
+    const targetKind = targetMode?.kind === 'skill' ? targetMode.skill.targetType : targetMode?.kind === 'patronus' ? targetMode.patronus.targetType : null;
+    const myPatronus = me.patronus ? patronusById(me.patronus) : null;
 
     function cancelTargeting() {
       setTargetMode(null);
@@ -679,23 +678,36 @@ export default function ForestPage() {
 
     function pickTarget(targetMonsterIndex: number | undefined, targetPlayerId: string | undefined, targetLabel: string) {
       if (!targetMode) return;
-      setPendingAction({ spell: targetMode.spell, targetMonsterIndex, targetPlayerId, targetLabel });
+      setPendingAction({ ...targetMode, targetMonsterIndex, targetPlayerId, targetLabel });
       setTargetMode(null);
     }
 
     function confirmPending() {
       if (!pendingAction) return;
-      const { spell, targetMonsterIndex, targetPlayerId } = pendingAction;
+      const { targetMonsterIndex, targetPlayerId } = pendingAction;
       setPendingAction(null);
-      guard(() => submitCombatAction(roomId, game.playerId!, { kind: 'spell', spellId: spell.id, targetMonsterIndex, targetPlayerId }));
+      if (pendingAction.kind === 'skill') {
+        guard(() => submitCombatAction(roomId, game.playerId!, { kind: 'skill', skillId: pendingAction.skill.id, targetMonsterIndex, targetPlayerId }));
+      } else {
+        guard(() => submitCombatAction(roomId, game.playerId!, { kind: 'patronus', targetMonsterIndex, targetPlayerId }));
+      }
     }
 
-    function onSpellClick(spell: Spell) {
-      if (spell.category === 'attack' || spell.category === 'heal') {
-        setTargetMode({ spell });
+    function onSkillClick(skill: SkillDef) {
+      if (skill.targetType === 'enemy' || skill.targetType === 'ally') {
+        setTargetMode({ kind: 'skill', skill });
         return;
       }
-      guard(() => submitCombatAction(roomId, game.playerId!, { kind: 'spell', spellId: spell.id }));
+      guard(() => submitCombatAction(roomId, game.playerId!, { kind: 'skill', skillId: skill.id }));
+    }
+
+    function onPatronusClick() {
+      if (!myPatronus) return;
+      if (myPatronus.targetType === 'enemy' || myPatronus.targetType === 'ally') {
+        setTargetMode({ kind: 'patronus', patronus: myPatronus });
+        return;
+      }
+      guard(() => submitCombatAction(roomId, game.playerId!, { kind: 'patronus' }));
     }
 
     return (
@@ -725,7 +737,7 @@ export default function ForestPage() {
                   defenseDC={m.defenseDC}
                   statusEffects={m.statusEffects}
                   shield={m.shield}
-                  targetable={isMyTurn && targetMode?.spell.category === 'attack'}
+                  targetable={isMyTurn && targetKind === 'enemy'}
                   onTarget={() => pickTarget(realIndex, undefined, m.name)}
                 />
               );
@@ -738,7 +750,7 @@ export default function ForestPage() {
                 key={p.id}
                 player={p}
                 isActing={p.id === actingId}
-                targetable={isMyTurn && targetMode?.spell.category === 'heal'}
+                targetable={isMyTurn && targetKind === 'ally'}
                 onTarget={() => pickTarget(undefined, p.id, p.nickname)}
               />
             ))}
@@ -748,7 +760,7 @@ export default function ForestPage() {
             pendingAction ? (
               <Card className="flex flex-col gap-2 border-seal-500">
                 <p className="text-sm font-bold text-ink-900">
-                  {pendingAction.spell.category === 'attack' ? '⚔️' : '✨'} {pendingAction.spell.name} → {pendingAction.targetLabel}
+                  {pendingAction.kind === 'skill' ? pendingAction.skill.name : `익스펙토 패트로눔 (${pendingAction.patronus.name})`} → {pendingAction.targetLabel}
                 </p>
                 <div className="flex gap-2">
                   <Button className="flex-1" disabled={busy} onClick={confirmPending}>행동 확정</Button>
@@ -757,41 +769,49 @@ export default function ForestPage() {
               </Card>
             ) : targetMode ? (
               <Card className="flex items-center justify-between">
-                <p className="text-sm font-bold text-ink-900">{targetMode.spell.name} — 대상을 선택하세요</p>
+                <p className="text-sm font-bold text-ink-900">
+                  {targetMode.kind === 'skill' ? targetMode.skill.name : `익스펙토 패트로눔 (${targetMode.patronus.name})`} — 대상을 선택하세요
+                </p>
                 <button type="button" onClick={cancelTargeting} className="text-xs text-ink-500/60 underline">취소</button>
               </Card>
             ) : (
               <Card className="flex flex-col gap-2.5">
                 <p className="font-gothic text-lg text-ink-black">내 턴 — 행동 선택</p>
-                {CATEGORY_SECTION.map(({ category, label }) => {
-                  const spells = SPELLS.filter((s) => s.category === category);
-                  return (
-                    <div key={category}>
-                      <p className="mb-1 text-[10px] font-bold text-ink-500/60">{label}</p>
-                      <div className="grid grid-cols-1 gap-1">
-                        {spells.map((s) => {
-                          const level = me.spellLevels[s.id] ?? 0;
-                          const cost = spellMpCost(s, level);
-                          const canAfford = me.mp >= cost;
-                          return (
-                            <button
-                              key={s.id}
-                              type="button"
-                              disabled={busy || !canAfford}
-                              onClick={() => onSpellClick(s)}
-                              className="flex items-center justify-between rounded-lg border border-ink-700/15 bg-paper-100/60 px-2.5 py-1.5 text-left hover:border-seal-500/40 disabled:opacity-40"
-                            >
-                              <span className="text-xs font-bold text-ink-900">{s.name} <span className="text-[10px] font-normal text-ink-500/60">Lv.{level}</span></span>
-                              <span className="font-mono text-[10px] text-ink-500/60">
-                                DC{spellDcAtLevel(s, level)} · 위력{spellPowerAtLevel(s, level)} · <span className={canAfford ? '' : 'text-seal-600'}>MP{cost}</span>
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
+                <div className="grid grid-cols-1 gap-1">
+                  {SKILLS.map((s) => {
+                    const level = me.skillLevels[s.id] ?? 0;
+                    const cost = skillMpCostAtLevel(s, level);
+                    const canAfford = me.mp >= cost;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        disabled={busy || !canAfford}
+                        onClick={() => onSkillClick(s)}
+                        className="flex items-center justify-between rounded-lg border border-ink-700/15 bg-paper-100/60 px-2.5 py-1.5 text-left hover:border-seal-500/40 disabled:opacity-40"
+                      >
+                        <span className="text-xs font-bold text-ink-900">{s.name} <span className="text-[10px] font-normal text-ink-500/60">Lv.{level}</span></span>
+                        <span className="font-mono text-[10px] text-ink-500/60">
+                          위력{skillValueAtLevel(s, level)} · <span className={canAfford ? '' : 'text-seal-600'}>MP{cost}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {myPatronus && (
+                  <div>
+                    <p className="mb-1 text-[10px] font-bold text-ink-500/60">고유 주문</p>
+                    <button
+                      type="button"
+                      disabled={busy || me.mp < myPatronus.baseMpCost}
+                      onClick={onPatronusClick}
+                      className="flex w-full items-center justify-between rounded-lg border border-seal-500/40 bg-seal-600/10 px-2.5 py-1.5 text-left hover:border-seal-500 disabled:opacity-40"
+                    >
+                      <span className="text-xs font-bold text-seal-600">익스펙토 패트로눔 <span className="text-[10px] font-normal text-ink-500/60">({myPatronus.name} · {myPatronus.effectLabel})</span></span>
+                      <span className={`font-mono text-[10px] ${me.mp >= myPatronus.baseMpCost ? 'text-ink-500/60' : 'text-seal-600'}`}>MP{myPatronus.baseMpCost}</span>
+                    </button>
+                  </div>
+                )}
                 <button
                   type="button"
                   disabled={busy}

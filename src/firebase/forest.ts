@@ -12,10 +12,10 @@ import {
   resolveTie as engineResolveTie,
   setReady as engineSetReady,
   startExpedition as engineStartExpedition,
-  upgradeSpell as engineUpgradeSpell,
+  upgradeSkill as engineUpgradeSkill,
   type CombatAction,
 } from '../game/forest/engine';
-import type { ForestParty } from '../game/forest/types';
+import type { ForestParty, PatronusId, SkillId } from '../game/forest/types';
 import { db, isFirebaseConfigured } from './config';
 
 export { ForestFullError };
@@ -76,8 +76,8 @@ export function subscribeParty(roomId: string, callback: (party: ForestParty) =>
   };
 }
 
-export async function joinParty(roomId: string, playerId: string, nickname: string): Promise<void> {
-  await transact(roomId, (current) => joinSeat(current, playerId, nickname || '이름 없음'));
+export async function joinParty(roomId: string, playerId: string, nickname: string, patronus: PatronusId | null = null): Promise<void> {
+  await transact(roomId, (current) => joinSeat(current, playerId, nickname || '이름 없음', patronus));
 }
 
 export async function leaveParty(roomId: string, playerId: string): Promise<void> {
@@ -112,8 +112,8 @@ export async function submitCombatAction(roomId: string, playerId: string, actio
   await transact(roomId, (current) => engineCombatAction(current, playerId, action));
 }
 
-export async function upgradeSpell(roomId: string, playerId: string, spellId: string): Promise<void> {
-  await transact(roomId, (current) => engineUpgradeSpell(current, playerId, spellId));
+export async function upgradeSkill(roomId: string, playerId: string, skillId: SkillId): Promise<void> {
+  await transact(roomId, (current) => engineUpgradeSkill(current, playerId, skillId));
 }
 
 export async function leaveExpedition(roomId: string): Promise<void> {

@@ -1,19 +1,20 @@
-export type SpellCategory = 'attack' | 'aoeAttack' | 'defense' | 'aoeDefense' | 'heal' | 'aoeHeal';
-
-export interface Spell {
-  id: string;
-  name: string;
-  category: SpellCategory;
-  dc: number;
-  power: number;
-  description: string;
-  statusOnHit?: StatusType;
-  statusChance?: number;
-  statusValue?: number;
-  statusTurns?: number;
-}
-
-export type StatusType = 'burn' | 'bleed' | 'stun' | 'weaken' | 'vulnerable' | 'slow';
+export type StatusType =
+  | 'burn'
+  | 'bleed'
+  | 'stun'
+  | 'weaken'
+  | 'vulnerable'
+  | 'slow'
+  | 'poison'
+  | 'daze'
+  | 'intBoost'
+  | 'agiBoost'
+  | 'agiDown'
+  | 'critBoost'
+  | 'followAttack'
+  | 'regenHp'
+  | 'regenMp'
+  | 'charm';
 
 export interface StatusEffect {
   type: StatusType;
@@ -57,20 +58,86 @@ export function emptyBuffs(): PlayerBuffs {
   };
 }
 
+// ---------- skills ----------
+
+/** The 8 fixed combat skills every player has access to; only their level (via skill points) differs per player. */
+export type SkillId =
+  | 'personalAttack'
+  | 'aoeAttack'
+  | 'personalDefense'
+  | 'aoeDefense'
+  | 'personalHeal'
+  | 'aoeHeal'
+  | 'personalMpHeal'
+  | 'aoeMpHeal';
+
+export type SkillTargetType = 'enemy' | 'enemyAll' | 'ally' | 'allyAll';
+export type SkillEffectType = 'damage' | 'defense' | 'healHp' | 'healMp';
+
+export interface SkillDef {
+  id: SkillId;
+  name: string;
+  description: string;
+  targetType: SkillTargetType;
+  effectType: SkillEffectType;
+  /** Base damage/defense/heal amount at skill level 0 (unlearned/base). */
+  baseValue: number;
+  /** Added to baseValue per skill level. */
+  valuePerLevel: number;
+  /** MP cost at skill level 0; decreases per level (see skillMpCostAtLevel in skills.ts) down to a floor of 0. */
+  baseMpCost: number;
+}
+
+export function emptySkillLevels(): Record<SkillId, number> {
+  return {
+    personalAttack: 0,
+    aoeAttack: 0,
+    personalDefense: 0,
+    aoeDefense: 0,
+    personalHeal: 0,
+    aoeHeal: 0,
+    personalMpHeal: 0,
+    aoeMpHeal: 0,
+  };
+}
+
+// ---------- patronus ----------
+
+export type PatronusId = 'snake' | 'tiger' | 'squirrel' | 'panther' | 'lark' | 'cat' | 'fox' | 'snail' | 'gecko' | 'giraffe';
+
+export interface PatronusDef {
+  id: PatronusId;
+  name: string;
+  effectLabel: string;
+  description: string;
+  targetType: SkillTargetType;
+  baseMpCost: number;
+  /** Base damage/heal/buff magnitude — combined with the caster's spellPower like any other skill. */
+  baseValue: number;
+  statusType: StatusType | null;
+  /** Duration in the affected target's own turns (see engine.ts's per-turn status ticking), not global rounds. */
+  statusDuration: number;
+}
+
+// ---------- player ----------
+
 export interface Player {
   id: string;
   nickname: string;
   hp: number;
   maxHp: number;
-  /** Drives spell damage — see spellDamageBonus() in spells.ts. */
-  spellPower: number;
-  defense: number;
-  /** Drives spell accuracy and max MP — see maxMpFor()/spellHitBonus() in spells.ts. */
-  intelligence: number;
-  /** Current MP pool; persists across the whole expedition like HP, spent per spell cast. */
+  /** Current MP pool; persists across the whole expedition like HP, spent per skill cast. */
   mp: number;
+  /** Drives skill accuracy (vs. the target's evasion/defense DC) and max MP — see skills.ts. */
+  intelligence: number;
+  /** Drives skill damage/heal/support magnitude. */
+  spellPower: number;
+  /** Drives evasion against enemy attacks and the effectiveness of defense skills. */
+  agility: number;
   skillPoints: number;
-  spellLevels: Record<string, number>;
+  skillLevels: Record<SkillId, number>;
+  /** Admin-assigned Patronus species; null until an admin sets one. */
+  patronus: PatronusId | null;
   statusEffects: StatusEffect[];
   shield: number;
   buffs: PlayerBuffs;
@@ -78,18 +145,19 @@ export interface Player {
   ready: boolean;
 }
 
-export function createPlayer(id: string, nickname: string): Player {
+export function createPlayer(id: string, nickname: string, patronus: PatronusId | null = null): Player {
   return {
     id,
     nickname,
     hp: 100,
     maxHp: 100,
-    spellPower: 5,
-    defense: 5,
+    mp: 30, // baseline intelligence(5) via maxMpFor() in skills.ts — refilled properly once the expedition starts
     intelligence: 5,
-    mp: 30, // baseline intelligence(5) via maxMpFor() in spells.ts — reset properly once the expedition starts
+    spellPower: 5,
+    agility: 5,
     skillPoints: 0,
-    spellLevels: {},
+    skillLevels: emptySkillLevels(),
+    patronus,
     statusEffects: [],
     shield: 0,
     buffs: emptyBuffs(),
@@ -151,7 +219,7 @@ export interface BossTemplate {
   phases: [BossPhase, BossPhase, BossPhase];
 }
 
-export type EventCategory = 'heal' | 'spellPower' | 'intelligence' | 'defense' | 'buff' | 'hint' | 'monster' | 'eliteMonster' | 'trap' | 'penalty' | 'partyChoice' | 'riskyChoice' | 'special' | 'neutral';
+export type EventCategory = 'heal' | 'spellPower' | 'intelligence' | 'agility' | 'buff' | 'hint' | 'monster' | 'eliteMonster' | 'trap' | 'penalty' | 'partyChoice' | 'riskyChoice' | 'special' | 'neutral';
 
 export interface ForestEvent {
   id: string;
@@ -168,7 +236,7 @@ export interface EventEffect {
   hp?: number;
   maxHp?: number;
   spellPower?: number;
-  defense?: number;
+  agility?: number;
   skillPoints?: number;
   intelligence?: number;
   buff?: keyof PlayerBuffs;

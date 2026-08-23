@@ -42,17 +42,16 @@ export interface QuidditchGame {
   turnStartedAt: number;
   turnDeadline: number;
   gameStartedAt: number;
-  gameDeadline: number;
   scores: { A: number; B: number };
   winner: Team | 'draw' | null;
-  winReason: 'snitch' | 'time' | null;
+  winReason: 'snitch' | 'turns' | null;
   log: LogEntry[];
   updatedAt: number;
 }
 
 export const BOARD_SIZE = 8;
 export const TURN_MS = 30_000;
-export const GAME_MS = 20 * 60_000;
+export const MAX_TURNS = 20;
 export const SNITCH_SPAWN_TURN = 5;
 export const CENTER = { row: 3, col: 3 };
 const MAX_LOG = 30;
@@ -65,7 +64,6 @@ const SCORES = {
   captureChaser: 2,
   captureBeater: 2,
   captureSeeker: 5,
-  captureKeeper: 5,
   snitchCatch: 50,
 } as const;
 
@@ -114,7 +112,8 @@ function captureScore(type: PieceType): number {
     case 'seeker':
       return SCORES.captureSeeker;
     case 'keeper':
-      return SCORES.captureKeeper;
+      // Unreachable: chasers/seekers can't capture a keeper (see legalMoves) and beaters only push it.
+      return 0;
   }
 }
 
@@ -159,11 +158,11 @@ export function legalMoves(game: QuidditchGame, pieceId: string): MoveDest[] {
     case 'keeper':
       return rayDestinations(game.pieces, piece, ALL8, 1, { cannotCaptureType: 'keeper' });
     case 'chaser':
-      return rayDestinations(game.pieces, piece, ORTHO, 3);
+      return rayDestinations(game.pieces, piece, ORTHO, 3, { cannotCaptureType: 'keeper' });
     case 'beater':
       return rayDestinations(game.pieces, piece, ORTHO, 3, { noCaptureLanding: true });
     case 'seeker':
-      return rayDestinations(game.pieces, piece, ALL8, 3);
+      return rayDestinations(game.pieces, piece, ALL8, 3, { cannotCaptureType: 'keeper' });
   }
 }
 
@@ -272,7 +271,6 @@ export function createInitialGame(seatA: SeatInfo, seatB: SeatInfo): QuidditchGa
     turnStartedAt: now,
     turnDeadline: now + TURN_MS,
     gameStartedAt: now,
-    gameDeadline: now + GAME_MS,
     scores: { A: 0, B: 0 },
     winner: null,
     winReason: null,
@@ -295,7 +293,6 @@ export function emptyRoom(): QuidditchGame {
     turnStartedAt: now,
     turnDeadline: now,
     gameStartedAt: now,
-    gameDeadline: now,
     scores: { A: 0, B: 0 },
     winner: null,
     winReason: null,
@@ -304,9 +301,24 @@ export function emptyRoom(): QuidditchGame {
   };
 }
 
+/** Score → quaffle-holder → closer-seeker-to-opponent-goal, in that order. */
+function decideWinnerByScore(pieces: Piece[], scores: { A: number; B: number }): Team | 'draw' {
+  if (scores.A > scores.B) return 'A';
+  if (scores.B > scores.A) return 'B';
+  const holder = pieces.find((p) => p.hasQuaffle);
+  if (holder) return holder.team;
+  const seekerA = pieces.find((p) => p.team === 'A' && p.type === 'seeker');
+  const seekerB = pieces.find((p) => p.team === 'B' && p.type === 'seeker');
+  const distA = seekerA ? Math.abs(seekerA.row - goalRowOf('B')) : Infinity;
+  const distB = seekerB ? Math.abs(seekerB.row - goalRowOf('A')) : Infinity;
+  if (distA < distB) return 'A';
+  if (distB < distA) return 'B';
+  return 'draw';
+}
+
 function endTurn(game: QuidditchGame): QuidditchGame {
   let { snitch } = game;
-  let { status, winner, scores } = game;
+  let { status, winner, winReason, scores } = game;
   const turnCount = game.turnCount + 1;
   let log = game.log;
 
@@ -320,22 +332,29 @@ function endTurn(game: QuidditchGame): QuidditchGame {
       scores = { ...scores, [occupant.team]: scores[occupant.team] + SCORES.snitchCatch };
       status = 'finished';
       winner = occupant.team;
+      winReason = 'snitch';
       log = pushLog(log, mkLog(turnCount, occupant.team, `스니치가 ${occupant.team}팀 수색꾼에게 날아들어 포획되었습니다! 승리!`));
     }
   }
 
+  if (status === 'playing' && turnCount >= MAX_TURNS) {
+    status = 'finished';
+    winner = decideWinnerByScore(game.pieces, scores);
+    winReason = 'turns';
+    log = pushLog(log, mkLog(turnCount, null, `${MAX_TURNS}턴이 모두 끝나 경기가 종료되었습니다.`));
+  }
+
   const now = Date.now();
-  const finished = status === 'finished';
   return {
     ...game,
     snitch,
     status,
     winner,
-    winReason: finished && !game.winReason ? 'snitch' : game.winReason,
+    winReason,
     scores,
     turnCount,
     log,
-    currentTeam: finished ? game.currentTeam : otherTeam(game.currentTeam),
+    currentTeam: status === 'finished' ? game.currentTeam : otherTeam(game.currentTeam),
     turnStartedAt: now,
     turnDeadline: now + TURN_MS,
     updatedAt: now,
@@ -509,29 +528,4 @@ export function passTurnIfExpired(game: QuidditchGame): QuidditchGame | null {
   const team = game.currentTeam;
   const log = pushLog(game.log, mkLog(game.turnCount, team, `${team}팀이 시간 안에 행동하지 않아 턴이 자동으로 넘어갔습니다.`));
   return endTurn({ ...game, log });
-}
-
-export function finalizeByTimeout(game: QuidditchGame): QuidditchGame | null {
-  if (game.status !== 'playing') return null;
-  if (Date.now() < game.gameDeadline) return null;
-  let winner: Team | 'draw';
-  if (game.scores.A > game.scores.B) winner = 'A';
-  else if (game.scores.B > game.scores.A) winner = 'B';
-  else {
-    const holder = game.pieces.find((p) => p.hasQuaffle);
-    if (holder) {
-      winner = holder.team;
-    } else {
-      // still tied and nobody's carrying the quaffle — whoever's seeker is closer to the opponent's goal wins.
-      const seekerA = game.pieces.find((p) => p.team === 'A' && p.type === 'seeker');
-      const seekerB = game.pieces.find((p) => p.team === 'B' && p.type === 'seeker');
-      const distA = seekerA ? Math.abs(seekerA.row - goalRowOf('B')) : Infinity;
-      const distB = seekerB ? Math.abs(seekerB.row - goalRowOf('A')) : Infinity;
-      if (distA < distB) winner = 'A';
-      else if (distB < distA) winner = 'B';
-      else winner = 'draw';
-    }
-  }
-  const log = pushLog(game.log, mkLog(game.turnCount, null, '제한 시간이 종료되었습니다.'));
-  return { ...game, status: 'finished', winner, winReason: 'time', log, updatedAt: Date.now() };
 }

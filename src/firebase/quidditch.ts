@@ -4,7 +4,6 @@ import {
   applyPass,
   createInitialGame,
   emptyRoom,
-  finalizeByTimeout,
   passTurnIfExpired,
   type QuidditchGame,
   type SeatInfo,
@@ -192,23 +191,5 @@ export async function checkTurnTimeout(roomId: string): Promise<void> {
   }
   const current = readDemoRoom(roomId);
   const next = passTurnIfExpired(current);
-  if (next) writeDemoRoom(roomId, next);
-}
-
-/** Idempotent — safe to call from any connected client on a timer. No-ops unless the game clock has actually run out. */
-export async function checkGameTimeout(roomId: string): Promise<void> {
-  if (isFirebaseConfigured && db) {
-    const ref = doc(db, COLLECTION, roomId);
-    await runTransaction(db, async (tx) => {
-      const snap = await tx.get(ref);
-      if (!snap.exists()) return;
-      const current = snap.data() as QuidditchGame;
-      const next = finalizeByTimeout(current);
-      if (next) tx.set(ref, next);
-    });
-    return;
-  }
-  const current = readDemoRoom(roomId);
-  const next = finalizeByTimeout(current);
   if (next) writeDemoRoom(roomId, next);
 }

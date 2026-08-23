@@ -8,7 +8,6 @@ import { PieceGlyph, QuaffleGlyph, SnitchGlyph } from '../components/quidditch/Q
 import { useGame } from '../context/GameContext';
 import { QUIDDITCH_RULES } from '../data/quidditchRules';
 import {
-  checkGameTimeout,
   checkTurnTimeout,
   joinRoom,
   leaveFinishedRoom,
@@ -19,7 +18,7 @@ import {
   submitPass,
   subscribeRoom,
 } from '../firebase/quidditch';
-import type { PieceType, QuidditchGame, Team } from '../game/quidditchEngine';
+import { MAX_TURNS, type PieceType, type QuidditchGame, type Team } from '../game/quidditchEngine';
 
 const VALID_ROOMS = ['a', 'b', 'c'];
 const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B', c: 'C' };
@@ -32,13 +31,6 @@ const PIECE_LEGEND: { type: PieceType; label: string }[] = [
   { type: 'chaser', label: '추격꾼' },
   { type: 'beater', label: '타격수' },
 ];
-
-function fmt(ms: number) {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
 
 function ScoreChip({ team, room }: { team: Team; room: QuidditchGame }) {
   const seat = room.seats[team];
@@ -130,8 +122,8 @@ function QuidditchRulesModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function rewardKey(roomId: string, gameDeadline: number) {
-  return `arcanum-quidditch-reward-${roomId}-${gameDeadline}`;
+function rewardKey(roomId: string, gameStartedAt: number) {
+  return `arcanum-quidditch-reward-${roomId}-${gameStartedAt}`;
 }
 
 function QuidditchResultScreen({
@@ -152,13 +144,13 @@ function QuidditchResultScreen({
 
   useEffect(() => {
     if (!iWon) return;
-    const key = rewardKey(roomId, room.gameDeadline);
+    const key = rewardKey(roomId, room.gameStartedAt);
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, 'true');
     game.adjustStat('agility', 5);
     game.growMaxStat('maxStamina', 5);
     game.growMaxStat('maxHp', 5);
-  }, [iWon, roomId, room.gameDeadline, game]);
+  }, [iWon, roomId, room.gameStartedAt, game]);
 
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
@@ -169,7 +161,7 @@ function QuidditchResultScreen({
           {isDraw ? '무승부' : iWon ? '승리!' : '패배'}
         </p>
         <p className="mt-1 text-xs text-ink-500/70">
-          {room.winReason === 'snitch' ? '황금 스니치 포획으로 경기가 종료되었습니다.' : '제한 시간 종료로 경기가 종료되었습니다.'}
+          {room.winReason === 'snitch' ? '황금 스니치 포획으로 경기가 종료되었습니다.' : `${MAX_TURNS}턴이 모두 끝나 경기가 종료되었습니다.`}
         </p>
         {iWon && <p className="mt-1 text-xs font-bold text-seal-600">보상: 민첩 +5, 최대 스태미나 +5, 최대 체력 +5</p>}
         <div className="mt-4 flex items-center justify-center gap-3">
@@ -230,7 +222,6 @@ export default function QuidditchPage() {
     if (roomStatus !== 'playing') return;
     const id = setInterval(() => {
       checkTurnTimeout(roomId);
-      checkGameTimeout(roomId);
     }, 1000);
     return () => clearInterval(id);
   }, [roomId, roomStatus]);
@@ -297,7 +288,7 @@ export default function QuidditchPage() {
     const iWon = room.winner === mySeat;
     const isDraw = room.winner === 'draw';
     return (
-      <QuidditchResultScreen key={`${roomId}-${room.gameDeadline}`} room={room} roomId={roomId} roomLabel={roomLabel} iWon={iWon} isDraw={isDraw} />
+      <QuidditchResultScreen key={`${roomId}-${room.gameStartedAt}`} room={room} roomId={roomId} roomLabel={roomLabel} iWon={iWon} isDraw={isDraw} />
     );
   }
 
@@ -324,7 +315,6 @@ export default function QuidditchPage() {
 
   const myTurn = room.currentTeam === mySeat;
   const turnMs = room.turnDeadline - now;
-  const gameMs = room.gameDeadline - now;
 
   return (
     <div className="relative flex min-h-svh flex-col">
@@ -350,8 +340,8 @@ export default function QuidditchPage() {
         </div>
 
         <div className="flex items-center justify-between rounded-sm bg-ink-black px-3 py-1.5 text-paper-50">
-          <p className="font-mono text-[10px] tracking-wide">전체 남은 시간 {fmt(gameMs)}</p>
-          <p className="font-mono text-[10px] tracking-wide">{room.turnCount + 1}턴 · {room.snitch ? '스니치 등장' : `스니치 등장까지 ${Math.max(0, 5 - room.turnCount)}턴`}</p>
+          <p className="font-mono text-[10px] tracking-wide">{room.turnCount} / {MAX_TURNS}턴</p>
+          <p className="font-mono text-[10px] tracking-wide">{room.snitch ? '스니치 등장' : `스니치 등장까지 ${Math.max(0, 5 - room.turnCount)}턴`}</p>
         </div>
 
         <div className={`flex items-center justify-between rounded-lg border-2 px-3 py-2 ${myTurn ? 'border-seal-600 bg-seal-600/10' : 'border-ink-700/15 bg-paper-100/60'}`}>

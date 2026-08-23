@@ -199,7 +199,7 @@ export function generatePaths(party: ForestParty): ForestParty {
     let fi = Math.floor(Math.random() * PATH_FLAVORS.length);
     while (usedFlavors.has(fi)) fi = Math.floor(Math.random() * PATH_FLAVORS.length);
     usedFlavors.add(fi);
-    return { label: PATH_FLAVORS[fi], eventId: e.id, revealedCategory: reveal ? CATEGORY_LABEL[e.category] : undefined };
+    return { label: PATH_FLAVORS[fi], eventId: e.id, ...(reveal ? { revealedCategory: CATEGORY_LABEL[e.category] } : {}) };
   });
   let next: ForestParty = { ...party, status: 'exploring', paths, currentEventId: null, updatedAt: now() };
   if (reveal) {
@@ -394,8 +394,8 @@ function beginCombat(party: ForestParty, templates: ReturnType<typeof randomTemp
 
   const combat: CombatState = {
     isBoss,
-    bossId,
-    phaseIndex: isBoss ? 0 : undefined,
+    ...(bossId !== undefined ? { bossId } : {}),
+    ...(isBoss ? { phaseIndex: 0 } : {}),
     monsters,
     turnOrder: order.map((o) => o.key),
     turnIndex: 0,

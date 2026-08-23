@@ -144,6 +144,7 @@ export default function ForestPage() {
   const { roomId = '' } = useParams<{ roomId: string }>();
   const [party, setParty] = useState<ForestParty | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [targetMode, setTargetMode] = useState<{ spell: Spell } | null>(null);
   const [busy, setBusy] = useState(false);
   const roomLabel = ROOM_LABEL[roomId] ?? '';
@@ -197,8 +198,11 @@ export default function ForestPage() {
   async function guard(fn: () => Promise<void>) {
     if (busy) return;
     setBusy(true);
+    setActionError(null);
     try {
       await fn();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : '요청을 처리하지 못했습니다. 다시 시도해 주세요.');
     } finally {
       setBusy(false);
     }
@@ -255,6 +259,7 @@ export default function ForestPage() {
           >
             {seatedCount < 2 ? `최소 2명 필요 (${seatedCount}/${MAX_SEATS})` : ready ? '탐사 가기' : '전원 준비 대기 중'}
           </Button>
+          {actionError && <p className="mt-2 text-xs font-bold text-seal-600">{actionError}</p>}
           <Button
             variant="ghost"
             className="mt-2 w-full"

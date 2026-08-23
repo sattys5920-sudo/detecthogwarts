@@ -5,6 +5,7 @@
   --font-gothic: 'Cinzel', 'Nanum Myeongjo', serif;
   --font-serif: 'Noto Serif KR', 'Noto Serif', serif;
   --font-sans: 'Noto Serif KR', 'Noto Serif', serif;
+  --font-hand: 'Gaegu', 'Nanum Pen Script', cursive;
 
   /* aged parchment paper */
   --color-paper-50: #faf3df;
@@ -107,6 +108,11 @@ select {
   font-family: var(--font-gothic);
   letter-spacing: 0.03em;
   font-weight: 600;
+}
+
+.font-hand {
+  font-family: var(--font-hand);
+  font-weight: 700;
 }
 
 /* aged-paper grain, layered as a fixed full-screen overlay */

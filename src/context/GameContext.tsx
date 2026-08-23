@@ -250,6 +250,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState(emptyState);
     setAssignedHouse(null);
     setJustAssigned(false);
+    sessionStorage.removeItem(ADMIN_KEY);
+    setIsAdmin(false);
   }, []);
 
   const value: GameContextValue = {

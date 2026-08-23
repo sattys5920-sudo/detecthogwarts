@@ -279,6 +279,17 @@ service cloud.firestore {
         && request.resource.data.dex is map;
     }
 
+    // 탐사 수첩: 플레이어 1인당 문서 하나. 로그인한 계정마다 개인화되도록
+    // (기기가 바뀌어도 동기화되도록) 문서 id가 playerId입니다.
+    match /notebooks/{playerId} {
+      allow read: if true;
+      // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 지울 수 있도록 삭제를
+      // 허용합니다.
+      allow delete: if true;
+
+      allow create, update: if request.resource.data.entries is list;
+    }
+
     // 모바일 푸시 구독: 브라우저의 PushSubscription(endpoint/키)을 저장합니다.
     // endpoint/키는 민감한 값이라 클라이언트가 다시 읽을 필요가 없으므로(구독
     // 객체는 브라우저가 이미 들고 있음) 읽기는 막고, Cloud Functions(관리자

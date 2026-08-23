@@ -109,21 +109,6 @@ export default function ProfilePage() {
     <div className="flex flex-col gap-4">
       <Letterhead label="내 정보" context={SCHOOL_NAME} meta="2026.08.18 · 초승달 · 수업 3교시" />
 
-      {game.justAssigned && house && (
-        <div className="deckle-edge flex items-center justify-between gap-3 border border-seal-500/40 bg-paper-100 p-3.5">
-          <p className="font-serif-kr text-sm text-ink-900">
-            <b className="text-seal-600">{house.name}</b>에 배정되었습니다!
-          </p>
-          <button
-            type="button"
-            onClick={game.clearJustAssigned}
-            className="flex-none text-xs text-ink-500/60 underline-offset-2 hover:text-ink-700 hover:underline"
-          >
-            확인
-          </button>
-        </div>
-      )}
-
       <Card ornate className="text-center">
         <p className="mb-3 font-mono text-[10px] font-bold tracking-[0.2em] text-gold-600">탐구자 기록부</p>
         <div className="relative mx-auto h-16 w-16">

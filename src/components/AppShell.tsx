@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { BackProvider } from '../context/BackContext';
 import { useGame } from '../context/GameContext';
 import AnnouncementPopup from './AnnouncementPopup';
+import AssignmentPopup from './AssignmentPopup';
 import BottomTabBar from './BottomTabBar';
 import PaperTexture from './PaperTexture';
 import ScreenFrame from './ScreenFrame';
@@ -18,6 +19,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <PaperTexture />
         <ScreenFrame />
         <AnnouncementPopup />
+        <AssignmentPopup />
         <TopAppBar />
         <main className="flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
           <div className="mx-auto max-w-md px-4 pt-4 pb-6">{children}</div>

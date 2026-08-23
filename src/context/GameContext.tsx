@@ -39,6 +39,7 @@ interface PlayerState {
 
 const STORAGE_KEY = 'arcanum-player';
 const SEEN_ASSIGNMENT_PREFIX = 'arcanum-assignment-seen-';
+const SEEN_PATRONUS_PREFIX = 'arcanum-patronus-seen-';
 const ADMIN_KEY = 'arcanum-admin-unlocked';
 const ADMIN_USERNAME = 'admin';
 const ADMIN_NICKNAME = '호그와트';
@@ -91,9 +92,11 @@ interface GameContextValue extends PlayerState {
   stage: OnboardingStage;
   assignedHouse: HouseId | null;
   justAssigned: boolean;
+  justAssignedPatronus: boolean;
   isAdmin: boolean;
   unlockAdmin: () => void;
   clearJustAssigned: () => void;
+  clearJustAssignedPatronus: () => void;
   signUp: (username: string, password: string) => Promise<'ok' | 'taken'>;
   logIn: (username: string, password: string) => Promise<'ok' | 'not-found' | 'wrong-password'>;
   submitTest: (testScores: Record<HouseId, number>, computedHouse: HouseId) => Promise<void>;
@@ -114,6 +117,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PlayerState>(loadState);
   const [assignedHouse, setAssignedHouse] = useState<HouseId | null>(null);
   const [justAssigned, setJustAssigned] = useState(false);
+  const [justAssignedPatronus, setJustAssignedPatronus] = useState(false);
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem(ADMIN_KEY) === 'true');
   const playerIdRef = useRef(state.playerId);
   playerIdRef.current = state.playerId;
@@ -127,6 +131,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const unsubscribe = listenPlayer(state.playerId, (record) => {
       if (!record) return;
       setState((prev) => (prev.patronus === record.patronus ? prev : { ...prev, patronus: record.patronus }));
+
+      if (record.patronus) {
+        const patronusSeenKey = SEEN_PATRONUS_PREFIX + record.id;
+        if (localStorage.getItem(patronusSeenKey) !== record.patronus) {
+          setJustAssignedPatronus(true);
+        }
+      }
+
       if (!record.assignedHouse) return;
       setAssignedHouse(record.assignedHouse);
       setState((prev) => (prev.houseId === record.assignedHouse ? prev : { ...prev, houseId: record.assignedHouse }));
@@ -246,10 +258,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setJustAssigned(false);
   }, [assignedHouse]);
 
+  const clearJustAssignedPatronus = useCallback(() => {
+    const playerId = playerIdRef.current;
+    if (playerId && state.patronus) {
+      localStorage.setItem(SEEN_PATRONUS_PREFIX + playerId, state.patronus);
+    }
+    setJustAssignedPatronus(false);
+  }, [state.patronus]);
+
   const resetPlayer = useCallback(() => {
     setState(emptyState);
     setAssignedHouse(null);
     setJustAssigned(false);
+    setJustAssignedPatronus(false);
     sessionStorage.removeItem(ADMIN_KEY);
     setIsAdmin(false);
   }, []);
@@ -260,9 +281,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     stage,
     assignedHouse,
     justAssigned,
+    justAssignedPatronus,
     isAdmin,
     unlockAdmin,
     clearJustAssigned,
+    clearJustAssignedPatronus,
     signUp,
     logIn,
     submitTest,

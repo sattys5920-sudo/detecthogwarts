@@ -71,7 +71,7 @@ export default function NotebookPage() {
               ← 목록으로
             </button>
             <p className={`font-mono text-[11px] tracking-wide ${INK_TEXT[open.ink]}`}>{open.status}</p>
-            <h2 className="font-display mt-1 text-3xl leading-tight text-ink-900">{open.title}</h2>
+            <h2 className="font-hand mt-1 text-2xl leading-tight text-ink-900">{open.title}</h2>
             <p className="mt-1 font-mono text-[10px] text-ink-500/60">{formatDate(open.registeredAt)} 등록</p>
             <p className="mt-4 font-serif-kr text-sm leading-relaxed text-ink-900">{open.desc}</p>
 
@@ -135,7 +135,7 @@ export default function NotebookPage() {
                 >
                   <span className={`h-2 w-2 flex-none rounded-full ${INK_BG[e.ink]}`} />
                   <span className="min-w-0 flex-1">
-                    <span className="font-display block text-lg leading-none text-ink-900">{e.title}</span>
+                    <span className="font-hand block text-lg leading-none text-ink-900">{e.title}</span>
                     <span className="mt-0.5 block truncate text-xs text-ink-700/60">{e.desc}</span>
                   </span>
                   <span className={`flex-none font-mono text-[10px] ${INK_TEXT[e.ink]}`}>{e.status}</span>

@@ -77,15 +77,21 @@ async function resetRecessLocks(firestore: Firestore): Promise<void> {
   await Promise.all(snap.docs.map((d) => setDoc(d.ref, { locked: false })));
 }
 
-/** Resets every existing Quidditch/Forest room back to its empty starting state, whatever room ids exist. */
+/** Resets every existing Quidditch/Forest room back to its empty starting state, whatever room ids exist, and clears each forest room's chat log. */
 async function resetGameRooms(firestore: Firestore): Promise<void> {
   const [quidditchSnap, forestSnap] = await Promise.all([
     getDocs(collection(firestore, 'quidditch')),
     getDocs(collection(firestore, 'forest')),
   ]);
+  const chatRefs: DocumentReference[] = [];
+  for (const forestDoc of forestSnap.docs) {
+    const msgsSnap = await getDocs(collection(firestore, 'forest', forestDoc.id, 'messages'));
+    chatRefs.push(...msgsSnap.docs.map((m) => m.ref));
+  }
   await Promise.all([
     ...quidditchSnap.docs.map((d) => setDoc(d.ref, emptyRoom())),
     ...forestSnap.docs.map((d) => setDoc(d.ref, resetParty())),
+    commitDeletes(firestore, chatRefs),
   ]);
 }
 
@@ -95,6 +101,7 @@ const DEMO_PREFIXES_TO_CLEAR = [
   'arcanum-announcement-demo',
   'arcanum-quidditch-demo-',
   'arcanum-forest-demo-',
+  'arcanum-forestchat-demo-',
   'arcanum-herbfarm-demo:',
   'arcanum-notifications-demo-',
   'arcanum-notifprefs-demo-',
@@ -111,6 +118,7 @@ const DEMO_EVENTS_TO_FIRE = [
   'arcanum-announcement-demo-changed',
   'arcanum-quidditch-demo-changed',
   'arcanum-forest-demo-changed',
+  'arcanum-forestchat-demo-changed',
   'arcanum-herbfarm-demo-changed',
   'arcanum-notifications-demo-changed',
   'arcanum-notifprefs-demo-changed',

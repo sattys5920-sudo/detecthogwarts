@@ -65,6 +65,7 @@ export function createParty(): ForestParty {
     usedBossIds: [],
     recentCategories: [],
     paths: null,
+    votes: {},
     currentEventId: null,
     combat: null,
     log: [],
@@ -201,7 +202,7 @@ export function generatePaths(party: ForestParty): ForestParty {
     usedFlavors.add(fi);
     return { label: PATH_FLAVORS[fi], eventId: e.id, ...(reveal ? { revealedCategory: CATEGORY_LABEL[e.category] } : {}) };
   });
-  let next: ForestParty = { ...party, status: 'exploring', paths, currentEventId: null, updatedAt: now() };
+  let next: ForestParty = { ...party, status: 'exploring', paths, votes: {}, currentEventId: null, updatedAt: now() };
   if (reveal) {
     next = applyToAllSeats(next, (p) => ({ ...p, buffs: { ...p.buffs, revealNextPaths: false } }));
     next = pushLog(next, '단서 덕분에 갈림길의 정체를 미리 엿보았다.');
@@ -288,6 +289,7 @@ export function resolveCurrentPath(party: ForestParty, choiceIndex: number): For
     usedEventIds: [...party.usedEventIds, event.id],
     recentCategories: [...party.recentCategories, event.category].slice(-6),
     paths: null,
+    votes: {},
   };
   next = pushLog(next, `[${party.stage}단계] ${choice.label} → ${event.title}`);
 
@@ -328,6 +330,34 @@ export function resolveCurrentPath(party: ForestParty, choiceIndex: number): For
   }
 
   return applyPlainEffect(next, eff);
+}
+
+/** Casts one seated player's vote for a path choice; once everyone seated has voted, the majority choice (ties broken at random) resolves automatically. */
+export function castVote(party: ForestParty, playerId: string, choiceIndex: number): ForestParty {
+  if (party.status !== 'exploring' || !party.paths) return party;
+  if (!seatedPlayer(party, playerId)) return party;
+  if (choiceIndex < 0 || choiceIndex >= party.paths.length) return party;
+
+  const votes = { ...party.votes, [playerId]: choiceIndex };
+  const seatedIds = party.seats.filter((p): p is Player => p !== null).map((p) => p.id);
+  if (!seatedIds.every((id) => id in votes)) {
+    return { ...party, votes, updatedAt: now() };
+  }
+
+  const counts = new Map<number, number>();
+  for (const id of seatedIds) counts.set(votes[id], (counts.get(votes[id]) ?? 0) + 1);
+  let topCount = 0;
+  let leaders: number[] = [];
+  for (const [idx, count] of counts) {
+    if (count > topCount) {
+      topCount = count;
+      leaders = [idx];
+    } else if (count === topCount) {
+      leaders.push(idx);
+    }
+  }
+  const winner = leaders[Math.floor(Math.random() * leaders.length)];
+  return resolveCurrentPath({ ...party, votes }, winner);
 }
 
 function applyPlainEffect(party: ForestParty, eff: ForestEvent['effect']): ForestParty {

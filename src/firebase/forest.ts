@@ -1,12 +1,12 @@
 import { doc, onSnapshot, runTransaction, setDoc } from 'firebase/firestore';
 import {
+  castVote as engineCastVote,
   confirmEvent as engineConfirmEvent,
   createParty,
   ForestFullError,
   joinSeat,
   leaveSeat,
   playerCombatAction as engineCombatAction,
-  resolveCurrentPath,
   resetParty,
   setReady as engineSetReady,
   startExpedition as engineStartExpedition,
@@ -90,8 +90,8 @@ export async function startExpedition(roomId: string): Promise<void> {
   await transact(roomId, (current) => engineStartExpedition(current));
 }
 
-export async function choosePath(roomId: string, choiceIndex: number): Promise<void> {
-  await transact(roomId, (current) => resolveCurrentPath(current, choiceIndex));
+export async function castVote(roomId: string, playerId: string, choiceIndex: number): Promise<void> {
+  await transact(roomId, (current) => engineCastVote(current, playerId, choiceIndex));
 }
 
 export async function confirmEvent(roomId: string): Promise<void> {

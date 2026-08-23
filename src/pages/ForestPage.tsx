@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
+import ForestChatFeed from '../components/ForestChatFeed';
 import PaperTexture from '../components/PaperTexture';
 import { useGame } from '../context/GameContext';
 import {
-  choosePath,
+  castVote,
   confirmEvent,
   ForestFullError,
   joinParty,
@@ -318,6 +319,10 @@ export default function ForestPage() {
 
   // ---------- exploring ----------
   if (party.status === 'exploring' && party.paths) {
+    const seatedIds = party.seats.filter((p): p is Player => !!p).map((p) => p.id);
+    const myVote = game.playerId ? party.votes[game.playerId] : undefined;
+    const votedCount = seatedIds.filter((id) => party.votes[id] !== undefined).length;
+
     return (
       <div className="relative min-h-svh px-4 py-8">
         <PaperTexture />
@@ -333,25 +338,48 @@ export default function ForestPage() {
               <PlayerCard key={p.id} player={p} isActing={false} targetable={false} />
             ))}
           </div>
+
+          <ForestChatFeed roomId={roomId} log={party.log} myId={game.playerId ?? ''} myNickname={me?.nickname ?? game.nickname} />
+
           <div>
-            <p className="mb-2 text-sm font-bold text-ink-700/80">갈림길을 선택하세요</p>
-            <div className="flex flex-col gap-2">
-              {party.paths.map((choice, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  disabled={busy}
-                  onClick={() => guard(() => choosePath(roomId, i))}
-                  className="text-left"
-                >
-                  <Card className="hover:border-seal-500/40">
-                    <p className="font-serif-kr font-semibold text-ink-900">{['①', '②', '③'][i]} {choice.label}</p>
-                    {choice.revealedCategory && <p className="mt-0.5 text-[10px] text-ink-500/60">단서: {choice.revealedCategory}</p>}
-                  </Card>
-                </button>
-              ))}
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-sm font-bold text-ink-700/80">갈림길 투표</p>
+              <p className="font-mono text-[10px] text-ink-500/60">{votedCount}/{seatedIds.length}명 투표 · 전원 투표 시 다수결로 진행</p>
             </div>
+            <div className="flex flex-col gap-2">
+              {party.paths.map((choice, i) => {
+                const voterNames = seatedIds
+                  .filter((id) => party.votes[id] === i)
+                  .map((id) => party.seats.find((s) => s?.id === id)?.nickname)
+                  .filter((n): n is string => !!n);
+                const isMine = myVote === i;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => guard(() => castVote(roomId, game.playerId!, i))}
+                    className="text-left"
+                  >
+                    <Card className={isMine ? 'border-seal-500' : 'hover:border-seal-500/40'}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-serif-kr font-semibold text-ink-900">{['①', '②', '③'][i]} {choice.label}</p>
+                          {choice.revealedCategory && <p className="mt-0.5 text-[10px] text-ink-500/60">단서: {choice.revealedCategory}</p>}
+                        </div>
+                        {voterNames.length > 0 && (
+                          <span className="flex-none font-mono text-[10px] font-bold text-seal-600">{voterNames.length}표</span>
+                        )}
+                      </div>
+                      {voterNames.length > 0 && <p className="mt-1 truncate text-[10px] text-ink-500/60">{voterNames.join(', ')}</p>}
+                    </Card>
+                  </button>
+                );
+              })}
+            </div>
+            {actionError && <p className="mt-2 text-xs font-bold text-seal-600">{actionError}</p>}
           </div>
+
           {me && <SkillPanel player={me} onUpgrade={(spellId) => guard(() => upgradeSpell(roomId, game.playerId!, spellId))} />}
           <button
             type="button"
@@ -383,6 +411,9 @@ export default function ForestPage() {
           </div>
           <Button className="mt-4 w-full" disabled={busy} onClick={() => guard(() => confirmEvent(roomId))}>확인</Button>
         </Card>
+        <div className="w-full max-w-xs">
+          <ForestChatFeed roomId={roomId} log={[]} myId={game.playerId ?? ''} myNickname={me?.nickname ?? game.nickname} maxHeightClass="max-h-40" />
+        </div>
       </div>
     );
   }
@@ -523,14 +554,7 @@ export default function ForestPage() {
             </Card>
           )}
 
-          <div className="rounded-lg border border-ink-700/15 bg-paper-50 px-3 py-2">
-            <p className="mb-1 font-mono text-[10px] font-bold text-ink-500/60">전투 기록</p>
-            <div className="flex max-h-28 flex-col-reverse gap-0.5 overflow-y-auto text-[11px] text-ink-700/80">
-              {party.log.slice(-8).reverse().map((l, i) => (
-                <p key={i}>{l.text}</p>
-              ))}
-            </div>
-          </div>
+          <ForestChatFeed roomId={roomId} log={party.log.slice(-15)} myId={game.playerId ?? ''} myNickname={me.nickname} maxHeightClass="max-h-40" />
         </div>
       </div>
     );

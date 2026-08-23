@@ -239,6 +239,26 @@ service cloud.firestore {
       allow delete: if false;
 
       allow create, update: if request.resource.data.status in ['lobby', 'exploring', 'event', 'combat', 'cleared', 'failed'];
+
+      // 탐사 도중 파티원끼리 나누는 대화입니다. 기숙사 대화와 마찬가지로 추가만
+      // 가능하고 수정/삭제는 막습니다.
+      match /messages/{messageId} {
+        allow read: if true;
+
+        allow create: if request.resource.data.keys().hasAll(
+            ['authorPlayerId', 'authorNickname', 'text']
+          )
+          && request.resource.data.authorNickname is string
+          && request.resource.data.authorNickname.size() <= 20
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500;
+
+        allow update: if false;
+        // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 탐사 대화 로그를 지울 수
+        // 있도록 삭제를 허용합니다.
+        allow delete: if true;
+      }
     }
 
     // 약초 농장: 플레이어 1인당 문서 하나(슬롯/도감)를 저장하는 방치형 재배

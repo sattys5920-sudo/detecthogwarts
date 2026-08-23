@@ -227,6 +227,7 @@ export interface ForestParty {
   usedBossIds: string[];
   recentCategories: EventCategory[];
   paths: PathChoice[] | null;
+  votes: Record<string, number>;
   currentEventId: string | null;
   combat: CombatState | null;
   log: LogEntry[];

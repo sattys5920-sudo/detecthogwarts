@@ -16,16 +16,18 @@ const HOUSE_CRESTS: Record<string, string> = {
 
 function PopupShell({ label, image, lines, onConfirm }: { label: string; image?: string; lines: string[]; onConfirm: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-black/60 px-6 py-8" role="alertdialog" aria-modal="true">
-      <div className="relative w-full max-w-xs">
+    <div
+      className="fixed inset-x-0 top-0 z-50 flex justify-center overflow-y-auto bg-ink-black/60 px-6 py-8"
+      style={{ height: '100dvh' }}
+      role="alertdialog"
+      aria-modal="true"
+    >
+      <div className="relative my-auto w-full max-w-xs flex-none">
         <CornerFlourish corner="tl" className="pointer-events-none absolute -top-1.5 -left-1.5 z-10 h-5 w-5 text-gold-600/70" />
         <CornerFlourish corner="tr" className="pointer-events-none absolute -top-1.5 -right-1.5 z-10 h-5 w-5 text-gold-600/70" />
         <CornerFlourish corner="bl" className="pointer-events-none absolute -bottom-1.5 -left-1.5 z-10 h-5 w-5 text-gold-600/70" />
         <CornerFlourish corner="br" className="pointer-events-none absolute -bottom-1.5 -right-1.5 z-10 h-5 w-5 text-gold-600/70" />
-        <div
-          className="deckle-edge flex w-full flex-col overflow-y-auto border border-seal-500/40 bg-paper-50 p-5 text-center shadow-[0_4px_20px_rgba(23,19,15,0.35)]"
-          style={{ maxHeight: 'calc(100dvh - 4rem)' }}
-        >
+        <div className="deckle-edge flex w-full flex-col border border-seal-500/40 bg-paper-50 p-5 text-center shadow-[0_4px_20px_rgba(23,19,15,0.35)]">
           <p className="flex-none font-mono text-[10px] font-bold tracking-widest text-seal-600">{label}</p>
           {image && <img src={image} alt="" className="mx-auto mt-3 h-24 w-auto flex-none" />}
           <div className="mt-3">

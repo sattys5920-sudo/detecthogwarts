@@ -305,6 +305,11 @@ export default function ForestPage() {
   }, [party?.lastVoteResult, party?.stage]);
 
   // Shows a brief "몬스터가 나타났다!" banner on entering combat, after any vote-result overlay finishes.
+  // The trigger and its auto-hide timer are kept in separate effects: if they were combined, a
+  // `voteReveal` flip landing in the same commit as the combat-intro trigger (which happens when a
+  // monster event resolves straight out of a vote) would cancel the just-armed hide timer via this
+  // effect's own cleanup, and the guard below would then block it from ever being rescheduled —
+  // leaving the banner stuck on screen forever.
   useEffect(() => {
     if (!party) return;
     if (party.status !== 'combat') {
@@ -314,9 +319,13 @@ export default function ForestPage() {
     if (combatBannerShownRef.current || voteReveal) return;
     combatBannerShownRef.current = true;
     setCombatIntro(true);
+  }, [party?.status, voteReveal]);
+
+  useEffect(() => {
+    if (!combatIntro) return;
     const t = setTimeout(() => setCombatIntro(false), 1100);
     return () => clearTimeout(t);
-  }, [party?.status, voteReveal]);
+  }, [combatIntro]);
 
   if (!game.hasEntered) return <Navigate to="/" replace />;
   if (!VALID_ROOMS.includes(roomId)) return <Navigate to="/recess" replace />;

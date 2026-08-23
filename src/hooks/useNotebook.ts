@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useGame } from '../context/GameContext';
 
 export interface NotebookEntry {
   id: string;
@@ -11,8 +12,11 @@ export interface NotebookEntry {
   memo?: string;
 }
 
-const STORAGE_KEY = 'arcanum-notebook';
 const SYNC_EVENT = 'arcanum-notebook-sync';
+
+function storageKey(playerId: string) {
+  return `arcanum-notebook-${playerId}`;
+}
 
 const SEED: NotebookEntry[] = [
   {
@@ -41,18 +45,18 @@ const SEED: NotebookEntry[] = [
   },
 ];
 
-function load(): NotebookEntry[] {
+function load(playerId: string): NotebookEntry[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey(playerId));
     return raw ? (JSON.parse(raw) as NotebookEntry[]) : SEED;
   } catch {
     return SEED;
   }
 }
 
-function persist(entries: NotebookEntry[]) {
+function persist(playerId: string, entries: NotebookEntry[]) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    localStorage.setItem(storageKey(playerId), JSON.stringify(entries));
     window.dispatchEvent(new Event(SYNC_EVENT));
   } catch {
     // localStorage unavailable (private mode, etc.) — silently skip persistence.
@@ -60,13 +64,21 @@ function persist(entries: NotebookEntry[]) {
 }
 
 export function useNotebook() {
-  const [entries, setEntries] = useState<NotebookEntry[]>(load);
+  const { playerId } = useGame();
+  const key = playerId ?? 'guest';
+  const [entries, setEntries] = useState<NotebookEntry[]>(() => load(key));
+
+  // Re-reads whenever the logged-in account changes, so switching accounts on the same
+  // device swaps to that account's own notebook instead of showing the previous one's.
+  useEffect(() => {
+    setEntries(load(key));
+  }, [key]);
 
   useEffect(() => {
-    const sync = () => setEntries(load());
+    const sync = () => setEntries(load(key));
     window.addEventListener(SYNC_EVENT, sync);
     return () => window.removeEventListener(SYNC_EVENT, sync);
-  }, []);
+  }, [key]);
 
   const register = useCallback((entry: Omit<NotebookEntry, 'id' | 'registeredAt'>) => {
     setEntries((prev) => {
@@ -74,34 +86,34 @@ export function useNotebook() {
       if (!entry.sourceId && prev.some((e) => e.title === entry.title)) return prev;
       const created: NotebookEntry = { ...entry, id: crypto.randomUUID(), registeredAt: Date.now() };
       const next = [created, ...prev];
-      persist(next);
+      persist(key, next);
       return next;
     });
-  }, []);
+  }, [key]);
 
   const remove = useCallback((id: string) => {
     setEntries((prev) => {
       const next = prev.filter((e) => e.id !== id);
-      persist(next);
+      persist(key, next);
       return next;
     });
-  }, []);
+  }, [key]);
 
   const setInk = useCallback((id: string, ink: NotebookEntry['ink']) => {
     setEntries((prev) => {
       const next = prev.map((e) => (e.id === id ? { ...e, ink } : e));
-      persist(next);
+      persist(key, next);
       return next;
     });
-  }, []);
+  }, [key]);
 
   const setMemo = useCallback((id: string, memo: string) => {
     setEntries((prev) => {
       const next = prev.map((e) => (e.id === id ? { ...e, memo } : e));
-      persist(next);
+      persist(key, next);
       return next;
     });
-  }, []);
+  }, [key]);
 
   return { entries, register, remove, setInk, setMemo };
 }

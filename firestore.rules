@@ -24,30 +24,67 @@ service cloud.firestore {
       allow delete: if true;
     }
 
-    // 기숙사 배정 테스트 결과: 응시자 본인이 결과를 생성할 수 있고, 관리자 페이지가
-    // 목록을 읽습니다. 배정(assignedHouse/assignedAt)만 이후에 갱신할 수 있고,
-    // 그 외 필드는 생성 이후 변경할 수 없습니다.
+    // 가입 계정: 아이디(문서 ID)당 하나씩만 생성할 수 있습니다 — 이미 존재하는
+    // 아이디로 다시 만들려는 요청은 Firestore 규칙상 create가 아니라 update로
+    // 취급되고, update가 막혀 있어 자연스럽게 아이디 중복이 방지됩니다.
+    // 비밀번호는 클라이언트에서 해시한 값만 저장되지만, 이 프로젝트엔 실제
+    // 로그인 신원 검증(Firebase Auth)이 없어 해시도 읽기는 누구나 가능합니다 —
+    // 다른 관리자 기능들과 동일한 신뢰 모델입니다.
+    match /accounts/{username} {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasAll(
+          ['username', 'passwordHash', 'playerId', 'createdAt']
+        )
+        && request.resource.data.username is string
+        && request.resource.data.username.size() > 0
+        && request.resource.data.username.size() <= 20
+        && request.resource.data.passwordHash is string
+        && request.resource.data.passwordHash.size() == 64
+        && request.resource.data.playerId is string;
+
+      allow update: if false;
+
+      // "가입 데이터 초기화" 버튼이 계정도 함께 지워야 아이디를 재사용할 수
+      // 있으므로 삭제를 허용합니다.
+      allow delete: if true;
+    }
+
+    // 가입자 기록: 계정 생성 직후 빈 값으로 만들어지고, 적성 검사 결과
+    // (testScores/computedHouse)와 입학 서류(nickname/grade)가 이후 각각 한 번씩
+    // 채워집니다. 배정(assignedHouse/assignedAt)은 그 다음에 관리자가 채웁니다.
     match /players/{playerId} {
       allow read: if true;
 
       allow create: if request.resource.data.keys().hasAll(
-          ['nickname', 'testScores', 'computedHouse', 'assignedHouse', 'assignedAt', 'createdAt']
+          ['username', 'nickname', 'grade', 'testScores', 'computedHouse', 'assignedHouse', 'assignedAt', 'createdAt']
         )
-        && request.resource.data.nickname is string
-        && request.resource.data.nickname.size() > 0
-        && request.resource.data.nickname.size() <= 20
-        && request.resource.data.testScores is map
-        && request.resource.data.computedHouse in ['flame', 'moonlight', 'earth', 'wind']
+        && request.resource.data.username is string
+        && request.resource.data.username.size() > 0
+        && request.resource.data.username.size() <= 20
+        && request.resource.data.nickname == ''
+        && request.resource.data.grade == null
+        && request.resource.data.testScores == null
+        && request.resource.data.computedHouse == null
         && request.resource.data.assignedHouse == null
         && request.resource.data.assignedAt == null;
 
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assignedHouse', 'assignedAt'])
-        && request.resource.data.assignedHouse in ['flame', 'moonlight', 'earth', 'wind'];
+      allow update: if
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['testScores', 'computedHouse'])
+          && request.resource.data.testScores is map
+          && request.resource.data.computedHouse in ['flame', 'moonlight', 'earth', 'wind'])
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nickname', 'grade'])
+          && request.resource.data.nickname is string
+          && request.resource.data.nickname.size() > 0
+          && request.resource.data.nickname.size() <= 20
+          && request.resource.data.grade in [10, 11, 12])
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assignedHouse', 'assignedAt'])
+          && request.resource.data.assignedHouse in ['flame', 'moonlight', 'earth', 'wind']);
 
       // 관리자 페이지의 "가입 데이터 초기화" 버튼이 지워야 하므로 삭제를
-      // 허용합니다. 이 프로젝트엔 로그인이 없어 이 허용은 관리자 여부와
-      // 무관하게 모든 클라이언트에 적용됩니다 — 신뢰 모델은 이미 다른
-      // 관리자 기능들과 동일합니다(패스코드는 클라이언트에서만 검사).
+      // 허용합니다. 이 프로젝트엔 Firebase Auth 기반 신원 검증이 없어 이 허용은
+      // 관리자 여부와 무관하게 모든 클라이언트에 적용됩니다 — 신뢰 모델은 이미
+      // 다른 관리자 기능들과 동일합니다(패스코드는 클라이언트에서만 검사).
       allow delete: if true;
     }
 

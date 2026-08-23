@@ -22,10 +22,11 @@ function formatTime(ms: number) {
 }
 
 function PlayerRow({ player }: { player: PlayerRecord }) {
-  const [selected, setSelected] = useState<HouseId>(player.assignedHouse ?? player.computedHouse);
+  const [selected, setSelected] = useState<HouseId>(player.assignedHouse ?? player.computedHouse ?? 'flame');
   const [sending, setSending] = useState(false);
   const computed = houseOf(player.computedHouse);
   const assigned = houseOf(player.assignedHouse);
+  const testDone = player.computedHouse !== null;
 
   async function send() {
     setSending(true);
@@ -39,50 +40,60 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="font-gothic text-xl text-ink-black">{player.nickname}</p>
+        <p className="font-gothic text-xl text-ink-black">
+          {player.nickname || '(가입만 완료)'}
+          <span className="ml-1.5 font-mono text-[10px] font-normal text-ink-500/50">@{player.username}</span>
+          {player.grade && <span className="ml-1.5 font-mono text-[10px] font-normal text-ink-500/50">{player.grade}학년</span>}
+        </p>
         <p className="font-mono text-[10px] text-ink-500/60">{formatTime(player.createdAt)}</p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-xs text-ink-700/80">
-        <span>
-          추천: <b>{computed ? computed.name : '-'}</b>
-        </span>
-        <span className="text-ink-500/40">·</span>
-        <span>
-          현재 배정:{' '}
-          {assigned ? (
-            <b className="text-seal-600">{assigned.name}</b>
-          ) : (
-            <b className="text-ink-500/60">미배정</b>
-          )}
-        </span>
-        {player.assignedAt && <span className="text-ink-500/50">({formatTime(player.assignedAt)})</span>}
-      </div>
+      {testDone ? (
+        <>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-ink-700/80">
+            <span>
+              추천: <b>{computed ? computed.name : '-'}</b>
+            </span>
+            <span className="text-ink-500/40">·</span>
+            <span>
+              현재 배정:{' '}
+              {assigned ? (
+                <b className="text-seal-600">{assigned.name}</b>
+              ) : (
+                <b className="text-ink-500/60">미배정</b>
+              )}
+            </span>
+            {player.assignedAt && <span className="text-ink-500/50">({formatTime(player.assignedAt)})</span>}
+          </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px] text-ink-500/60">
-        {HOUSES.map((h) => (
-          <span key={h.id}>
-            {h.name} {player.testScores?.[h.id as HouseId] ?? 0}
-          </span>
-        ))}
-      </div>
+          <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px] text-ink-500/60">
+            {HOUSES.map((h) => (
+              <span key={h.id}>
+                {h.name} {player.testScores?.[h.id as HouseId] ?? 0}
+              </span>
+            ))}
+          </div>
 
-      <div className="flex items-center gap-2">
-        <select
-          value={selected}
-          onChange={(e) => setSelected(e.target.value as HouseId)}
-          className="min-w-0 flex-1 rounded-lg border border-ink-700/20 bg-paper-100/60 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
-        >
-          {HOUSES.map((h) => (
-            <option key={h.id} value={h.id}>
-              {h.name}
-            </option>
-          ))}
-        </select>
-        <Button onClick={send} disabled={sending} className="flex-none px-4 py-1.5 text-xs">
-          {sending ? '발송 중…' : assigned ? '재발송' : '배정 발송'}
-        </Button>
-      </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={selected}
+              onChange={(e) => setSelected(e.target.value as HouseId)}
+              className="min-w-0 flex-1 rounded-lg border border-ink-700/20 bg-paper-100/60 px-2.5 py-1.5 text-sm text-ink-900 outline-none focus:border-seal-500"
+            >
+              {HOUSES.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.name}
+                </option>
+              ))}
+            </select>
+            <Button onClick={send} disabled={sending} className="flex-none px-4 py-1.5 text-xs">
+              {sending ? '발송 중…' : assigned ? '재발송' : '배정 발송'}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <p className="text-xs text-ink-500/60">아직 적성 검사 · 입학 서류를 진행 중입니다.</p>
+      )}
     </Card>
   );
 }
@@ -179,7 +190,7 @@ function DangerZone() {
 
       <div className="flex flex-col gap-2 rounded-lg border border-ink-700/15 bg-paper-100/50 p-3">
         <p className="text-sm font-bold text-ink-900">가입 데이터 초기화</p>
-        <p className="text-xs text-ink-700/70">가입자 목록(닉네임 · 적성검사 결과 · 기숙사 배정)을 전부 삭제합니다.</p>
+        <p className="text-xs text-ink-700/70">가입 계정(아이디 · 비밀번호)과 가입자 목록(닉네임 · 적성검사 결과 · 기숙사 배정)을 전부 삭제합니다.</p>
         <div className="flex items-center gap-2">
           <input
             value={signupsPhrase}

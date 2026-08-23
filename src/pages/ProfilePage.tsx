@@ -171,6 +171,11 @@ export default function ProfilePage() {
           <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
             {house ? house.name : '기숙사 미배정'}
           </span>
+          {game.grade && (
+            <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
+              {game.grade}학년
+            </span>
+          )}
           <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
             탐구자
           </span>

@@ -129,14 +129,15 @@ function clearDemoKeysByPrefix(prefixes: string[], events: string[]): void {
   events.forEach((evt) => window.dispatchEvent(new Event(evt)));
 }
 
-/** Deletes every signup (가입자) record. Returns how many were removed. */
+/** Deletes every signup (가입자) record and its login account. Returns how many players were removed. */
 export async function resetSignups(): Promise<number> {
   if (isFirebaseConfigured && db) {
-    return deleteCollectionDocs(db, 'players');
+    const [playerCount] = await Promise.all([deleteCollectionDocs(db, 'players'), deleteCollectionDocs(db, 'accounts')]);
+    return playerCount;
   }
   const raw = localStorage.getItem('arcanum-players-demo');
   const count = raw ? (JSON.parse(raw) as unknown[]).length : 0;
-  clearDemoKeysByPrefix(['arcanum-players-demo'], ['arcanum-players-demo-changed']);
+  clearDemoKeysByPrefix(['arcanum-players-demo', 'arcanum-accounts-demo'], ['arcanum-players-demo-changed']);
   return count;
 }
 

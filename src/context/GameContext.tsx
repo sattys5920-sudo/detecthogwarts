@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createAccount, verifyAccount } from '../firebase/accounts';
+import { createPlayerRecord, getPlayerOnce, listenPlayer, submitProfile, submitTestResult } from '../firebase/players';
 import type { HouseId } from '../data/sortingTest';
-import { createPlayerRecord, listenPlayer } from '../firebase/players';
 
 export interface PlayerStats {
   hp: number;
@@ -10,11 +11,15 @@ export interface PlayerStats {
 }
 
 interface PlayerState {
+  username: string;
   nickname: string;
+  grade: number | null;
   avatarDataUrl: string | null;
   houseId: string | null;
   joinedAt: number | null;
   playerId: string | null;
+  testScores: Record<HouseId, number> | null;
+  computedHouse: HouseId | null;
   stats: PlayerStats;
   currentDay: number;
   deductionSolved: boolean;
@@ -23,15 +28,22 @@ interface PlayerState {
 const STORAGE_KEY = 'arcanum-player';
 const SEEN_ASSIGNMENT_PREFIX = 'arcanum-assignment-seen-';
 const ADMIN_KEY = 'arcanum-admin-unlocked';
+const ADMIN_USERNAME = 'admin';
+const ADMIN_NICKNAME = '관리자';
+const ADMIN_ZERO_SCORES: Record<HouseId, number> = { flame: 0, moonlight: 0, earth: 0, wind: 0 };
 
 const defaultStats: PlayerStats = { hp: 100, intelligence: 50, stamina: 50, spellPower: 50 };
 
 const emptyState: PlayerState = {
+  username: '',
   nickname: '',
+  grade: null,
   avatarDataUrl: null,
   houseId: null,
   joinedAt: null,
   playerId: null,
+  testScores: null,
+  computedHouse: null,
   stats: defaultStats,
   currentDay: 1,
   deductionSolved: false,
@@ -52,14 +64,21 @@ function clamp(value: number) {
   return Math.max(0, Math.min(100, value));
 }
 
+export type OnboardingStage = 'account' | 'test' | 'profile' | 'done';
+
 interface GameContextValue extends PlayerState {
   hasEntered: boolean;
+  stage: OnboardingStage;
   assignedHouse: HouseId | null;
   justAssigned: boolean;
   isAdmin: boolean;
   unlockAdmin: () => void;
   clearJustAssigned: () => void;
-  completeSignup: (nickname: string, testScores: Record<HouseId, number>, computedHouse: HouseId) => Promise<void>;
+  signUp: (username: string, password: string) => Promise<'ok' | 'taken'>;
+  logIn: (username: string, password: string) => Promise<'ok' | 'not-found' | 'wrong-password'>;
+  submitTest: (testScores: Record<HouseId, number>, computedHouse: HouseId) => Promise<void>;
+  completeProfile: (nickname: string, grade: number) => Promise<void>;
+  adminEnter: () => Promise<void>;
   setNickname: (nickname: string) => void;
   setAvatar: (dataUrl: string | null) => void;
   adjustStat: (key: keyof PlayerStats, delta: number) => void;
@@ -97,14 +116,65 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, [state.playerId]);
 
-  const completeSignup = useCallback(
-    async (nickname: string, testScores: Record<HouseId, number>, computedHouse: HouseId) => {
-      const playerId = crypto.randomUUID();
-      setState((prev) => ({ ...prev, nickname, joinedAt: prev.joinedAt ?? Date.now(), playerId }));
-      await createPlayerRecord(playerId, nickname, testScores, computedHouse);
-    },
-    [],
-  );
+  const stage: OnboardingStage = !state.playerId ? 'account' : !state.testScores ? 'test' : !state.nickname ? 'profile' : 'done';
+
+  const signUp = useCallback(async (username: string, password: string) => {
+    const playerId = crypto.randomUUID();
+    const result = await createAccount(username, password, playerId);
+    if (!result.ok) return 'taken' as const;
+    await createPlayerRecord(playerId, username.trim());
+    setState((prev) => ({ ...prev, username: username.trim(), playerId, joinedAt: prev.joinedAt ?? Date.now() }));
+    return 'ok' as const;
+  }, []);
+
+  const logIn = useCallback(async (username: string, password: string) => {
+    const result = await verifyAccount(username, password);
+    if (!result.ok) return result.reason;
+    const player = await getPlayerOnce(result.playerId);
+    setState((prev) => ({
+      ...prev,
+      username: username.trim(),
+      playerId: result.playerId,
+      nickname: player?.nickname ?? '',
+      grade: player?.grade ?? null,
+      testScores: player?.testScores ?? null,
+      computedHouse: player?.computedHouse ?? null,
+      houseId: player?.assignedHouse ?? prev.houseId,
+      joinedAt: prev.joinedAt ?? Date.now(),
+    }));
+    return 'ok' as const;
+  }, []);
+
+  const submitTest = useCallback(async (testScores: Record<HouseId, number>, computedHouse: HouseId) => {
+    const playerId = playerIdRef.current;
+    if (!playerId) return;
+    await submitTestResult(playerId, testScores, computedHouse);
+    setState((prev) => ({ ...prev, testScores, computedHouse }));
+  }, []);
+
+  const completeProfile = useCallback(async (nickname: string, grade: number) => {
+    const playerId = playerIdRef.current;
+    if (!playerId) return;
+    await submitProfile(playerId, nickname, grade);
+    setState((prev) => ({ ...prev, nickname, grade }));
+  }, []);
+
+  const adminEnter = useCallback(async () => {
+    const playerId = crypto.randomUUID();
+    await createPlayerRecord(playerId, ADMIN_USERNAME);
+    await submitTestResult(playerId, ADMIN_ZERO_SCORES, 'moonlight');
+    await submitProfile(playerId, ADMIN_NICKNAME, 12);
+    setState((prev) => ({
+      ...prev,
+      username: ADMIN_USERNAME,
+      playerId,
+      nickname: ADMIN_NICKNAME,
+      testScores: ADMIN_ZERO_SCORES,
+      computedHouse: 'moonlight',
+      grade: 12,
+      joinedAt: prev.joinedAt ?? Date.now(),
+    }));
+  }, []);
 
   const setNickname = useCallback((nickname: string) => {
     setState((prev) => ({ ...prev, nickname }));
@@ -148,12 +218,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const value: GameContextValue = {
     ...state,
     hasEntered: state.nickname !== '',
+    stage,
     assignedHouse,
     justAssigned,
     isAdmin,
     unlockAdmin,
     clearJustAssigned,
-    completeSignup,
+    signUp,
+    logIn,
+    submitTest,
+    completeProfile,
+    adminEnter,
     setNickname,
     setAvatar,
     adjustStat,

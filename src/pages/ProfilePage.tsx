@@ -7,6 +7,7 @@ import Letterhead from '../components/Letterhead';
 import PushSetup from '../components/PushSetup';
 import SectionTitle from '../components/SectionTitle';
 import { useGame } from '../context/GameContext';
+import { PATRONUS_ICONS } from '../data/patronusIcons';
 import { HOUSES, SCHOOL_NAME } from '../data/school';
 import { DEFAULT_PREFS, setPref, subscribePrefs, type NotificationPrefs } from '../firebase/notificationPrefs';
 import { patronusById } from '../game/forest/patronus';
@@ -228,7 +229,10 @@ export default function ProfilePage() {
         <div>
           <SectionTitle className="mb-2">배정 패트로누스</SectionTitle>
           <Card className="text-center">
-            <p className="font-serif-kr font-semibold text-ink-900">
+            {PATRONUS_ICONS[game.patronus] && (
+              <img src={PATRONUS_ICONS[game.patronus]} alt={patronusById(game.patronus).name} className="mx-auto h-32 w-auto" />
+            )}
+            <p className="mt-2 font-serif-kr font-semibold text-ink-900">
               {patronusById(game.patronus).name} <span className="text-seal-600">· {patronusById(game.patronus).effectLabel}</span>
             </p>
             <p className="mt-1 text-xs text-ink-500/70">{patronusById(game.patronus).description}</p>

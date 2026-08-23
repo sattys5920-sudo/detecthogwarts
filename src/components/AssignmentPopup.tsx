@@ -1,5 +1,6 @@
 import CornerFlourish from './CornerFlourish';
 import { useGame } from '../context/GameContext';
+import { PATRONUS_ICONS } from '../data/patronusIcons';
 import { HOUSES } from '../data/school';
 import { patronusById } from '../game/forest/patronus';
 import gryffindorCrest from '../assets/crests/gryffindor.png';
@@ -73,6 +74,7 @@ export default function AssignmentPopup() {
     return (
       <PopupShell
         label="패트로누스 배정"
+        image={PATRONUS_ICONS[game.patronus]}
         lines={[
           `${game.nickname}, 당신의 지팡이 끝에서 빛이 모여 하나의 피사체를 만들어 냅니다. ${patronus.name}, 당신의 든든한 친구가 되어 줄 거예요.`,
         ]}

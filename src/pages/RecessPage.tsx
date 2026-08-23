@@ -117,7 +117,6 @@ export default function RecessPage() {
   function enterRoom(r: Room) {
     if (recessLocked && !game.isAdmin) return;
     if (r.lockable && roomLocks[r.id] && !game.isAdmin) return;
-    game.adjustStat('stamina', -10);
     if (r.linkTo) {
       navigate(r.linkTo);
       return;
@@ -136,6 +135,7 @@ export default function RecessPage() {
 
   function handleDavinciFinished(result: 'win' | 'lose') {
     setDavinciResult(result);
+    game.adjustStat('stamina', -10);
     if (result === 'win') {
       game.adjustStat('intelligence', 5);
       game.adjustStat('spellPower', 5);
@@ -240,8 +240,6 @@ export default function RecessPage() {
         </div>
       ) : (
         <>
-          <p className="-mt-2 text-center font-mono text-[10px] text-ink-500/60">공간에 입장할 때마다 스태미나 -10</p>
-
           <div className="flex flex-col gap-3">
             {ROOMS.map((r) => {
               const locked = r.lockable && roomLocks[r.id] && !game.isAdmin;

@@ -126,6 +126,10 @@ function rewardKey(roomId: string, gameStartedAt: number) {
   return `arcanum-quidditch-reward-${roomId}-${gameStartedAt}`;
 }
 
+function staminaKey(roomId: string, gameStartedAt: number) {
+  return `arcanum-quidditch-stamina-${roomId}-${gameStartedAt}`;
+}
+
 function QuidditchResultScreen({
   room,
   roomId,
@@ -141,6 +145,13 @@ function QuidditchResultScreen({
 }) {
   const game = useGame();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const key = staminaKey(roomId, room.gameStartedAt);
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, 'true');
+    game.adjustStat('stamina', -10);
+  }, [roomId, room.gameStartedAt, game]);
 
   useEffect(() => {
     if (!iWon) return;

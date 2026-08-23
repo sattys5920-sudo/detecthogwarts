@@ -276,6 +276,14 @@ export default function ForestPage() {
     game.growMaxStat('maxMp', 5);
   }, [party, roomId, game]);
 
+  useEffect(() => {
+    if (!party || (party.status !== 'cleared' && party.status !== 'failed') || !party.seats.some((p) => p?.id === game.playerId)) return;
+    const key = `arcanum-forest-stamina-${roomId}-${party.updatedAt}`;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, 'true');
+    game.adjustStat('stamina', -10);
+  }, [party, roomId, game]);
+
   // Ticks once a second while a vote is open so the countdown display stays live.
   useEffect(() => {
     if (!party || party.status !== 'exploring' || !party.votingEndsAt || party.voteTieOptions) return;

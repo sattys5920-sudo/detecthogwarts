@@ -56,3 +56,11 @@ export function listenRoomLock(roomId: string, callback: (locked: boolean) => vo
 export function setRoomLock(roomId: string, locked: boolean): Promise<void> {
   return setLock('recessLocks', roomId, locked);
 }
+
+export function listenRecessLock(callback: (locked: boolean) => void): () => void {
+  return listenLock('sessions', 'recess', callback);
+}
+
+export function setRecessLock(locked: boolean): Promise<void> {
+  return setLock('sessions', 'recess', locked);
+}

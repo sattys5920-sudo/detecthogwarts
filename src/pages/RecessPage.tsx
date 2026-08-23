@@ -7,7 +7,7 @@ import Letterhead from '../components/Letterhead';
 import { usePageBack } from '../context/BackContext';
 import { useGame } from '../context/GameContext';
 import { HOUSES } from '../data/school';
-import { listenRoomLock, setRoomLock } from '../firebase/locks';
+import { listenRecessLock, listenRoomLock, setRecessLock, setRoomLock } from '../firebase/locks';
 import dormIcon from '../assets/rooms/dorm.png';
 import forestAIcon from '../assets/rooms/forestA.png';
 import forestBIcon from '../assets/rooms/forestB.png';
@@ -94,6 +94,7 @@ export default function RecessPage() {
   const [davinciResult, setDavinciResult] = useState<'win' | 'lose' | null>(null);
   const [davinciPlays, setDavinciPlays] = useState(() => Number(localStorage.getItem(davinciPlaysKey(game.currentDay)) ?? 0));
   const [roomLocks, setRoomLocks] = useState<Record<string, boolean>>({});
+  const [recessLocked, setRecessLocked] = useState(false);
   const room = ROOMS.find((r) => r.id === activeRoom);
   const house = HOUSES.find((h) => h.id === game.houseId);
 
@@ -104,6 +105,8 @@ export default function RecessPage() {
     return () => unsubs.forEach((u) => u());
   }, []);
 
+  useEffect(() => listenRecessLock(setRecessLocked), []);
+
   const exitRoom = useCallback(() => {
     if (davinciPlaying) exitDavinci();
     setActiveRoom(null);
@@ -112,6 +115,7 @@ export default function RecessPage() {
   usePageBack(room ? exitRoom : null);
 
   function enterRoom(r: Room) {
+    if (recessLocked && !game.isAdmin) return;
     if (r.lockable && roomLocks[r.id] && !game.isAdmin) return;
     game.adjustStat('stamina', -10);
     if (r.linkTo) {
@@ -213,24 +217,49 @@ export default function RecessPage() {
   return (
     <div className="flex flex-col gap-4">
       <Letterhead label="휴게시간" meta="쉬는 시간 · 10분 남음" />
-      <p className="-mt-2 text-center font-mono text-[10px] text-ink-500/60">공간에 입장할 때마다 스태미나 -10</p>
 
-      <div className="flex flex-col gap-3">
-        {ROOMS.map((r) => {
-          const locked = r.lockable && roomLocks[r.id] && !game.isAdmin;
-          return (
-            <button key={r.id} type="button" onClick={() => enterRoom(r)} disabled={locked} className="text-left disabled:opacity-50">
-              <Card className="flex items-center gap-3 hover:border-ink-700/30">
-                <img src={ROOM_ICONS[r.id]} alt="" className="h-12 w-12 flex-none rounded-lg border border-ink-700/20 object-cover" />
-                <p className="font-serif-kr font-semibold text-ink-900">
-                  {r.name}
-                  {locked && <span className="ml-1.5 font-mono text-[10px] font-bold text-ink-500/60">(잠김)</span>}
-                </p>
-              </Card>
-            </button>
-          );
-        })}
-      </div>
+      {game.isAdmin && (
+        <div className="flex items-center justify-between gap-2 rounded-sm bg-ink-black px-2.5 py-1.5">
+          <p className="font-mono text-[11px] font-bold text-paper-50">관리자 모드 · 휴게시간 전체</p>
+          <button
+            type="button"
+            onClick={() => setRecessLock(!recessLocked)}
+            className={`rounded-sm px-2.5 py-1 font-mono text-[11px] font-bold ${
+              recessLocked ? 'bg-seal-600 text-paper-50' : 'bg-paper-100 text-ink-900'
+            }`}
+          >
+            {recessLocked ? '잠김 — 열기' : '열림 — 잠그기'}
+          </button>
+        </div>
+      )}
+
+      {recessLocked && !game.isAdmin ? (
+        <div className="rounded-sm border border-ink-700/15 bg-paper-100/60 py-10 text-center">
+          <p className="text-sm font-bold text-ink-700/70">아직 휴게시간이 아닙니다.</p>
+          <p className="mt-1 text-xs text-ink-500/60">관리자가 열어야 이용할 수 있어요.</p>
+        </div>
+      ) : (
+        <>
+          <p className="-mt-2 text-center font-mono text-[10px] text-ink-500/60">공간에 입장할 때마다 스태미나 -10</p>
+
+          <div className="flex flex-col gap-3">
+            {ROOMS.map((r) => {
+              const locked = r.lockable && roomLocks[r.id] && !game.isAdmin;
+              return (
+                <button key={r.id} type="button" onClick={() => enterRoom(r)} disabled={locked} className="text-left disabled:opacity-50">
+                  <Card className="flex items-center gap-3 hover:border-ink-700/30">
+                    <img src={ROOM_ICONS[r.id]} alt="" className="h-12 w-12 flex-none rounded-lg border border-ink-700/20 object-cover" />
+                    <p className="font-serif-kr font-semibold text-ink-900">
+                      {r.name}
+                      {locked && <span className="ml-1.5 font-mono text-[10px] font-bold text-ink-500/60">(잠김)</span>}
+                    </p>
+                  </Card>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

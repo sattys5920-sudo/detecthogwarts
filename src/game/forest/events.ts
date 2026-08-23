@@ -26,6 +26,12 @@ const SPELLPOWER_TITLES = [
   '마력의 열매', '수상한 보라색 수정', '마법의 나무 심장', '오래된 마법사의 유품', '별똥별 조각',
 ];
 
+const INTELLIGENCE_TITLES = [
+  '고대 문헌 발견', '수수께끼를 풀었다', '별자리를 읽어낸다', '오래된 마법 이론서', '지혜의 부엉이',
+  '마법진의 원리를 깨우친다', '고대어 비문 해독', '스핑크스의 수수께끼', '마법사의 일기장', '천문 관측 기록',
+  '숨겨진 논리 회로', '마법 계산식 발견', '현자의 조언', '오래된 지도의 암호', '별빛 속의 계시',
+];
+
 const DEFENSE_TITLES = [
   '나무껍질 갑옷', '돌의 축복', '수호 부적 발견', '거대한 나무의 보호', '방어의 룬',
   '은빛 잎사귀', '마법 장벽 발견', '오래된 수호석', '숲의 수호자 축복', '단단한 나무의 힘',
@@ -102,6 +108,22 @@ function buildSpellPower(): ForestEvent[] {
       minStage: 1,
       maxStage: 10,
       effect: { spellPower: randInt(id, 1, 1, 3) },
+    };
+  });
+}
+
+function buildIntelligence(): ForestEvent[] {
+  return INTELLIGENCE_TITLES.map((title, i) => {
+    const id = `E${String(i + 121).padStart(3, '0')}`;
+    return {
+      id,
+      title,
+      description: `${title}. 머릿속이 한결 또렷해지는 느낌이다.`,
+      category: 'intelligence' as EventCategory,
+      rarity: 'common' as const,
+      minStage: 1,
+      maxStage: 10,
+      effect: { intelligence: randInt(id, 1, 1, 3) },
     };
   });
 }
@@ -256,6 +278,7 @@ function buildSpecial(): ForestEvent[] {
 export const FOREST_EVENTS: ForestEvent[] = [
   ...buildHeal(),
   ...buildSpellPower(),
+  ...buildIntelligence(),
   ...buildDefense(),
   ...buildBuff(),
   ...buildNeutral(),

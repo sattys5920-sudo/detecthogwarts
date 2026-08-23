@@ -45,3 +45,20 @@ export function spellPowerAtLevel(spell: Spell, level: number): number {
 export function spellDcAtLevel(spell: Spell, level: number): number {
   return Math.max(5, spell.dc - level);
 }
+
+// ---------- TRPG-style accuracy/damage split ----------
+// Intelligence drives hit chance (the accuracy roll bonus) and max MP.
+// SpellPower drives damage only (already the case — see castSpell in engine.ts).
+// These are kept as named constants, not inlined, so they're easy to rebalance later.
+export const BASE_MP = 20;
+export const MP_PER_INTELLIGENCE = 2;
+export const MP_COST_PER_DC = 0.5;
+
+export function maxMpFor(intelligence: number): number {
+  return BASE_MP + intelligence * MP_PER_INTELLIGENCE;
+}
+
+/** MP cost scales with the spell's current (post-level) DC — mastering a spell (lower DC) also makes it cheaper to cast. */
+export function spellMpCost(spell: Spell, level: number): number {
+  return Math.max(1, Math.round(spellDcAtLevel(spell, level) * MP_COST_PER_DC));
+}

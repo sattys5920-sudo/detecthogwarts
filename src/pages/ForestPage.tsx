@@ -22,7 +22,7 @@ import {
 } from '../firebase/forest';
 import { allSeatsReady, currentActingPlayerId, MAX_SEATS, TOTAL_STAGES, VOTE_DURATION_MS } from '../game/forest/engine';
 import { eventById } from '../game/forest/events';
-import { SPELLS, spellDcAtLevel, spellPowerAtLevel } from '../game/forest/spells';
+import { maxMpFor, SPELLS, spellDcAtLevel, spellMpCost, spellPowerAtLevel } from '../game/forest/spells';
 import type { ForestParty, LogEntry, Player, Spell, SpellCategory } from '../game/forest/types';
 
 const VALID_ROOMS = ['a', 'b'];
@@ -56,6 +56,7 @@ function HpBar({ hp, maxHp, colorClass = 'bg-seal-600' }: { hp: number; maxHp: n
 }
 
 function PlayerCard({ player, isActing, targetable, onTarget }: { player: Player; isActing: boolean; targetable: boolean; onTarget?: () => void }) {
+  const maxMp = maxMpFor(player.intelligence);
   const content = (
     <Card className={`flex flex-col gap-1.5 p-3 ${isActing ? 'border-seal-600' : ''} ${player.downed ? 'opacity-50' : ''}`}>
       <div className="flex items-center justify-between">
@@ -66,7 +67,9 @@ function PlayerCard({ player, isActing, targetable, onTarget }: { player: Player
       <p className="font-mono text-[10px] text-ink-500/70">
         HP {player.hp}/{player.maxHp} {player.shield > 0 && <span className="text-ink-indigo">🛡{player.shield}</span>}
       </p>
-      <p className="font-mono text-[10px] text-ink-500/50">주문력 {player.spellPower} · 방어력 {player.defense}</p>
+      <HpBar hp={player.mp} maxHp={maxMp} colorClass="bg-ink-indigo" />
+      <p className="font-mono text-[10px] text-ink-500/70">MP {player.mp}/{maxMp}</p>
+      <p className="font-mono text-[10px] text-ink-500/50">지능 {player.intelligence} · 주문력 {player.spellPower} · 방어력 {player.defense}</p>
       <div className="flex flex-wrap gap-1">
         {player.statusEffects.map((s, i) => (
           <span key={i} className="rounded-full bg-paper-200 px-1.5 py-0.5 text-[9px] text-ink-700">{STATUS_LABEL[s.type] ?? s.type}</span>
@@ -768,16 +771,20 @@ export default function ForestPage() {
                       <div className="grid grid-cols-1 gap-1">
                         {spells.map((s) => {
                           const level = me.spellLevels[s.id] ?? 0;
+                          const cost = spellMpCost(s, level);
+                          const canAfford = me.mp >= cost;
                           return (
                             <button
                               key={s.id}
                               type="button"
-                              disabled={busy}
+                              disabled={busy || !canAfford}
                               onClick={() => onSpellClick(s)}
-                              className="flex items-center justify-between rounded-lg border border-ink-700/15 bg-paper-100/60 px-2.5 py-1.5 text-left hover:border-seal-500/40"
+                              className="flex items-center justify-between rounded-lg border border-ink-700/15 bg-paper-100/60 px-2.5 py-1.5 text-left hover:border-seal-500/40 disabled:opacity-40"
                             >
                               <span className="text-xs font-bold text-ink-900">{s.name} <span className="text-[10px] font-normal text-ink-500/60">Lv.{level}</span></span>
-                              <span className="font-mono text-[10px] text-ink-500/60">DC{spellDcAtLevel(s, level)} · 위력{spellPowerAtLevel(s, level)}</span>
+                              <span className="font-mono text-[10px] text-ink-500/60">
+                                DC{spellDcAtLevel(s, level)} · 위력{spellPowerAtLevel(s, level)} · <span className={canAfford ? '' : 'text-seal-600'}>MP{cost}</span>
+                              </span>
                             </button>
                           );
                         })}

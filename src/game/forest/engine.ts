@@ -1,7 +1,7 @@
 import { BOSS_TEMPLATES, bossPhaseIndex, spawnBoss, templateByBossId } from './bosses';
 import { MONSTER_TEMPLATES, randomTemplateForStage, spawnMonster, templateById } from './creatures';
 import { eventById, FOREST_EVENTS } from './events';
-import { SPELLS, spellDcAtLevel, spellPowerAtLevel } from './spells';
+import { maxMpFor, MP_PER_INTELLIGENCE, SPELLS, spellDcAtLevel, spellMpCost, spellPowerAtLevel } from './spells';
 import {
   createPlayer,
   emptyBuffs,
@@ -141,7 +141,7 @@ function partyAverageHpPct(party: ForestParty): number {
 
 function categoryWeight(category: EventCategory, hpPct: number, recentCategories: EventCategory[]): number {
   let w = 1;
-  const goodCategories: EventCategory[] = ['heal', 'spellPower', 'defense', 'buff', 'special'];
+  const goodCategories: EventCategory[] = ['heal', 'spellPower', 'intelligence', 'defense', 'buff', 'special'];
   const dangerCategories: EventCategory[] = ['monster', 'eliteMonster', 'trap', 'penalty', 'riskyChoice'];
 
   if (hpPct <= 0.3) {
@@ -191,7 +191,7 @@ function pickWeightedEvents(party: ForestParty, count: number): ForestEvent[] {
 }
 
 const CATEGORY_LABEL: Record<EventCategory, string> = {
-  heal: '회복', spellPower: '주문력 강화', defense: '방어력 강화', buff: '일시적 강화',
+  heal: '회복', spellPower: '주문력 강화', intelligence: '지능 강화', defense: '방어력 강화', buff: '일시적 강화',
   hint: '단서', monster: '몬스터 조우', eliteMonster: '강력한 몬스터', trap: '함정', penalty: '위험',
   partyChoice: '동료 관련', riskyChoice: '위험한 선택', special: '특별한 발견', neutral: '평범한 길',
 };
@@ -228,7 +228,9 @@ export function startExpedition(party: ForestParty): ForestParty {
   if (party.status !== 'lobby') return party;
   if (partySize(party) < 2) throw new Error('최소 2명이 필요합니다.');
   if (!allSeatsReady(party)) throw new Error('모든 인원이 준비를 완료해야 합니다.');
-  const seats = party.seats.map((s) => (s ? { ...s, hp: s.maxHp, statusEffects: [], shield: 0, buffs: emptyBuffs(), downed: false, ready: false } : s)) as ForestParty['seats'];
+  const seats = party.seats.map((s) =>
+    s ? { ...s, hp: s.maxHp, mp: maxMpFor(s.intelligence), statusEffects: [], shield: 0, buffs: emptyBuffs(), downed: false, ready: false } : s,
+  ) as ForestParty['seats'];
   let next: ForestParty = {
     ...party,
     seats,
@@ -428,6 +430,13 @@ function applyPlainEffect(party: ForestParty, eff: ForestEvent['effect']): Fores
   }
   if (eff.spellPower) next = applyToAllSeats(next, (p) => ({ ...p, spellPower: Math.max(1, p.spellPower + eff.spellPower!) }));
   if (eff.defense) next = applyToAllSeats(next, (p) => ({ ...p, defense: Math.max(0, p.defense + eff.defense!) }));
+  if (eff.intelligence) {
+    next = applyToAllSeats(next, (p) => ({
+      ...p,
+      intelligence: Math.max(1, p.intelligence + eff.intelligence!),
+      mp: p.mp + eff.intelligence! * MP_PER_INTELLIGENCE,
+    }));
+  }
   if (eff.skillPoints) {
     next = applyToAllSeats(next, (p) => ({ ...p, skillPoints: p.skillPoints + eff.skillPoints! }));
     next = { ...next, stats: { ...next.stats, bonusesGained: next.stats.bonusesGained + 1 } };
@@ -936,6 +945,10 @@ function castSpell(party: ForestParty, playerId: string, action: CombatAction): 
   const player = next.seats.find((p) => p?.id === playerId)!;
   const spell = SPELLS.find((s) => s.id === action.spellId)!;
   const level = player.spellLevels[spell.id] ?? 0;
+  const mpCost = spellMpCost(spell, level);
+  if (player.mp < mpCost) {
+    return pushLog(next, `${player.nickname}의 MP가 부족해 ${spell.name}을(를) 사용할 수 없다. (필요 MP ${mpCost} / 보유 ${player.mp})`);
+  }
   const power = spellPowerAtLevel(spell, level) + player.buffs.combatSpellPowerBonus;
   let dc = spellDcAtLevel(spell, level) - player.buffs.nextDcReduction;
   const advantage = player.buffs.nextAdvantage;
@@ -943,15 +956,17 @@ function castSpell(party: ForestParty, playerId: string, action: CombatAction): 
   next = { ...next, stats: { ...next.stats, spellsCast: next.stats.spellsCast + 1 } };
   next = updatePlayer(next, playerId, (p) => ({
     ...p,
+    mp: p.mp - mpCost,
     buffs: { ...p.buffs, nextDcReduction: 0, nextAdvantage: false },
   }));
 
-  const res = check(player.spellPower, Math.max(5, dc), advantage, player.buffs.combatCritThresholdBonus);
+  // TRPG split: intelligence drives the hit-chance roll, spellPower drives damage (added into dmgBase/healBase below).
+  const res = check(player.intelligence, Math.max(5, dc), advantage, player.buffs.combatCritThresholdBonus);
   const critMult = res.crit ? 1.5 : 1;
 
   if (spell.category === 'attack' || spell.category === 'aoeAttack') {
     if (!res.success) {
-      next = pushLog(next, `${player.nickname}의 ${spell.name} 실패... (D20 ${res.roll} + ${player.spellPower} / DC ${res.dc})`);
+      next = pushLog(next, `${player.nickname}의 ${spell.name} 빗나감... (D20 ${res.roll} + 지능${player.intelligence} / DC ${res.dc}, MP -${mpCost})`);
       if (res.fumble) next = updatePlayer(next, playerId, (p) => ({ ...p, statusEffects: [...p.statusEffects, { type: 'weaken', value: 15, turnsLeft: 1 }] }));
       return next;
     }
@@ -969,7 +984,7 @@ function castSpell(party: ForestParty, playerId: string, action: CombatAction): 
         }
         next = damageMonster(next, i, perTarget, spell);
       });
-      next = pushLog(next, `${player.nickname}의 ${spell.name}! 모든 적에게 ${perTarget} 피해.${res.crit ? ' 대성공!' : ''}`);
+      next = pushLog(next, `${player.nickname}의 ${spell.name}! 모든 적에게 ${perTarget} 피해.${res.crit ? ' 대성공!' : ''} (MP -${mpCost})`);
     } else {
       const idx = action.targetMonsterIndex ?? next.combat!.monsters.findIndex((m) => m.hp > 0);
       const m = next.combat!.monsters[idx];
@@ -979,7 +994,7 @@ function castSpell(party: ForestParty, playerId: string, action: CombatAction): 
         return next;
       }
       next = damageMonster(next, idx, dmgBase, spell);
-      next = pushLog(next, `${player.nickname}의 ${spell.name}! ${m.name}에게 ${dmgBase} 피해.${res.crit ? ' 대성공!' : ''}`);
+      next = pushLog(next, `${player.nickname}의 ${spell.name}! ${m.name}에게 ${dmgBase} 피해.${res.crit ? ' 대성공!' : ''} (MP -${mpCost})`);
     }
     if (player.buffs.nextAttackBoost || player.buffs.nextAttackHitsAll || player.buffs.combatDamageBonusPct) {
       next = updatePlayer(next, playerId, (p) => ({ ...p, buffs: { ...p.buffs, nextAttackBoost: false, nextAttackHitsAll: false } }));
@@ -989,7 +1004,7 @@ function castSpell(party: ForestParty, playerId: string, action: CombatAction): 
 
   if (spell.category === 'heal' || spell.category === 'aoeHeal') {
     if (!res.success) {
-      next = pushLog(next, `${player.nickname}의 ${spell.name} 실패... (D20 ${res.roll} + ${player.spellPower} / DC ${res.dc})`);
+      next = pushLog(next, `${player.nickname}의 ${spell.name} 빗나감... (D20 ${res.roll} + 지능${player.intelligence} / DC ${res.dc}, MP -${mpCost})`);
       return next;
     }
     let boost = player.buffs.nextHealBoost ? 1.5 : 1;
@@ -1000,7 +1015,7 @@ function castSpell(party: ForestParty, playerId: string, action: CombatAction): 
         const revive = spell.id === 'rennervate' && t.downed;
         next = healPlayer(next, t.id, spell.id === 'rennervate' ? Math.round(healBase * 0.6) : healBase, revive);
       }
-      next = pushLog(next, `${player.nickname}의 ${spell.name}! 파티 전체 ${healBase} 회복.${res.crit ? ' 대성공!' : ''}`);
+      next = pushLog(next, `${player.nickname}의 ${spell.name}! 파티 전체 ${healBase} 회복.${res.crit ? ' 대성공!' : ''} (MP -${mpCost})`);
     } else {
       const targetId = action.targetPlayerId ?? playerId;
       const revive = false;
@@ -1009,7 +1024,7 @@ function castSpell(party: ForestParty, playerId: string, action: CombatAction): 
         next = updatePlayer(next, targetId, (p) => ({ ...p, statusEffects: p.statusEffects.filter((s) => s.type !== 'bleed') }));
       }
       const targetName = next.seats.find((p) => p?.id === targetId)?.nickname ?? '동료';
-      next = pushLog(next, `${player.nickname}의 ${spell.name}! ${targetName}이(가) ${healBase} 회복.${res.crit ? ' 대성공!' : ''}`);
+      next = pushLog(next, `${player.nickname}의 ${spell.name}! ${targetName}이(가) ${healBase} 회복.${res.crit ? ' 대성공!' : ''} (MP -${mpCost})`);
     }
     if (player.buffs.nextHealBoost) next = updatePlayer(next, playerId, (p) => ({ ...p, buffs: { ...p.buffs, nextHealBoost: false } }));
     return next;
@@ -1017,7 +1032,7 @@ function castSpell(party: ForestParty, playerId: string, action: CombatAction): 
 
   // defense / aoeDefense
   if (!res.success) {
-    next = pushLog(next, `${player.nickname}의 ${spell.name} 실패... 방어 마법이 발동하지 않았다.`);
+    next = pushLog(next, `${player.nickname}의 ${spell.name} 실패... 방어 마법이 발동하지 않았다. (D20 ${res.roll} + 지능${player.intelligence} / DC ${res.dc}, MP -${mpCost})`);
     return next;
   }
   let boost = player.buffs.nextDefenseBoost ? 1.5 : 1;
@@ -1030,10 +1045,10 @@ function castSpell(party: ForestParty, playerId: string, action: CombatAction): 
     } else {
       next = updatePlayer(next, playerId, (p) => ({ ...p, shield: p.shield + amount }));
     }
-    next = pushLog(next, `${player.nickname}의 ${spell.name}! 방어막 +${amount}.${res.crit ? ' 대성공!' : ''}`);
+    next = pushLog(next, `${player.nickname}의 ${spell.name}! 방어막 +${amount}.${res.crit ? ' 대성공!' : ''} (MP -${mpCost})`);
   } else {
     next = applyToAllSeats(next, (p) => (p ? { ...p, shield: p.shield + Math.round(amount * 0.6) } : p));
-    next = pushLog(next, `${player.nickname}의 ${spell.name}! 파티 전체 방어막 +${Math.round(amount * 0.6)}.${res.crit ? ' 대성공!' : ''}`);
+    next = pushLog(next, `${player.nickname}의 ${spell.name}! 파티 전체 방어막 +${Math.round(amount * 0.6)}.${res.crit ? ' 대성공!' : ''} (MP -${mpCost})`);
   }
   if (player.buffs.nextDefenseBoost || player.buffs.nextShieldDouble) {
     next = updatePlayer(next, playerId, (p) => ({ ...p, buffs: { ...p.buffs, nextDefenseBoost: false, nextShieldDouble: false } }));

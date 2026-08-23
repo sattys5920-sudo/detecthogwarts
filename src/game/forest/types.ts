@@ -62,8 +62,13 @@ export interface Player {
   nickname: string;
   hp: number;
   maxHp: number;
+  /** Drives spell damage — see spellDamageBonus() in spells.ts. */
   spellPower: number;
   defense: number;
+  /** Drives spell accuracy and max MP — see maxMpFor()/spellHitBonus() in spells.ts. */
+  intelligence: number;
+  /** Current MP pool; persists across the whole expedition like HP, spent per spell cast. */
+  mp: number;
   skillPoints: number;
   spellLevels: Record<string, number>;
   statusEffects: StatusEffect[];
@@ -81,6 +86,8 @@ export function createPlayer(id: string, nickname: string): Player {
     maxHp: 100,
     spellPower: 5,
     defense: 5,
+    intelligence: 5,
+    mp: 30, // baseline intelligence(5) via maxMpFor() in spells.ts — reset properly once the expedition starts
     skillPoints: 0,
     spellLevels: {},
     statusEffects: [],
@@ -144,7 +151,7 @@ export interface BossTemplate {
   phases: [BossPhase, BossPhase, BossPhase];
 }
 
-export type EventCategory = 'heal' | 'spellPower' | 'defense' | 'buff' | 'hint' | 'monster' | 'eliteMonster' | 'trap' | 'penalty' | 'partyChoice' | 'riskyChoice' | 'special' | 'neutral';
+export type EventCategory = 'heal' | 'spellPower' | 'intelligence' | 'defense' | 'buff' | 'hint' | 'monster' | 'eliteMonster' | 'trap' | 'penalty' | 'partyChoice' | 'riskyChoice' | 'special' | 'neutral';
 
 export interface ForestEvent {
   id: string;
@@ -163,6 +170,7 @@ export interface EventEffect {
   spellPower?: number;
   defense?: number;
   skillPoints?: number;
+  intelligence?: number;
   buff?: keyof PlayerBuffs;
   buffValue?: number;
   status?: { type: StatusType; value: number; turns: number };

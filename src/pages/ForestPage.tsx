@@ -30,6 +30,12 @@ const VALID_ROOMS = ['a', 'b'];
 const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B' };
 const VOTE_DURATION_SEC = VOTE_DURATION_MS / 1000;
 
+function fmtSec(totalSeconds: number) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 const STATUS_LABEL_TEXT: Record<ForestParty['status'], string> = {
   lobby: '대기 중', exploring: '탐사 중', event: '이벤트', combat: '전투', cleared: '클리어', failed: '실패',
 };
@@ -551,7 +557,7 @@ export default function ForestPage() {
             <div>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="text-sm font-bold text-ink-700/80">갈림길 투표</p>
-                <p className="font-mono text-[10px] text-ink-500/60">{votedCount}/{seatedIds.length}명 · {secondsLeft ?? 0}초</p>
+                <p className="font-mono text-[10px] text-ink-500/60">{votedCount}/{seatedIds.length}명 · {fmtSec(secondsLeft ?? 0)}</p>
               </div>
               {secondsLeft !== null && (
                 <div className="mb-2 h-1 w-full overflow-hidden rounded-full bg-paper-200">

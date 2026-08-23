@@ -9,6 +9,7 @@ export interface Post {
   title: string;
   content: string;
   allowComments: boolean;
+  pinned: boolean;
   createdAt: number;
   editedAt: number | null;
 }
@@ -79,6 +80,19 @@ export async function updatePost(id: string, title: string, content: string, all
   }
 }
 
+export async function setPostPinned(id: string, pinned: boolean): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, POSTS, id), { pinned });
+    return;
+  }
+  const store = readDemo();
+  const idx = store.posts.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    store.posts[idx] = { ...store.posts[idx], pinned };
+    writeDemo(store);
+  }
+}
+
 export async function deletePost(id: string): Promise<void> {
   if (isFirebaseConfigured && db) {
     await deleteDoc(doc(db, POSTS, id));
@@ -90,29 +104,37 @@ export async function deletePost(id: string): Promise<void> {
   writeDemo(store);
 }
 
+/** Pinned posts first (most-recently-pinned-or-created within that group), then everyone else by recency. */
+function sortPosts(posts: Post[]): Post[] {
+  return posts.slice().sort((a, b) => (a.pinned === b.pinned ? b.createdAt - a.createdAt : a.pinned ? -1 : 1));
+}
+
 export function listenPosts(callback: (posts: Post[]) => void): () => void {
   if (isFirebaseConfigured && db) {
     const q = query(collection(db, POSTS), orderBy('createdAt', 'desc'));
     return onSnapshot(q, (snap) => {
       callback(
-        snap.docs.map((docSnap) => {
-          const data = docSnap.data();
-          return {
-            id: docSnap.id,
-            authorPlayerId: data.authorPlayerId,
-            authorNickname: data.authorNickname,
-            authorAvatar: data.authorAvatar ?? null,
-            title: data.title ?? '',
-            content: data.content,
-            allowComments: data.allowComments,
-            createdAt: data.createdAt?.toMillis?.() ?? 0,
-            editedAt: data.editedAt?.toMillis?.() ?? null,
-          } satisfies Post;
-        }),
+        sortPosts(
+          snap.docs.map((docSnap) => {
+            const data = docSnap.data();
+            return {
+              id: docSnap.id,
+              authorPlayerId: data.authorPlayerId,
+              authorNickname: data.authorNickname,
+              authorAvatar: data.authorAvatar ?? null,
+              title: data.title ?? '',
+              content: data.content,
+              allowComments: data.allowComments,
+              pinned: data.pinned ?? false,
+              createdAt: data.createdAt?.toMillis?.() ?? 0,
+              editedAt: data.editedAt?.toMillis?.() ?? null,
+            } satisfies Post;
+          }),
+        ),
       );
     });
   }
-  const read = () => callback(readDemo().posts.slice().sort((a, b) => b.createdAt - a.createdAt));
+  const read = () => callback(sortPosts(readDemo().posts));
   read();
   window.addEventListener(DEMO_EVENT, read);
   window.addEventListener('storage', read);

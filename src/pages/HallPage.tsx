@@ -15,6 +15,7 @@ import {
   listenComments,
   listenPosts,
   type Post,
+  setPostPinned,
   updateComment,
   updatePost,
 } from '../firebase/posts';
@@ -124,7 +125,12 @@ function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: ()
         <div className="flex items-center gap-2">
           <Avatar src={post.authorAvatar} name={post.authorNickname} size={9} />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-ink-900">{post.authorNickname}</p>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <p className="text-sm font-bold text-ink-900">{post.authorNickname}</p>
+              {post.pinned && (
+                <span className="rounded-sm border border-seal-600/40 bg-seal-600/10 px-1.5 py-0.5 text-[10px] font-bold text-seal-600">📌 공지</span>
+              )}
+            </div>
             <p className="font-mono text-[10px] text-ink-500/60">
               {formatTime(post.createdAt)} {post.editedAt && '(수정됨)'}
             </p>
@@ -167,10 +173,15 @@ function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: ()
             <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-ink-900">{post.content}</p>
           </>
         )}
-        {isMine && !editing && (
+        {!editing && (isMine || game.isAdmin) && (
           <div className="mt-2 flex gap-2 text-[11px] text-ink-500/50">
-            <button type="button" onClick={() => setEditing(true)} className="hover:text-ink-700 hover:underline">수정</button>
-            <button type="button" onClick={onDelete} className="hover:text-seal-600 hover:underline">삭제</button>
+            {isMine && <button type="button" onClick={() => setEditing(true)} className="hover:text-ink-700 hover:underline">수정</button>}
+            {isMine && <button type="button" onClick={onDelete} className="hover:text-seal-600 hover:underline">삭제</button>}
+            {game.isAdmin && (
+              <button type="button" onClick={() => setPostPinned(post.id, !post.pinned)} className="hover:text-seal-600 hover:underline">
+                {post.pinned ? '공지 고정 해제' : '공지로 고정'}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -232,6 +243,7 @@ export default function HallPage() {
       title: titleDraft.trim(),
       content: trimmed,
       allowComments,
+      pinned: false,
     });
     setTitleDraft('');
     setDraft('');
@@ -313,7 +325,9 @@ export default function HallPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <p className="text-sm font-bold text-ink-900">{posts[0].authorNickname}</p>
-                      <span className="rounded-sm border border-seal-600/40 bg-seal-600/10 px-2 py-0.5 text-[10px] font-bold text-seal-600">최신 소식</span>
+                      <span className="rounded-sm border border-seal-600/40 bg-seal-600/10 px-2 py-0.5 text-[10px] font-bold text-seal-600">
+                        {posts[0].pinned ? '📌 공지' : '최신 소식'}
+                      </span>
                     </div>
                     <p className="font-mono text-[10px] text-ink-500/60">
                       {formatTime(posts[0].createdAt)} {posts[0].editedAt && '(수정됨)'}
@@ -337,7 +351,10 @@ export default function HallPage() {
                   <div className="flex items-center gap-2">
                     <Avatar src={p.authorAvatar} name={p.authorNickname} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-ink-900">{p.authorNickname}</p>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <p className="text-xs font-bold text-ink-900">{p.authorNickname}</p>
+                        {p.pinned && <span className="text-[10px] font-bold text-seal-600">📌 공지</span>}
+                      </div>
                       <p className="font-mono text-[10px] text-ink-500/60">
                         {formatTime(p.createdAt)} {p.editedAt && '(수정됨)'}
                       </p>

@@ -21,7 +21,7 @@ import {
 
 export const TOTAL_STAGES = 10;
 export const MAX_SEATS = 4;
-export const VOTE_DURATION_MS = 30_000;
+export const VOTE_DURATION_MS = 3 * 60_000;
 
 function now() {
   return Date.now();

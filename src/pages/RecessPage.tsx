@@ -112,11 +112,12 @@ export default function RecessPage() {
   usePageBack(room ? exitRoom : null);
 
   function enterRoom(r: Room) {
+    if (r.lockable && roomLocks[r.id] && !game.isAdmin) return;
+    game.adjustStat('stamina', -10);
     if (r.linkTo) {
       navigate(r.linkTo);
       return;
     }
-    if (r.lockable && roomLocks[r.id] && !game.isAdmin) return;
     setActiveRoom(r.id);
   }
 
@@ -212,6 +213,7 @@ export default function RecessPage() {
   return (
     <div className="flex flex-col gap-4">
       <Letterhead label="휴게시간" meta="쉬는 시간 · 10분 남음" />
+      <p className="-mt-2 text-center font-mono text-[10px] text-ink-500/60">공간에 입장할 때마다 스태미나 -10</p>
 
       <div className="flex flex-col gap-3">
         {ROOMS.map((r) => {

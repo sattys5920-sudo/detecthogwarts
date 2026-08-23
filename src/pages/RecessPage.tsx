@@ -8,6 +8,23 @@ import { usePageBack } from '../context/BackContext';
 import { useGame } from '../context/GameContext';
 import { HOUSES } from '../data/school';
 import { listenRoomLock, setRoomLock } from '../firebase/locks';
+import dormIcon from '../assets/rooms/dorm.png';
+import forestAIcon from '../assets/rooms/forestA.png';
+import forestBIcon from '../assets/rooms/forestB.png';
+import herbIcon from '../assets/rooms/herb.png';
+import libraryIcon from '../assets/rooms/library.png';
+import quidditchIcon from '../assets/rooms/quidditch.png';
+
+const ROOM_ICONS: Record<string, string> = {
+  library: libraryIcon,
+  forestExpeditionA: forestAIcon,
+  forestExpeditionB: forestBIcon,
+  quidditchArenaA: quidditchIcon,
+  quidditchArenaB: quidditchIcon,
+  quidditchArenaC: quidditchIcon,
+  herbarium: herbIcon,
+  dorm: dormIcon,
+};
 
 interface Room {
   id: string;
@@ -127,7 +144,7 @@ export default function RecessPage() {
 
     return (
       <div className="flex flex-col gap-4">
-        <Letterhead label={room.name} context={room.desc} meta="휴게시간" />
+        <Letterhead label={room.name} meta="휴게시간" />
 
         <button type="button" onClick={exitRoom} className="self-start text-xs text-ink-500/60 underline-offset-2 hover:text-ink-700 hover:underline">
           ← 방 목록으로
@@ -199,16 +216,11 @@ export default function RecessPage() {
           return (
             <button key={r.id} type="button" onClick={() => enterRoom(r)} disabled={locked} className="text-left disabled:opacity-50">
               <Card className="flex items-center gap-3 hover:border-ink-700/30">
-                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-ink-black text-sm font-bold text-paper-50">
-                  {r.name[0]}
-                </span>
-                <div>
-                  <p className="font-serif-kr font-semibold text-ink-900">
-                    {r.name}
-                    {locked && <span className="ml-1.5 font-mono text-[10px] font-bold text-ink-500/60">(잠김)</span>}
-                  </p>
-                  <p className="text-xs text-ink-700/70">{r.desc}</p>
-                </div>
+                <img src={ROOM_ICONS[r.id]} alt="" className="h-12 w-12 flex-none rounded-lg border border-ink-700/20 object-cover" />
+                <p className="font-serif-kr font-semibold text-ink-900">
+                  {r.name}
+                  {locked && <span className="ml-1.5 font-mono text-[10px] font-bold text-ink-500/60">(잠김)</span>}
+                </p>
               </Card>
             </button>
           );

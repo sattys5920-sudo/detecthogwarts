@@ -11,12 +11,13 @@ import {
   joinParty,
   leaveExpedition,
   leaveParty,
+  setReady,
   startExpedition,
   submitCombatAction,
   subscribeParty,
   upgradeSpell,
 } from '../firebase/forest';
-import { currentActingPlayerId, MAX_SEATS, TOTAL_STAGES } from '../game/forest/engine';
+import { allSeatsReady, currentActingPlayerId, MAX_SEATS, TOTAL_STAGES } from '../game/forest/engine';
 import { eventById } from '../game/forest/events';
 import { SPELLS, spellDcAtLevel, spellPowerAtLevel } from '../game/forest/spells';
 import type { ForestParty, Player, Spell, SpellCategory } from '../game/forest/types';
@@ -213,28 +214,46 @@ export default function ForestPage() {
         </div>
       );
     }
+    const ready = allSeatsReady(party);
+    const meReady = me.ready;
     return (
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         <PaperTexture />
         <Card className="w-full max-w-xs">
           <p className="font-gothic text-2xl text-ink-black">🌲 금지된 숲 {roomLabel}</p>
-          <p className="mt-1 text-sm text-ink-700/70">2~4인 협동 탐사. 동료가 모이면 시작하세요.</p>
+          <p className="mt-1 text-sm text-ink-700/70">2~4인 협동 탐사. 모두 준비를 마치면 시작할 수 있어요.</p>
           <div className="mt-4 flex flex-col gap-1.5 text-left">
             {Array.from({ length: MAX_SEATS }).map((_, i) => {
               const seat = party.seats[i];
               return (
-                <div key={i} className={`rounded-lg border px-3 py-2 text-sm ${seat ? 'border-seal-500/40 bg-paper-100 font-bold text-ink-900' : 'border-dashed border-ink-700/20 text-ink-500/50'}`}>
-                  {seat ? seat.nickname : '빈 자리'}
+                <div
+                  key={i}
+                  className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${seat ? 'border-seal-500/40 bg-paper-100 font-bold text-ink-900' : 'border-dashed border-ink-700/20 text-ink-500/50'}`}
+                >
+                  <span>{seat ? seat.nickname : '빈 자리'}</span>
+                  {seat && (
+                    <span className={`font-mono text-[10px] font-bold ${seat.ready ? 'text-seal-600' : 'text-ink-500/40'}`}>
+                      {seat.ready ? '준비 완료' : '대기 중'}
+                    </span>
+                  )}
                 </div>
               );
             })}
           </div>
           <Button
+            variant={meReady ? 'ghost' : 'primary'}
             className="mt-4 w-full"
-            disabled={seatedCount < 2 || busy}
+            disabled={busy}
+            onClick={() => guard(() => setReady(roomId, game.playerId!, !meReady))}
+          >
+            {meReady ? '준비 취소' : '탐사 준비 완료'}
+          </Button>
+          <Button
+            className="mt-2 w-full"
+            disabled={!ready || busy}
             onClick={() => guard(() => startExpedition(roomId))}
           >
-            {seatedCount < 2 ? `최소 2명 필요 (${seatedCount}/${MAX_SEATS})` : '탐사 시작'}
+            {seatedCount < 2 ? `최소 2명 필요 (${seatedCount}/${MAX_SEATS})` : ready ? '탐사 가기' : '전원 준비 대기 중'}
           </Button>
           <Button
             variant="ghost"

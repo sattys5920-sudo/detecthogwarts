@@ -71,6 +71,7 @@ export interface Player {
   buffs: PlayerBuffs;
   downed: boolean;
   items: string[];
+  ready: boolean;
 }
 
 export function createPlayer(id: string, nickname: string): Player {
@@ -88,6 +89,7 @@ export function createPlayer(id: string, nickname: string): Player {
     buffs: emptyBuffs(),
     downed: false,
     items: [],
+    ready: false,
   };
 }
 

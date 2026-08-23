@@ -8,6 +8,7 @@ import {
   playerCombatAction as engineCombatAction,
   resolveCurrentPath,
   resetParty,
+  setReady as engineSetReady,
   startExpedition as engineStartExpedition,
   upgradeSpell as engineUpgradeSpell,
   type CombatAction,
@@ -79,6 +80,10 @@ export async function joinParty(roomId: string, playerId: string, nickname: stri
 
 export async function leaveParty(roomId: string, playerId: string): Promise<void> {
   await transact(roomId, (current) => leaveSeat(current, playerId));
+}
+
+export async function setReady(roomId: string, playerId: string, ready: boolean): Promise<void> {
+  await transact(roomId, (current) => engineSetReady(current, playerId, ready));
 }
 
 export async function startExpedition(roomId: string): Promise<void> {

@@ -105,6 +105,16 @@ export function leaveSeat(party: ForestParty, playerId: string): ForestParty {
   return { ...party, seats, hostId: stillHost ? party.hostId : (seats.find((s) => s)?.id ?? null), updatedAt: now() };
 }
 
+export function setReady(party: ForestParty, playerId: string, ready: boolean): ForestParty {
+  if (party.status !== 'lobby') return party;
+  const seats = party.seats.map((s) => (s?.id === playerId ? { ...s, ready } : s)) as ForestParty['seats'];
+  return { ...party, seats, updatedAt: now() };
+}
+
+export function allSeatsReady(party: ForestParty): boolean {
+  return partySize(party) >= 2 && party.seats.every((s) => !s || s.ready);
+}
+
 export function resetParty(): ForestParty {
   return createParty();
 }
@@ -202,7 +212,8 @@ export function generatePaths(party: ForestParty): ForestParty {
 export function startExpedition(party: ForestParty): ForestParty {
   if (party.status !== 'lobby') return party;
   if (partySize(party) < 2) throw new Error('최소 2명이 필요합니다.');
-  const seats = party.seats.map((s) => (s ? { ...s, hp: s.maxHp, statusEffects: [], shield: 0, buffs: emptyBuffs(), downed: false } : s)) as ForestParty['seats'];
+  if (!allSeatsReady(party)) throw new Error('모든 인원이 준비를 완료해야 합니다.');
+  const seats = party.seats.map((s) => (s ? { ...s, hp: s.maxHp, statusEffects: [], shield: 0, buffs: emptyBuffs(), downed: false, ready: false } : s)) as ForestParty['seats'];
   let next: ForestParty = {
     ...party,
     seats,

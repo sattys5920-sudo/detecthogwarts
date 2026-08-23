@@ -21,11 +21,16 @@ const HOUSE_CRESTS: Record<string, string> = {
   wind: slytherinCrest,
 };
 
-const STAT_LABELS: { key: 'hp' | 'intelligence' | 'stamina' | 'spellPower'; label: string }[] = [
-  { key: 'hp', label: 'HP' },
+const RESOURCE_STATS: { key: 'hp' | 'mp' | 'stamina'; maxKey: 'maxHp' | 'maxMp' | 'maxStamina'; label: string }[] = [
+  { key: 'hp', maxKey: 'maxHp', label: 'HP' },
+  { key: 'mp', maxKey: 'maxMp', label: 'MP' },
+  { key: 'stamina', maxKey: 'maxStamina', label: '스태미나' },
+];
+
+const CAPABILITY_STATS: { key: 'intelligence' | 'spellPower' | 'agility'; label: string }[] = [
   { key: 'intelligence', label: '지능' },
-  { key: 'stamina', label: '스태미나' },
   { key: 'spellPower', label: '주문 공격력' },
+  { key: 'agility', label: '민첩' },
 ];
 
 function PrefRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
@@ -184,15 +189,31 @@ export default function ProfilePage() {
         <div className="my-4 h-px bg-ink-700/10" />
 
         <div className="flex flex-col gap-2 text-left">
-          {STAT_LABELS.map((s) => (
-            <div key={s.key} className="flex items-center gap-2 text-xs">
-              <span className="w-16 flex-none text-ink-500/70">{s.label}</span>
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full border border-ink-700/15 bg-paper-200">
-                <div className="h-full bg-ink-black transition-all duration-300" style={{ width: `${game.stats[s.key]}%` }} />
+          {RESOURCE_STATS.map((s) => {
+            const value = game.stats[s.key];
+            const max = game.stats[s.maxKey];
+            return (
+              <div key={s.key} className="flex items-center gap-2 text-xs">
+                <span className="w-16 flex-none text-ink-500/70">{s.label}</span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full border border-ink-700/15 bg-paper-200">
+                  <div className="h-full bg-ink-black transition-all duration-300" style={{ width: `${max > 0 ? Math.min(100, (value / max) * 100) : 0}%` }} />
+                </div>
+                <span className="w-14 flex-none text-right font-mono text-ink-red">{value}/{max}</span>
               </div>
-              <span className="w-6 flex-none text-right font-mono text-ink-red">{game.stats[s.key]}</span>
-            </div>
-          ))}
+            );
+          })}
+          {CAPABILITY_STATS.map((s) => {
+            const value = game.stats[s.key];
+            return (
+              <div key={s.key} className="flex items-center gap-2 text-xs">
+                <span className="w-16 flex-none text-ink-500/70">{s.label}</span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full border border-ink-700/15 bg-paper-200">
+                  <div className="h-full bg-ink-black transition-all duration-300" style={{ width: `${Math.min(100, value)}%` }} />
+                </div>
+                <span className="w-14 flex-none text-right font-mono text-ink-red">{value}</span>
+              </div>
+            );
+          })}
         </div>
       </Card>
 

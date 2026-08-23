@@ -6,6 +6,8 @@ export interface Herb {
   rarity: HerbRarity;
   growthTime: number; // seconds
   healAmount: number;
+  mpAmount: number;
+  staminaAmount: number;
   description: string;
 }
 
@@ -30,5 +32,7 @@ export interface HerbFarmState {
 export interface HarvestResult {
   herb: Herb;
   healAmount: number;
+  mpAmount: number;
+  staminaAmount: number;
   isNewDiscovery: boolean;
 }

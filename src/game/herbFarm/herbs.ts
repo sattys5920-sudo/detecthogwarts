@@ -12,13 +12,16 @@ function randInt(id: string, salt: number, min: number, max: number): number {
   return min + Math.floor(rand01(id, salt) * (max - min + 1));
 }
 
-// [growthTime min/max in minutes, healAmount min/max]
-const RARITY_RANGES: Record<HerbRarity, { growthMin: number; growthMax: number; healMin: number; healMax: number }> = {
-  1: { growthMin: 5, growthMax: 20, healMin: 5, healMax: 15 },
-  2: { growthMin: 20, growthMax: 60, healMin: 15, healMax: 30 },
-  3: { growthMin: 60, growthMax: 180, healMin: 30, healMax: 50 },
-  4: { growthMin: 180, growthMax: 480, healMin: 50, healMax: 80 },
-  5: { growthMin: 480, growthMax: 1440, healMin: 80, healMax: 120 },
+// [growthTime min/max in minutes, healAmount/mpAmount/staminaAmount min/max]
+const RARITY_RANGES: Record<
+  HerbRarity,
+  { growthMin: number; growthMax: number; healMin: number; healMax: number; mpMin: number; mpMax: number; staMin: number; staMax: number }
+> = {
+  1: { growthMin: 5, growthMax: 20, healMin: 5, healMax: 15, mpMin: 3, mpMax: 10, staMin: 3, staMax: 10 },
+  2: { growthMin: 20, growthMax: 60, healMin: 15, healMax: 30, mpMin: 10, mpMax: 20, staMin: 10, staMax: 20 },
+  3: { growthMin: 60, growthMax: 180, healMin: 30, healMax: 50, mpMin: 20, mpMax: 35, staMin: 20, staMax: 35 },
+  4: { growthMin: 180, growthMax: 480, healMin: 50, healMax: 80, mpMin: 35, mpMax: 55, staMin: 35, staMax: 55 },
+  5: { growthMin: 480, growthMax: 1440, healMin: 80, healMax: 120, mpMin: 55, mpMax: 85, staMin: 55, staMax: 85 },
 };
 
 interface Row {
@@ -90,12 +93,16 @@ function buildHerb(row: Row): Herb {
   const range = RARITY_RANGES[row.rarity];
   const growthMinutes = randInt(row.id, 1, range.growthMin, range.growthMax);
   const healAmount = randInt(row.id, 2, range.healMin, range.healMax);
+  const mpAmount = randInt(row.id, 3, range.mpMin, range.mpMax);
+  const staminaAmount = randInt(row.id, 4, range.staMin, range.staMax);
   return {
     id: row.id,
     name: row.name,
     rarity: row.rarity,
     growthTime: growthMinutes * 60,
     healAmount,
+    mpAmount,
+    staminaAmount,
     description: row.description,
   };
 }

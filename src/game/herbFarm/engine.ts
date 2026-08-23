@@ -92,7 +92,7 @@ export function harvestSlot(state: HerbFarmState, slotId: number, now: number): 
     dex: nextDex,
   };
 
-  return { state: nextState, result: { herb, healAmount: herb.healAmount, isNewDiscovery } };
+  return { state: nextState, result: { herb, healAmount: herb.healAmount, mpAmount: herb.mpAmount, staminaAmount: herb.staminaAmount, isNewDiscovery } };
 }
 
 export function harvestAllReady(state: HerbFarmState, now: number): { state: HerbFarmState; results: HarvestResult[] } {

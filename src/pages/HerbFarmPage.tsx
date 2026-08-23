@@ -124,9 +124,11 @@ function DexModal({ farm, onClose }: { farm: HerbFarmState; onClose: () => void 
               <p className="font-serif-kr text-lg font-bold text-ink-900">{selected.name}</p>
               <p className={`font-mono text-xs ${rarityColor(selected.rarity)}`}>{stars(selected.rarity)}</p>
               <p className="mt-1 text-sm leading-relaxed text-ink-700/80">{selected.description}</p>
-              <div className="mt-2 flex gap-4 font-mono text-[11px] text-ink-500/70">
+              <div className="mt-2 flex flex-wrap justify-center gap-3 font-mono text-[11px] text-ink-500/70">
                 <span>성장 시간 {formatDuration(selected.growthTime)}</span>
                 <span>HP +{selected.healAmount}</span>
+                <span>MP +{selected.mpAmount}</span>
+                <span>스태미나 +{selected.staminaAmount}</span>
               </div>
             </div>
           </div>
@@ -158,6 +160,8 @@ function DexModal({ farm, onClose }: { farm: HerbFarmState; onClose: () => void 
 
 function HarvestPopup({ results, onClose }: { results: HarvestResult[]; onClose: () => void }) {
   const totalHeal = results.reduce((sum, r) => sum + r.healAmount, 0);
+  const totalMp = results.reduce((sum, r) => sum + r.mpAmount, 0);
+  const totalStamina = results.reduce((sum, r) => sum + r.staminaAmount, 0);
   const anyNew = results.some((r) => r.isNewDiscovery);
 
   return (
@@ -172,11 +176,15 @@ function HarvestPopup({ results, onClose }: { results: HarvestResult[]; onClose:
                 {r.herb.name} {r.isNewDiscovery && <span className="ml-1 text-[10px] font-bold text-seal-600">NEW!</span>}
               </p>
               <p className={`font-mono text-[10px] ${rarityColor(r.herb.rarity)}`}>{stars(r.herb.rarity)}</p>
-              <p className="text-sm font-bold text-seal-600">HP +{r.healAmount}</p>
+              <p className="text-sm font-bold text-seal-600">HP +{r.healAmount} · MP +{r.mpAmount} · 스태미나 +{r.staminaAmount}</p>
             </div>
           ))}
         </div>
-        {results.length > 1 && <p className="mt-3 flex-none font-mono text-[11px] text-ink-500/70">총 HP +{totalHeal}</p>}
+        {results.length > 1 && (
+          <p className="mt-3 flex-none font-mono text-[11px] text-ink-500/70">
+            총 HP +{totalHeal} · MP +{totalMp} · 스태미나 +{totalStamina}
+          </p>
+        )}
         <button type="button" onClick={onClose} className="tablet-btn tablet-btn-dark mt-5 w-full flex-none px-4 py-2 text-xs font-bold">
           확인
         </button>
@@ -235,6 +243,8 @@ export default function HerbFarmPage() {
     try {
       const result = await harvest(game.playerId!, slotId);
       game.adjustStat('hp', result.healAmount);
+      game.adjustStat('mp', result.mpAmount);
+      game.adjustStat('stamina', result.staminaAmount);
       setHarvestPopup([result]);
     } finally {
       setBusySlot(null);
@@ -247,7 +257,11 @@ export default function HerbFarmPage() {
       const results = await harvestAll(game.playerId!);
       if (results.length > 0) {
         const totalHeal = results.reduce((sum, r) => sum + r.healAmount, 0);
+        const totalMp = results.reduce((sum, r) => sum + r.mpAmount, 0);
+        const totalStamina = results.reduce((sum, r) => sum + r.staminaAmount, 0);
         game.adjustStat('hp', totalHeal);
+        game.adjustStat('mp', totalMp);
+        game.adjustStat('stamina', totalStamina);
         setHarvestPopup(results);
       }
     } finally {
@@ -268,9 +282,12 @@ export default function HerbFarmPage() {
           <p className="font-mono text-[10px] font-bold tracking-widest text-ink-500/70">현재 HP</p>
           <div className="mt-1 flex items-center gap-2">
             <div className="h-2 w-28 overflow-hidden rounded-full bg-ink-700/10">
-              <div className="h-full rounded-full bg-seal-500/70" style={{ width: `${game.stats.hp}%` }} />
+              <div
+                className="h-full rounded-full bg-seal-500/70"
+                style={{ width: `${game.stats.maxHp > 0 ? Math.min(100, (game.stats.hp / game.stats.maxHp) * 100) : 0}%` }}
+              />
             </div>
-            <span className="font-mono text-xs text-ink-700/80">{game.stats.hp} / 100</span>
+            <span className="font-mono text-xs text-ink-700/80">{game.stats.hp} / {game.stats.maxHp}</span>
           </div>
         </div>
         <button

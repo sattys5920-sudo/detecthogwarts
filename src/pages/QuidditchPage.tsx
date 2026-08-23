@@ -155,7 +155,9 @@ function QuidditchResultScreen({
     const key = rewardKey(roomId, room.gameDeadline);
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, 'true');
-    game.adjustStat('hp', 5);
+    game.adjustStat('agility', 5);
+    game.growMaxStat('maxStamina', 5);
+    game.growMaxStat('maxHp', 5);
   }, [iWon, roomId, room.gameDeadline, game]);
 
   return (
@@ -169,7 +171,7 @@ function QuidditchResultScreen({
         <p className="mt-1 text-xs text-ink-500/70">
           {room.winReason === 'snitch' ? '황금 스니치 포획으로 경기가 종료되었습니다.' : '제한 시간 종료로 경기가 종료되었습니다.'}
         </p>
-        {iWon && <p className="mt-1 text-xs font-bold text-seal-600">보상: 최대 체력 +5</p>}
+        {iWon && <p className="mt-1 text-xs font-bold text-seal-600">보상: 민첩 +5, 최대 스태미나 +5, 최대 체력 +5</p>}
         <div className="mt-4 flex items-center justify-center gap-3">
           <div className="text-center">
             <p className="font-mono text-2xl font-bold text-ink-900">{room.scores.A}</p>

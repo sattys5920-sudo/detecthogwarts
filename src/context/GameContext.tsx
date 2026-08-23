@@ -6,10 +6,20 @@ import type { PatronusId } from '../game/forest/types';
 
 export interface PlayerStats {
   hp: number;
-  intelligence: number;
+  maxHp: number;
+  mp: number;
+  maxMp: number;
   stamina: number;
+  maxStamina: number;
+  intelligence: number;
   spellPower: number;
+  agility: number;
 }
+
+/** hp/mp/stamina are resources with a growable ceiling; the other three are uncapped capability stats. */
+const RESOURCE_MAX_KEY = { hp: 'maxHp', mp: 'maxMp', stamina: 'maxStamina' } as const;
+type ResourceStatKey = keyof typeof RESOURCE_MAX_KEY;
+type MaxStatKey = (typeof RESOURCE_MAX_KEY)[ResourceStatKey];
 
 interface PlayerState {
   username: string;
@@ -34,7 +44,12 @@ const ADMIN_USERNAME = 'admin';
 const ADMIN_NICKNAME = '호그와트';
 const ADMIN_ZERO_SCORES: Record<HouseId, number> = { flame: 0, moonlight: 0, earth: 0, wind: 0 };
 
-const defaultStats: PlayerStats = { hp: 100, intelligence: 50, stamina: 50, spellPower: 50 };
+const defaultStats: PlayerStats = {
+  hp: 100, maxHp: 100,
+  mp: 100, maxMp: 100,
+  stamina: 100, maxStamina: 100,
+  intelligence: 50, spellPower: 50, agility: 50,
+};
 
 const emptyState: PlayerState = {
   username: '',
@@ -63,8 +78,10 @@ function loadState(): PlayerState {
   }
 }
 
-function clamp(value: number) {
-  return Math.max(0, Math.min(100, value));
+function clampStat(stats: PlayerStats, key: keyof PlayerStats, value: number): number {
+  const maxKey = (RESOURCE_MAX_KEY as Partial<Record<keyof PlayerStats, MaxStatKey>>)[key];
+  if (maxKey) return Math.max(0, Math.min(stats[maxKey], value));
+  return Math.max(0, value);
 }
 
 export type OnboardingStage = 'account' | 'test' | 'profile' | 'done';
@@ -85,6 +102,7 @@ interface GameContextValue extends PlayerState {
   setNickname: (nickname: string) => void;
   setAvatar: (dataUrl: string | null) => void;
   adjustStat: (key: keyof PlayerStats, delta: number) => void;
+  growMaxStat: (key: MaxStatKey, delta: number) => void;
   advanceDay: () => void;
   setDeductionSolved: (solved: boolean) => void;
   resetPlayer: () => void;
@@ -191,7 +209,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const adjustStat = useCallback((key: keyof PlayerStats, delta: number) => {
-    setState((prev) => ({ ...prev, stats: { ...prev.stats, [key]: clamp(prev.stats[key] + delta) } }));
+    setState((prev) => ({ ...prev, stats: { ...prev.stats, [key]: clampStat(prev.stats, key, prev.stats[key] + delta) } }));
+  }, []);
+
+  /** Raises a resource's ceiling (e.g. maxHp) and grants the same amount to its current value, like the forest's own maxHp events. */
+  const growMaxStat = useCallback((key: MaxStatKey, delta: number) => {
+    const currentKey = (Object.keys(RESOURCE_MAX_KEY) as ResourceStatKey[]).find((k) => RESOURCE_MAX_KEY[k] === key)!;
+    setState((prev) => ({
+      ...prev,
+      stats: {
+        ...prev.stats,
+        [key]: Math.max(1, prev.stats[key] + delta),
+        [currentKey]: Math.max(0, prev.stats[currentKey] + delta),
+      },
+    }));
   }, []);
 
   const advanceDay = useCallback(() => {
@@ -238,6 +269,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setNickname,
     setAvatar,
     adjustStat,
+    growMaxStat,
     advanceDay,
     setDeductionSolved,
     resetPlayer,

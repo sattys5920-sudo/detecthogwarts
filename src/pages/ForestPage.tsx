@@ -268,7 +268,12 @@ export default function ForestPage() {
     const key = `arcanum-forest-reward-${roomId}-${party.updatedAt}`;
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, 'true');
-    game.adjustStat('spellPower', 3);
+    game.adjustStat('intelligence', 5);
+    game.adjustStat('spellPower', 5);
+    game.adjustStat('agility', 5);
+    game.growMaxStat('maxStamina', 5);
+    game.growMaxStat('maxHp', 5);
+    game.growMaxStat('maxMp', 5);
   }, [party, roomId, game]);
 
   // Ticks once a second while a vote is open so the countdown display stays live.
@@ -451,7 +456,11 @@ export default function ForestPage() {
                 {result.bossName && <p className="col-span-2">보스: {result.bossName}</p>}
               </div>
             )}
-            {cleared && <p className="mt-3 text-xs text-seal-600">파티 전원 주문 공격력 +3</p>}
+            {cleared && (
+              <p className="mt-3 text-xs text-seal-600">
+                파티 전원 지능 +5 · 주문 공격력 +5 · 민첩 +5 · 최대 스태미나 +5 · 최대 체력 +5 · 최대 MP +5, 스킬 포인트 3개 획득 (바로 사용 가능)
+              </p>
+            )}
           </Card>
           {me && <SkillPanel player={me} onUpgrade={(skillId) => guard(() => upgradeSkill(roomId, game.playerId!, skillId))} />}
           <Button onClick={() => guard(async () => { await leaveExpedition(roomId); navigate('/recess'); })}>

@@ -70,7 +70,6 @@ export interface Player {
   shield: number;
   buffs: PlayerBuffs;
   downed: boolean;
-  items: string[];
   ready: boolean;
 }
 
@@ -88,7 +87,6 @@ export function createPlayer(id: string, nickname: string): Player {
     shield: 0,
     buffs: emptyBuffs(),
     downed: false,
-    items: [],
     ready: false,
   };
 }
@@ -146,7 +144,7 @@ export interface BossTemplate {
   phases: [BossPhase, BossPhase, BossPhase];
 }
 
-export type EventCategory = 'heal' | 'spellPower' | 'defense' | 'buff' | 'item' | 'hint' | 'monster' | 'eliteMonster' | 'trap' | 'penalty' | 'partyChoice' | 'riskyChoice' | 'special' | 'neutral';
+export type EventCategory = 'heal' | 'spellPower' | 'defense' | 'buff' | 'hint' | 'monster' | 'eliteMonster' | 'trap' | 'penalty' | 'partyChoice' | 'riskyChoice' | 'special' | 'neutral';
 
 export interface ForestEvent {
   id: string;
@@ -165,7 +163,6 @@ export interface EventEffect {
   spellPower?: number;
   defense?: number;
   skillPoints?: number;
-  item?: string;
   buff?: keyof PlayerBuffs;
   buffValue?: number;
   status?: { type: StatusType; value: number; turns: number };
@@ -228,6 +225,9 @@ export interface ForestParty {
   recentCategories: EventCategory[];
   paths: PathChoice[] | null;
   votes: Record<string, number>;
+  votingEndsAt: number | null;
+  voteTieOptions: number[] | null;
+  lastVoteResult: { pathLabel: string; tally: { label: string; count: number }[]; chosenIndex: number } | null;
   currentEventId: string | null;
   combat: CombatState | null;
   log: LogEntry[];

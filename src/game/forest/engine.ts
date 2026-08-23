@@ -17,6 +17,7 @@ import {
 
 export const TOTAL_STAGES = 10;
 export const MAX_SEATS = 4;
+export const VOTE_DURATION_MS = 30_000;
 
 function now() {
   return Date.now();
@@ -66,6 +67,9 @@ export function createParty(): ForestParty {
     recentCategories: [],
     paths: null,
     votes: {},
+    votingEndsAt: null,
+    voteTieOptions: null,
+    lastVoteResult: null,
     currentEventId: null,
     combat: null,
     log: [],
@@ -137,7 +141,7 @@ function partyAverageHpPct(party: ForestParty): number {
 
 function categoryWeight(category: EventCategory, hpPct: number, recentCategories: EventCategory[]): number {
   let w = 1;
-  const goodCategories: EventCategory[] = ['heal', 'spellPower', 'defense', 'buff', 'item', 'special'];
+  const goodCategories: EventCategory[] = ['heal', 'spellPower', 'defense', 'buff', 'special'];
   const dangerCategories: EventCategory[] = ['monster', 'eliteMonster', 'trap', 'penalty', 'riskyChoice'];
 
   if (hpPct <= 0.3) {
@@ -187,7 +191,7 @@ function pickWeightedEvents(party: ForestParty, count: number): ForestEvent[] {
 }
 
 const CATEGORY_LABEL: Record<EventCategory, string> = {
-  heal: '회복', spellPower: '주문력 강화', defense: '방어력 강화', buff: '일시적 강화', item: '아이템',
+  heal: '회복', spellPower: '주문력 강화', defense: '방어력 강화', buff: '일시적 강화',
   hint: '단서', monster: '몬스터 조우', eliteMonster: '강력한 몬스터', trap: '함정', penalty: '위험',
   partyChoice: '동료 관련', riskyChoice: '위험한 선택', special: '특별한 발견', neutral: '평범한 길',
 };
@@ -202,7 +206,17 @@ export function generatePaths(party: ForestParty): ForestParty {
     usedFlavors.add(fi);
     return { label: PATH_FLAVORS[fi], eventId: e.id, ...(reveal ? { revealedCategory: CATEGORY_LABEL[e.category] } : {}) };
   });
-  let next: ForestParty = { ...party, status: 'exploring', paths, votes: {}, currentEventId: null, updatedAt: now() };
+  let next: ForestParty = {
+    ...party,
+    status: 'exploring',
+    paths,
+    votes: {},
+    votingEndsAt: now() + VOTE_DURATION_MS,
+    voteTieOptions: null,
+    lastVoteResult: null,
+    currentEventId: null,
+    updatedAt: now(),
+  };
   if (reveal) {
     next = applyToAllSeats(next, (p) => ({ ...p, buffs: { ...p.buffs, revealNextPaths: false } }));
     next = pushLog(next, '단서 덕분에 갈림길의 정체를 미리 엿보았다.');
@@ -282,6 +296,9 @@ export function resolveCurrentPath(party: ForestParty, choiceIndex: number): For
   if (!choice) return party;
   const event = eventById(choice.eventId);
 
+  const seatedIds = party.seats.filter((p): p is Player => p !== null).map((p) => p.id);
+  const tally = party.paths.map((p, i) => ({ label: p.label, count: seatedIds.filter((id) => party.votes[id] === i).length }));
+
   let next: ForestParty = {
     ...party,
     status: 'event',
@@ -290,6 +307,9 @@ export function resolveCurrentPath(party: ForestParty, choiceIndex: number): For
     recentCategories: [...party.recentCategories, event.category].slice(-6),
     paths: null,
     votes: {},
+    votingEndsAt: null,
+    lastVoteResult: { pathLabel: choice.label, tally, chosenIndex: choiceIndex },
+    voteTieOptions: null,
   };
   next = pushLog(next, `[${party.stage}단계] ${choice.label} → ${event.title}`);
 
@@ -332,20 +352,13 @@ export function resolveCurrentPath(party: ForestParty, choiceIndex: number): For
   return applyPlainEffect(next, eff);
 }
 
-/** Casts one seated player's vote for a path choice; once everyone seated has voted, the majority choice (ties broken at random) resolves automatically. */
-export function castVote(party: ForestParty, playerId: string, choiceIndex: number): ForestParty {
-  if (party.status !== 'exploring' || !party.paths) return party;
-  if (!seatedPlayer(party, playerId)) return party;
-  if (choiceIndex < 0 || choiceIndex >= party.paths.length) return party;
-
-  const votes = { ...party.votes, [playerId]: choiceIndex };
-  const seatedIds = party.seats.filter((p): p is Player => p !== null).map((p) => p.id);
-  if (!seatedIds.every((id) => id in votes)) {
-    return { ...party, votes, updatedAt: now() };
-  }
-
+/** Returns which choice index(es) currently have the most votes among the given voter ids. Multiple entries mean a tie. Empty means nobody voted. */
+function voteLeaders(votes: Record<string, number>, voterIds: string[]): number[] {
   const counts = new Map<number, number>();
-  for (const id of seatedIds) counts.set(votes[id], (counts.get(votes[id]) ?? 0) + 1);
+  for (const id of voterIds) {
+    if (!(id in votes)) continue;
+    counts.set(votes[id], (counts.get(votes[id]) ?? 0) + 1);
+  }
   let topCount = 0;
   let leaders: number[] = [];
   for (const [idx, count] of counts) {
@@ -356,8 +369,55 @@ export function castVote(party: ForestParty, playerId: string, choiceIndex: numb
       leaders.push(idx);
     }
   }
-  const winner = leaders[Math.floor(Math.random() * leaders.length)];
-  return resolveCurrentPath({ ...party, votes }, winner);
+  return leaders;
+}
+
+/**
+ * Casts one seated player's vote for a path choice. Once everyone seated has voted, the
+ * majority choice resolves automatically — unless it's a tie, in which case voting locks
+ * and the party host is asked to break it (see resolveTie).
+ */
+export function castVote(party: ForestParty, playerId: string, choiceIndex: number): ForestParty {
+  if (party.status !== 'exploring' || !party.paths || party.voteTieOptions) return party;
+  if (!seatedPlayer(party, playerId)) return party;
+  if (choiceIndex < 0 || choiceIndex >= party.paths.length) return party;
+
+  const votes = { ...party.votes, [playerId]: choiceIndex };
+  const seatedIds = party.seats.filter((p): p is Player => p !== null).map((p) => p.id);
+  if (!seatedIds.every((id) => id in votes)) {
+    return { ...party, votes, updatedAt: now() };
+  }
+
+  const leaders = voteLeaders(votes, seatedIds);
+  if (leaders.length > 1) {
+    return { ...party, votes, voteTieOptions: leaders, updatedAt: now() };
+  }
+  return resolveCurrentPath({ ...party, votes }, leaders[0]);
+}
+
+/** The party host breaks a tie left open by castVote. */
+export function resolveTie(party: ForestParty, hostPlayerId: string, choiceIndex: number): ForestParty {
+  if (party.status !== 'exploring' || !party.paths || !party.voteTieOptions) return party;
+  if (party.hostId !== hostPlayerId) return party;
+  if (!party.voteTieOptions.includes(choiceIndex)) return party;
+  return resolveCurrentPath(party, choiceIndex);
+}
+
+/**
+ * Called by any client once the vote countdown has elapsed: resolves whatever votes were
+ * cast (majority, or the tie flow above), or defaults to the first path if nobody voted at all.
+ */
+export function forceResolveVoteTimeout(party: ForestParty): ForestParty {
+  if (party.status !== 'exploring' || !party.paths || party.voteTieOptions) return party;
+  if (!party.votingEndsAt || now() < party.votingEndsAt) return party;
+
+  const seatedIds = party.seats.filter((p): p is Player => p !== null).map((p) => p.id);
+  const leaders = voteLeaders(party.votes, seatedIds);
+  if (leaders.length === 0) return resolveCurrentPath(party, 0);
+  if (leaders.length > 1) {
+    return { ...party, voteTieOptions: leaders, updatedAt: now() };
+  }
+  return resolveCurrentPath(party, leaders[0]);
 }
 
 function applyPlainEffect(party: ForestParty, eff: ForestEvent['effect']): ForestParty {
@@ -371,13 +431,6 @@ function applyPlainEffect(party: ForestParty, eff: ForestEvent['effect']): Fores
   if (eff.skillPoints) {
     next = applyToAllSeats(next, (p) => ({ ...p, skillPoints: p.skillPoints + eff.skillPoints! }));
     next = { ...next, stats: { ...next.stats, bonusesGained: next.stats.bonusesGained + 1 } };
-  }
-  if (eff.item) {
-    const alive = next.seats.filter((p): p is Player => !!p);
-    if (alive.length > 0) {
-      const pick = alive[Math.floor(Math.random() * alive.length)];
-      next = { ...next, seats: next.seats.map((p) => (p?.id === pick.id ? { ...p, items: [...p.items, eff.item!] } : p)) as ForestParty['seats'] };
-    }
   }
   if (eff.buff) next = applyBuffToAll(next, eff.buff, eff.buffValue ?? 0);
   if (eff.status) next = applyStatusToAll(next, eff.status.type, eff.status.value, eff.status.turns);
@@ -679,11 +732,10 @@ function onCombatLost(party: ForestParty): ForestParty {
 export type ActionTargetType = 'monster' | 'self' | 'ally' | 'party' | 'allMonsters';
 
 export interface CombatAction {
-  kind: 'spell' | 'item' | 'pass';
+  kind: 'spell' | 'pass';
   spellId?: string;
   targetMonsterIndex?: number;
   targetPlayerId?: string;
-  itemName?: string;
 }
 
 function monsterDamageToPlayer(party: ForestParty, playerId: string, rawDmg: number): ForestParty {
@@ -856,30 +908,6 @@ export function playerCombatAction(party: ForestParty, playerId: string, action:
 
   if (action.kind === 'pass') {
     next = pushLog(next, `${player.nickname}이(가) 이번 턴을 넘겼다.`);
-    next = advanceTurnIndex(next);
-    return advanceToActionableTurn(next);
-  }
-
-  if (action.kind === 'item') {
-    const idx = player.items.findIndex((i) => i === action.itemName);
-    if (idx === -1) return party;
-    next = updatePlayer(next, playerId, (p) => ({ ...p, items: p.items.filter((_, i) => i !== idx) }));
-    if (action.itemName === '치유 물약') {
-      next = healPlayer(next, playerId, 25, false);
-      next = pushLog(next, `${player.nickname}이(가) 치유 물약을 사용했다. (+25 HP)`);
-    } else if (action.itemName === '기력의 부적') {
-      next = updatePlayer(next, playerId, (p) => ({ ...p, buffs: { ...p.buffs, combatSpellPowerBonus: p.buffs.combatSpellPowerBonus + 5 } }));
-      next = pushLog(next, `${player.nickname}이(가) 기력의 부적을 사용했다. (주문력 +5)`);
-    } else if (action.itemName === '민첩의 깃털') {
-      next = updatePlayer(next, playerId, (p) => ({ ...p, buffs: { ...p.buffs, nextAdvantage: true } }));
-      next = pushLog(next, `${player.nickname}이(가) 민첩의 깃털을 사용했다. (다음 판정 Advantage)`);
-    } else if (action.itemName === '수호의 돌') {
-      next = updatePlayer(next, playerId, (p) => ({ ...p, shield: p.shield + 30 }));
-      next = pushLog(next, `${player.nickname}이(가) 수호의 돌을 사용했다. (보호막 +30)`);
-    } else if (action.itemName === '행운의 클로버') {
-      next = updatePlayer(next, playerId, (p) => ({ ...p, buffs: { ...p.buffs, combatCritThresholdBonus: p.buffs.combatCritThresholdBonus + 2 } }));
-      next = pushLog(next, `${player.nickname}이(가) 행운의 클로버를 사용했다. (크리티컬 확률 증가)`);
-    }
     next = advanceTurnIndex(next);
     return advanceToActionableTurn(next);
   }

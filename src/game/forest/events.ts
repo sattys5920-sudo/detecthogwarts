@@ -55,7 +55,6 @@ const NEUTRAL_TITLES = [
   '오래된 동상', '마법사의 흔적', '정체불명의 편지', '빛나는 나뭇잎', '길을 표시하는 돌',
   '수상한 발자국', '누군가의 지팡이', '오래된 횃불', '버려진 캠프파이어', '정체불명의 목소리',
 ];
-const ITEM_POOL = ['치유 물약', '기력의 부적', '민첩의 깃털', '수호의 돌', '행운의 클로버'];
 
 const PENALTY_TITLES = [
   '독성 안개', '미끄러운 뿌리', '갑작스러운 낙석', '마법 폭풍', '검은 덩굴',
@@ -144,11 +143,10 @@ function buildNeutral(): ForestEvent[] {
     const id = `E${String(i + 61).padStart(3, '0')}`;
     const kind = i % 5;
     if (kind === 0) {
-      const item = ITEM_POOL[i % ITEM_POOL.length];
       return {
-        id, title, description: `${title}. ${item}을(를) 손에 넣었다.`,
-        category: 'item' as EventCategory, rarity: 'common' as const, minStage: 1, maxStage: 10,
-        effect: { item },
+        id, title, description: `${title}. 배운 것이 있는 느낌이다.`,
+        category: 'buff' as EventCategory, rarity: 'common' as const, minStage: 1, maxStage: 10,
+        effect: { skillPoints: 1 },
       };
     }
     if (kind === 1) {

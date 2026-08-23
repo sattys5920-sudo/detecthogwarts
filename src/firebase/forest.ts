@@ -4,10 +4,12 @@ import {
   confirmEvent as engineConfirmEvent,
   createParty,
   ForestFullError,
+  forceResolveVoteTimeout as engineForceResolveVoteTimeout,
   joinSeat,
   leaveSeat,
   playerCombatAction as engineCombatAction,
   resetParty,
+  resolveTie as engineResolveTie,
   setReady as engineSetReady,
   startExpedition as engineStartExpedition,
   upgradeSpell as engineUpgradeSpell,
@@ -92,6 +94,14 @@ export async function startExpedition(roomId: string): Promise<void> {
 
 export async function castVote(roomId: string, playerId: string, choiceIndex: number): Promise<void> {
   await transact(roomId, (current) => engineCastVote(current, playerId, choiceIndex));
+}
+
+export async function resolveTie(roomId: string, hostPlayerId: string, choiceIndex: number): Promise<void> {
+  await transact(roomId, (current) => engineResolveTie(current, hostPlayerId, choiceIndex));
+}
+
+export async function forceResolveVoteTimeout(roomId: string): Promise<void> {
+  await transact(roomId, (current) => engineForceResolveVoteTimeout(current));
 }
 
 export async function confirmEvent(roomId: string): Promise<void> {

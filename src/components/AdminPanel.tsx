@@ -10,7 +10,7 @@ import { assignHouse, listenAllPlayers, type PlayerRecord } from '../firebase/pl
 
 const RESET_PHRASE = '초기화';
 
-const ADMIN_NICKNAME = '관리자';
+const ADMIN_NICKNAME = '호그와트';
 
 function houseOf(id: HouseId | null) {
   return HOUSES.find((h) => h.id === id) ?? null;

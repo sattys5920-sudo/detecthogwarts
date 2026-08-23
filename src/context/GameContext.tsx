@@ -29,7 +29,7 @@ const STORAGE_KEY = 'arcanum-player';
 const SEEN_ASSIGNMENT_PREFIX = 'arcanum-assignment-seen-';
 const ADMIN_KEY = 'arcanum-admin-unlocked';
 const ADMIN_USERNAME = 'admin';
-const ADMIN_NICKNAME = '관리자';
+const ADMIN_NICKNAME = '호그와트';
 const ADMIN_ZERO_SCORES: Record<HouseId, number> = { flame: 0, moonlight: 0, earth: 0, wind: 0 };
 
 const defaultStats: PlayerStats = { hp: 100, intelligence: 50, stamina: 50, spellPower: 50 };

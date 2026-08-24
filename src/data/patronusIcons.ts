@@ -9,9 +9,10 @@ import fox from '../assets/patronus/fox.png';
 import snail from '../assets/patronus/snail.png';
 import gecko from '../assets/patronus/gecko.png';
 import giraffe from '../assets/patronus/giraffe.png';
+import pony from '../assets/patronus/pony.png';
+import otter from '../assets/patronus/otter.png';
 
-// 조랑말/해달은 아직 전용 아이콘 이미지가 없어 빠져 있다 — 이미지가 오면 여기에 추가하면 된다.
-export const PATRONUS_ICONS: Partial<Record<PatronusId, string>> = {
+export const PATRONUS_ICONS: Record<PatronusId, string> = {
   snake,
   tiger,
   squirrel,
@@ -22,4 +23,6 @@ export const PATRONUS_ICONS: Partial<Record<PatronusId, string>> = {
   snail,
   gecko,
   giraffe,
+  pony,
+  otter,
 };

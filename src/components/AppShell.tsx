@@ -12,7 +12,7 @@ import TopAppBar from './TopAppBar';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { hasEntered } = useGame();
-  const { height: viewportHeight, offsetTop } = useViewportHeight();
+  const { height: viewportHeight, offsetTop, keyboardOpen } = useViewportHeight();
   if (!hasEntered) return <Navigate to="/" replace />;
 
   return (
@@ -29,7 +29,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <main className="flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
           <div className="mx-auto max-w-md px-4 pt-4 pb-6">{children}</div>
         </main>
-        <BottomTabBar />
+        {!keyboardOpen && <BottomTabBar />}
       </div>
     </BackProvider>
   );

@@ -878,15 +878,18 @@ function resolveMonsterTurn(party: ForestParty, index: number): ForestParty {
     return next;
   }
 
-  // default: basic attack — charmed monsters (여우 Patronus) strike another monster (or themselves, if alone) instead of a player.
+  // default: basic attack — charmed monsters (여우 Patronus) or confused monsters (해달 Patronus) strike
+  // another monster (or themselves, if alone) instead of a player.
   const dmg = liveMonster.attackMin + Math.floor(Math.random() * (liveMonster.attackMax - liveMonster.attackMin + 1));
   const charmed = liveMonster.statusEffects.some((s) => s.type === 'charm');
-  if (charmed) {
+  const confused = liveMonster.statusEffects.some((s) => s.type === 'confuse');
+  if (charmed || confused) {
     const others = next.combat!.monsters.map((m, i) => ({ m, i })).filter(({ m, i }) => i !== index && m.hp > 0);
     const victimIndex = others.length > 0 ? others[Math.floor(Math.random() * others.length)].i : index;
     const victim = next.combat!.monsters[victimIndex];
     next = damageMonster(next, victimIndex, dmg);
-    next = pushLog(next, `매혹에 걸린 ${monster.name}이(가) ${victim.name}을(를) 공격했다! (${dmg} 피해)`);
+    const verb = confused ? '혼란' : '매혹';
+    next = pushLog(next, `${verb}에 걸린 ${monster.name}이(가) ${victim.name}을(를) 공격했다! (${dmg} 피해)`);
     return next;
   }
   const target = pickMonsterTarget(alivePlayers);
@@ -1213,7 +1216,48 @@ function castPatronus(party: ForestParty, playerId: string, action: CombatAction
     return next;
   };
 
-  return patronus.targetType === 'enemy' ? applyToEnemy() : applyToAlly();
+  const applyToAllAllies = (): ForestParty => {
+    const targets = next.seats.filter((p): p is Player => !!p && !p.downed && p.hp > 0);
+    for (const t of targets) {
+      if (patronus.statusType === 'regenHp') {
+        next = healPlayer(next, t.id, magnitude, false);
+      } else if (patronus.statusType === 'regenMp') {
+        next = healMp(next, t.id, magnitude);
+      }
+      if (patronus.statusType) {
+        next = updatePlayer(next, t.id, (p) => ({ ...p, statusEffects: [...p.statusEffects, { type: patronus.statusType!, value: magnitude, turnsLeft: patronus.statusDuration }] }));
+      }
+    }
+    next = pushLog(next, `${player.nickname}의 익스펙토 패트로눔(${patronus.name})! 파티 전체에게 ${patronus.effectLabel} 효과. (MP -${patronus.baseMpCost})`);
+    return next;
+  };
+
+  const applyToAllEnemies = (): ForestParty => {
+    const liveIndexes = next.combat!.monsters.map((_, i) => i).filter((i) => next.combat!.monsters[i].hp > 0);
+    let anyHit = false;
+    for (const idx of liveIndexes) {
+      const m = next.combat!.monsters[idx];
+      const res = check(effectiveIntelligence(player), m.defenseDC);
+      if (!res.success) continue;
+      anyHit = true;
+      if (magnitude > 0) next = damageMonster(next, idx, magnitude);
+      if (patronus.statusType) {
+        next = updateMonster(next, idx, (mo) => ({ ...mo, statusEffects: [...mo.statusEffects, { type: patronus.statusType!, value: magnitude, turnsLeft: patronus.statusDuration }] }));
+      }
+    }
+    next = pushLog(
+      next,
+      anyHit
+        ? `${player.nickname}의 익스펙토 패트로눔(${patronus.name})! 적 전체에게 ${patronus.effectLabel} 효과. (MP -${patronus.baseMpCost})`
+        : `${player.nickname}의 익스펙토 패트로눔(${patronus.name})이(가) 모두 빗나갔다. (MP -${patronus.baseMpCost})`,
+    );
+    return next;
+  };
+
+  if (patronus.targetType === 'enemy') return applyToEnemy();
+  if (patronus.targetType === 'enemyAll') return applyToAllEnemies();
+  if (patronus.targetType === 'allyAll') return applyToAllAllies();
+  return applyToAlly();
 }
 
 // ---------- skill points ----------

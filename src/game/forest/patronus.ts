@@ -17,6 +17,12 @@ export const PATRONUS_LIST: PatronusDef[] = [
   { id: 'snail', name: '달팽이', effectLabel: '회피 저하', description: '적 1명의 민첩을 일시적으로 낮춘다.', targetType: 'enemy', baseMpCost: 10, baseValue: 10, statusType: 'agiDown', statusDuration: 3 },
   { id: 'gecko', name: '게코', effectLabel: '크리티컬 강화', description: '아군 1명의 크리티컬 확률을 일시적으로 높인다.', targetType: 'ally', baseMpCost: 11, baseValue: 10, statusType: 'critBoost', statusDuration: 3 },
   { id: 'giraffe', name: '기린', effectLabel: '지속 MP 회복', description: '아군 1명의 MP를 즉시 회복시키고, 이후 턴마다 추가로 회복시킨다.', targetType: 'ally', baseMpCost: 12, baseValue: 8, statusType: 'regenMp', statusDuration: 3 },
+  // statusDuration is 2, not 1: this engine ticks a status down at the START of the affected
+  // unit's own turn (before it acts) — see tickStatusStart in engine.ts — so a duration of 1
+  // always expires on that very first tick and never actually applies to anything. Duration 2
+  // is what actually produces "active for exactly one of the target's own turns."
+  { id: 'pony', name: '조랑말', effectLabel: '민첩 강화', description: '아군 전원의 민첩을 각자의 다음 한 턴 동안 높인다.', targetType: 'allyAll', baseMpCost: 18, baseValue: 10, statusType: 'agiBoost', statusDuration: 2 },
+  { id: 'otter', name: '해달', effectLabel: '혼란', description: '적 전원을 각자의 다음 한 턴 동안 혼란시켜 서로를 공격하게 한다.', targetType: 'enemyAll', baseMpCost: 18, baseValue: 0, statusType: 'confuse', statusDuration: 2 },
 ];
 
 export function patronusById(id: PatronusId): PatronusDef {

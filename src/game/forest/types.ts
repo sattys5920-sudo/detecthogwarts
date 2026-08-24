@@ -14,7 +14,8 @@ export type StatusType =
   | 'followAttack'
   | 'regenHp'
   | 'regenMp'
-  | 'charm';
+  | 'charm'
+  | 'confuse';
 
 export interface StatusEffect {
   type: StatusType;
@@ -103,7 +104,7 @@ export function emptySkillLevels(): Record<SkillId, number> {
 
 // ---------- patronus ----------
 
-export type PatronusId = 'snake' | 'tiger' | 'squirrel' | 'panther' | 'lark' | 'cat' | 'fox' | 'snail' | 'gecko' | 'giraffe';
+export type PatronusId = 'snake' | 'tiger' | 'squirrel' | 'panther' | 'lark' | 'cat' | 'fox' | 'snail' | 'gecko' | 'giraffe' | 'pony' | 'otter';
 
 export interface PatronusDef {
   id: PatronusId;

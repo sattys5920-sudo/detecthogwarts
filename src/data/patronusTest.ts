@@ -120,9 +120,11 @@ export interface PatronusTestAnswer {
   option: PatronusTestOption;
 }
 
+// 조랑말/해달은 AoE 지원기라 성격 설문지에는 아직 문항으로 연결되지 않았고, 관리자가 수동으로만 지정한다.
 const EMPTY_SCORES: Record<PatronusId, number> = {
   snake: 0, tiger: 0, squirrel: 0, panther: 0, lark: 0,
   cat: 0, fox: 0, snail: 0, gecko: 0, giraffe: 0,
+  pony: 0, otter: 0,
 };
 
 export function scorePatronusAnswers(answers: PatronusTestAnswer[]): Record<PatronusId, number> {

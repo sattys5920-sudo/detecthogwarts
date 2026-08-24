@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import Button from '../components/Button';
 import Card from '../components/Card';
 import DaVinciCodeGame from '../components/DaVinciCodeGame';
 import DormChat from '../components/DormChat';
@@ -127,10 +128,14 @@ export default function RecessPage() {
   const [davinciPlays, setDavinciPlays] = useState(() => Number(localStorage.getItem(davinciPlaysKey(game.currentDay)) ?? 0));
   const [roomLocks, setRoomLocks] = useState<Record<string, boolean>>({});
   const [recessLocked, setRecessLocked] = useState(false);
-  const [forestStatus, setForestStatus] = useState<Record<string, { count: number; inProgress: boolean }>>({});
-  const [quidditchStatus, setQuidditchStatus] = useState<Record<string, { count: number; inProgress: boolean }>>({});
+  const [forestStatus, setForestStatus] = useState<Record<string, { count: number; inProgress: boolean; mine: boolean }>>({});
+  const [quidditchStatus, setQuidditchStatus] = useState<Record<string, { count: number; inProgress: boolean; mine: boolean }>>({});
+  const [busyModal, setBusyModal] = useState(false);
   const room = ROOMS.find((r) => r.id === activeRoom);
   const house = HOUSES.find((h) => h.id === game.houseId);
+
+  const myActiveForestLetter = FOREST_ROOM_LETTERS.find((l) => forestStatus[l]?.mine) ?? null;
+  const myActiveQuidditchLetter = QUIDDITCH_ROOM_LETTERS.find((l) => quidditchStatus[l]?.mine) ?? null;
 
   useEffect(() => {
     const unsubs = ROOMS.filter((r) => r.lockable).map((r) =>
@@ -144,22 +149,27 @@ export default function RecessPage() {
       subscribeParty(letter, (party) => {
         setForestStatus((prev) => ({
           ...prev,
-          [letter]: { count: party.seats.filter((s) => s !== null).length, inProgress: party.status !== 'lobby' },
+          [letter]: {
+            count: party.seats.filter((s) => s !== null).length,
+            inProgress: party.status !== 'lobby',
+            mine: party.seats.some((s) => s?.id === game.playerId),
+          },
         }));
       }),
     );
     return () => unsubs.forEach((u) => u());
-  }, []);
+  }, [game.playerId]);
 
   useEffect(() => {
     const unsubs = QUIDDITCH_ROOM_LETTERS.map((letter) =>
       subscribeRoom(letter, (g) => {
         const count = (g.seats.A ? 1 : 0) + (g.seats.B ? 1 : 0);
-        setQuidditchStatus((prev) => ({ ...prev, [letter]: { count, inProgress: g.status === 'playing' } }));
+        const mine = g.seats.A?.playerId === game.playerId || g.seats.B?.playerId === game.playerId;
+        setQuidditchStatus((prev) => ({ ...prev, [letter]: { count, inProgress: g.status === 'playing', mine } }));
       }),
     );
     return () => unsubs.forEach((u) => u());
-  }, []);
+  }, [game.playerId]);
 
   useEffect(() => listenRecessLock(setRecessLocked), []);
 
@@ -174,6 +184,15 @@ export default function RecessPage() {
     if (recessLocked && !game.isAdmin) return;
     if (r.lockable && roomLocks[r.id] && !game.isAdmin) return;
     if (r.linkTo) {
+      const letter = roomLetter(r.linkTo);
+      const enteringForest = r.linkTo.startsWith('/forest/');
+      const enteringQuidditch = r.linkTo.startsWith('/quidditch/');
+      const enteringMyOwnRoom = (enteringForest && myActiveForestLetter === letter) || (enteringQuidditch && myActiveQuidditchLetter === letter);
+      const busyElsewhere = !enteringMyOwnRoom && (myActiveForestLetter !== null || myActiveQuidditchLetter !== null);
+      if (busyElsewhere) {
+        setBusyModal(true);
+        return;
+      }
       navigate(r.linkTo);
       return;
     }
@@ -336,6 +355,17 @@ export default function RecessPage() {
             })}
           </div>
         </>
+      )}
+
+      {busyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-black/50 px-6" role="alertdialog" aria-modal="true">
+          <Card className="w-full max-w-xs text-center">
+            <p className="text-sm font-semibold leading-relaxed text-ink-900">지금 하고 있던 활동을 끝내고 시도해 주세요.</p>
+            <Button className="mt-4 w-full" onClick={() => setBusyModal(false)}>
+              확인
+            </Button>
+          </Card>
+        </div>
       )}
     </div>
   );

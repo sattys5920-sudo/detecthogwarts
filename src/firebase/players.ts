@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import type { HouseId } from '../data/sortingTest';
 import type { PatronusId } from '../game/forest/types';
 import { db, isFirebaseConfigured } from './config';
@@ -22,6 +22,21 @@ export interface PlayerRecord {
 const COLLECTION_NAME = 'players';
 const DEMO_STORAGE_KEY = 'arcanum-players-demo';
 const DEMO_EVENT = 'arcanum-players-demo-changed';
+
+/** Kept in sync with GameContext's own ADMIN_USERNAME — the admin's own entry into this same collection doesn't count as a signup. */
+const ADMIN_USERNAME = 'admin';
+
+/** Max non-admin signups. A best-effort check (not atomic) — fine at this game's scale of a single classroom signing up over time, not a concurrent rush. */
+export const MAX_PLAYERS = 12;
+
+/** Current non-admin signup count, for enforcing MAX_PLAYERS before a new signup. */
+export async function countSignedUpPlayers(): Promise<number> {
+  if (isFirebaseConfigured && db) {
+    const snap = await getDocs(collection(db, COLLECTION_NAME));
+    return snap.docs.filter((d) => (d.data().username as string) !== ADMIN_USERNAME).length;
+  }
+  return readDemoPlayers().filter((p) => p.username !== ADMIN_USERNAME).length;
+}
 
 function readDemoPlayers(): PlayerRecord[] {
   try {

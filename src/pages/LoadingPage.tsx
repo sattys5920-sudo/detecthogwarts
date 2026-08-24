@@ -54,6 +54,10 @@ function AccountStep() {
         setError('이미 사용 중인 아이디입니다.');
         return;
       }
+      if (result === 'full') {
+        setError('가입 정원(12명)이 모두 찼습니다.');
+        return;
+      }
     } catch {
       setError('가입 처리에 실패했습니다. 다시 시도해 주세요.');
     } finally {

@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { createAccount, verifyAccount } from '../firebase/accounts';
-import { createPlayerRecord, getPlayerOnce, listenPlayer, submitPatronusTestResult, submitProfile, submitTestResult } from '../firebase/players';
+import { countSignedUpPlayers, createPlayerRecord, getPlayerOnce, listenPlayer, MAX_PLAYERS, submitPatronusTestResult, submitProfile, submitTestResult } from '../firebase/players';
 import { topPatronus } from '../data/patronusTest';
 import type { HouseId } from '../data/sortingTest';
 import type { PatronusId } from '../game/forest/types';
@@ -101,7 +101,7 @@ interface GameContextValue extends PlayerState {
   unlockAdmin: () => void;
   clearJustAssigned: () => void;
   clearJustAssignedPatronus: () => void;
-  signUp: (username: string, password: string) => Promise<'ok' | 'taken'>;
+  signUp: (username: string, password: string) => Promise<'ok' | 'taken' | 'full'>;
   logIn: (username: string, password: string) => Promise<'ok' | 'not-found' | 'wrong-password'>;
   submitTest: (testScores: Record<HouseId, number>, computedHouse: HouseId) => Promise<void>;
   submitPatronusTest: (scores: Record<PatronusId, number>) => Promise<void>;
@@ -167,6 +167,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           : 'done';
 
   const signUp = useCallback(async (username: string, password: string) => {
+    const signedUpCount = await countSignedUpPlayers();
+    if (signedUpCount >= MAX_PLAYERS) return 'full' as const;
     const playerId = crypto.randomUUID();
     const result = await createAccount(username, password, playerId);
     if (!result.ok) return 'taken' as const;

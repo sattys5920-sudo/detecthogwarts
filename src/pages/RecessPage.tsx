@@ -183,16 +183,21 @@ export default function RecessPage() {
   function enterRoom(r: Room) {
     if (recessLocked && !game.isAdmin) return;
     if (r.lockable && roomLocks[r.id] && !game.isAdmin) return;
+
+    // A seat held in a forest/quidditch room (waiting or already underway) blocks entering
+    // ANY other room — including 도서관/기숙사 — until that seat is properly left or the
+    // expedition/match ends. Re-entering the exact room you're already seated in is exempt.
+    const letter = r.linkTo ? roomLetter(r.linkTo) : null;
+    const enteringForest = r.linkTo?.startsWith('/forest/') ?? false;
+    const enteringQuidditch = r.linkTo?.startsWith('/quidditch/') ?? false;
+    const enteringMyOwnRoom = (enteringForest && myActiveForestLetter === letter) || (enteringQuidditch && myActiveQuidditchLetter === letter);
+    const busyElsewhere = !enteringMyOwnRoom && (myActiveForestLetter !== null || myActiveQuidditchLetter !== null);
+    if (busyElsewhere) {
+      setBusyModal(true);
+      return;
+    }
+
     if (r.linkTo) {
-      const letter = roomLetter(r.linkTo);
-      const enteringForest = r.linkTo.startsWith('/forest/');
-      const enteringQuidditch = r.linkTo.startsWith('/quidditch/');
-      const enteringMyOwnRoom = (enteringForest && myActiveForestLetter === letter) || (enteringQuidditch && myActiveQuidditchLetter === letter);
-      const busyElsewhere = !enteringMyOwnRoom && (myActiveForestLetter !== null || myActiveQuidditchLetter !== null);
-      if (busyElsewhere) {
-        setBusyModal(true);
-        return;
-      }
       navigate(r.linkTo);
       return;
     }

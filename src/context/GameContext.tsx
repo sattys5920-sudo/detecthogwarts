@@ -139,7 +139,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [assignedHouse, setAssignedHouse] = useState<HouseId | null>(null);
   const [justAssigned, setJustAssigned] = useState(false);
   const [justAssignedPatronus, setJustAssignedPatronus] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem(ADMIN_KEY) === 'true');
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem(ADMIN_KEY) === 'true');
   const playerIdRef = useRef(state.playerId);
   playerIdRef.current = state.playerId;
 
@@ -302,7 +302,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const unlockAdmin = useCallback(() => {
-    sessionStorage.setItem(ADMIN_KEY, 'true');
+    localStorage.setItem(ADMIN_KEY, 'true');
     setIsAdmin(true);
   }, []);
 
@@ -327,7 +327,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setAssignedHouse(null);
     setJustAssigned(false);
     setJustAssignedPatronus(false);
-    sessionStorage.removeItem(ADMIN_KEY);
+    localStorage.removeItem(ADMIN_KEY);
     setIsAdmin(false);
   }, []);
 

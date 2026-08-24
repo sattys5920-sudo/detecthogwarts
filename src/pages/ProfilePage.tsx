@@ -206,9 +206,6 @@ export default function ProfilePage() {
               {game.grade}학년
             </span>
           )}
-          <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
-            탐구자
-          </span>
         </div>
 
         <div className="my-4 h-px bg-ink-700/10" />

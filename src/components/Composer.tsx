@@ -22,7 +22,10 @@ export default function Composer({ onSubmit, placeholder, submitLabel }: Compose
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div
+      className="sticky bottom-0 z-10 flex items-center gap-2 bg-paper-50 py-2"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       <input
         ref={inputRef}
         value={text}

@@ -12,14 +12,14 @@ import TopAppBar from './TopAppBar';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { hasEntered } = useGame();
-  const viewportHeight = useViewportHeight();
+  const { height: viewportHeight, offsetTop } = useViewportHeight();
   if (!hasEntered) return <Navigate to="/" replace />;
 
   return (
     <BackProvider>
       <div
-        className="fixed inset-x-0 top-0 flex flex-col overflow-hidden"
-        style={{ height: viewportHeight ? `${viewportHeight}px` : '100dvh' }}
+        className="fixed inset-x-0 flex flex-col overflow-hidden"
+        style={{ height: viewportHeight ? `${viewportHeight}px` : '100dvh', top: offsetTop }}
       >
         <PaperTexture />
         <ScreenFrame />

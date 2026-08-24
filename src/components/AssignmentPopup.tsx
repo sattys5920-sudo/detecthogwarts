@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import CornerFlourish from './CornerFlourish';
 import { useGame } from '../context/GameContext';
 import { PATRONUS_ICONS } from '../data/patronusIcons';
 import { HOUSES } from '../data/school';
+import { listenAssignmentBroadcast, type AssignmentBroadcast } from '../firebase/assignmentBroadcast';
 import { patronusById } from '../game/forest/patronus';
 import gryffindorCrest from '../assets/crests/gryffindor.png';
 import hufflepuffCrest from '../assets/crests/hufflepuff.png';
@@ -51,9 +53,15 @@ function PopupShell({ label, image, lines, onConfirm }: { label: string; image?:
   );
 }
 
-/** Full-screen narrated popups shown once when a house or patronus is newly assigned. */
+const BROADCAST_SEEN_KEY = 'arcanum-assignment-broadcast-seen';
+
+/** Full-screen narrated popups shown once when a house or patronus is newly assigned — to the player themselves, and (in third person) to everyone else currently in the app. */
 export default function AssignmentPopup() {
   const game = useGame();
+  const [broadcast, setBroadcast] = useState<AssignmentBroadcast | null>(null);
+  const [broadcastDismissedId, setBroadcastDismissedId] = useState<string | null>(() => localStorage.getItem(BROADCAST_SEEN_KEY));
+
+  useEffect(() => listenAssignmentBroadcast(setBroadcast), []);
 
   if (game.justAssigned && game.assignedHouse) {
     const house = HOUSES.find((h) => h.id === game.assignedHouse);
@@ -81,6 +89,42 @@ export default function AssignmentPopup() {
         onConfirm={game.clearJustAssignedPatronus}
       />
     );
+  }
+
+  function dismissBroadcast() {
+    if (!broadcast) return;
+    localStorage.setItem(BROADCAST_SEEN_KEY, broadcast.id);
+    setBroadcastDismissedId(broadcast.id);
+  }
+
+  if (broadcast && broadcast.id !== broadcastDismissedId && broadcast.playerId !== game.playerId) {
+    if (broadcast.kind === 'house' && broadcast.house) {
+      const house = HOUSES.find((h) => h.id === broadcast.house);
+      if (house) {
+        return (
+          <PopupShell
+            label="기숙사 배정"
+            image={HOUSE_CRESTS[house.id]}
+            lines={['기숙사 배정 모자가 고민 끝에 입을 열었습니다.', `${broadcast.nickname}님은...... ${house.name}!`]}
+            onConfirm={dismissBroadcast}
+          />
+        );
+      }
+    }
+
+    if (broadcast.kind === 'patronus' && broadcast.patronus) {
+      const patronus = patronusById(broadcast.patronus);
+      return (
+        <PopupShell
+          label="패트로누스 배정"
+          image={PATRONUS_ICONS[broadcast.patronus]}
+          lines={[
+            `${broadcast.nickname}님의 지팡이 끝에서 빛이 모여 하나의 피사체를 만들어 냅니다. ${patronus.name}, ${broadcast.nickname}님의 든든한 친구가 되어 줄 거예요.`,
+          ]}
+          onConfirm={dismissBroadcast}
+        />
+      );
+    }
   }
 
   return null;

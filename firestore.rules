@@ -225,6 +225,22 @@ service cloud.firestore {
         && request.resource.data.sentAt is number;
     }
 
+    // 기숙사·패트로누스 배정 전체 팝업(당사자뿐 아니라 접속 중인 모든 플레이어에게
+    // 표시)입니다. announcements와 같은 "최신 한 건 덮어쓰기" 구조입니다.
+    match /assignmentBroadcasts/{docId} {
+      allow read: if true;
+      allow delete: if true;
+
+      allow create, update: if request.resource.data.keys().hasOnly(['id', 'kind', 'playerId', 'nickname', 'house', 'patronus', 'sentAt'])
+        && request.resource.data.id is string
+        && request.resource.data.kind in ['house', 'patronus']
+        && request.resource.data.playerId is string
+        && request.resource.data.nickname is string
+        && (request.resource.data.house == null || request.resource.data.house is string)
+        && (request.resource.data.patronus == null || request.resource.data.patronus is string)
+        && request.resource.data.sentAt is number;
+    }
+
     // 퀴디치 경기장: 단일 방(room) 문서 하나에 좌석/보드/점수 등 전체 대국 상태를
     // 통째로 저장합니다. 상태가 매우 자주, 다양한 모양으로 바뀌므로(대기/진행/종료)
     // 필드 단위 검증 대신 status 값만 검증하고 나머지는 클라이언트 로직을 신뢰합니다.

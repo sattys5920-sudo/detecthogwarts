@@ -6,6 +6,7 @@ import { HOUSES } from '../data/school';
 import type { HouseId } from '../data/sortingTest';
 import { resetContent, resetSignups } from '../firebase/adminReset';
 import { sendAnnouncement } from '../firebase/announcements';
+import { broadcastAssignment } from '../firebase/assignmentBroadcast';
 import { assignHouse, assignPatronus, listenAllPlayers, type PlayerRecord } from '../firebase/players';
 import { PATRONUS_LIST } from '../game/forest/patronus';
 import type { PatronusId } from '../game/forest/types';
@@ -37,6 +38,7 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
     setSending(true);
     try {
       await assignHouse(player.id, selected);
+      await broadcastAssignment({ kind: 'house', playerId: player.id, nickname: player.nickname, house: selected, patronus: null });
     } finally {
       setSending(false);
     }
@@ -46,6 +48,7 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
     setSendingPatronus(true);
     try {
       await assignPatronus(player.id, selectedPatronus);
+      await broadcastAssignment({ kind: 'patronus', playerId: player.id, nickname: player.nickname, house: null, patronus: selectedPatronus });
     } finally {
       setSendingPatronus(false);
     }

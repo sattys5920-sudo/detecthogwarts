@@ -10,7 +10,10 @@ const SRC = `https://www.youtube-nocookie.com/embed/${VIDEO_ID}?autoplay=1&mute=
  * which counts as the user gesture browsers require before allowing audio.
  */
 export default function SiteBackgroundVideo() {
-  const [minimized, setMinimized] = useState(false);
+  // Starts minimized (a small corner icon, not the full preview box) so it doesn't pop up
+  // visibly on load — YouTube's embed terms require the player to stay visible, so it can't
+  // be fully hidden while playing, but a small always-present icon is the closest compliant fit.
+  const [minimized, setMinimized] = useState(true);
   const [muted, setMuted] = useState(true);
 
   function toggleMute() {

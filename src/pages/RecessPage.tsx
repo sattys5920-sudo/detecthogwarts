@@ -15,6 +15,7 @@ import { MAX_SEATS as FOREST_MAX_SEATS } from '../game/forest/engine';
 import dormIcon from '../assets/rooms/dorm.png';
 import forestAIcon from '../assets/rooms/forestA.png';
 import forestBIcon from '../assets/rooms/forestB.png';
+import forestCIcon from '../assets/rooms/forestC.png';
 import herbIcon from '../assets/rooms/herb.png';
 import libraryIcon from '../assets/rooms/library.png';
 import quidditchIcon from '../assets/rooms/quidditch.png';
@@ -23,7 +24,7 @@ const ROOM_ICONS: Record<string, string> = {
   library: libraryIcon,
   forestExpeditionA: forestAIcon,
   forestExpeditionB: forestBIcon,
-  forestExpeditionC: forestAIcon,
+  forestExpeditionC: forestCIcon,
   quidditchArenaA: quidditchIcon,
   quidditchArenaB: quidditchIcon,
   quidditchArenaC: quidditchIcon,

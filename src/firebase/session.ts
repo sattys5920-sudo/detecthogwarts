@@ -11,6 +11,8 @@ export interface AdlibMessage {
   options?: string[];
   /** For kind 'options': each player's chosen option index, keyed by playerId. Everyone sees live counts instead of picking to post a chat reply. */
   votes?: Record<string, number>;
+  /** For kind 'options': once the admin closes voting, players can no longer change/cast a pick. */
+  closed?: boolean;
   authorAvatar?: string | null;
   at: number;
 }
@@ -59,6 +61,7 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
             clue: data.clue,
             options: data.options,
             votes: data.votes ?? {},
+            closed: data.closed ?? false,
             authorAvatar: data.authorAvatar ?? null,
             at: data.at?.toMillis?.() ?? 0,
           } satisfies AdlibMessage;
@@ -84,7 +87,7 @@ export async function sendAdlib(day: number, speaker: string, text: string): Pro
 }
 
 export async function sendOptionsMessage(day: number, speaker: string, prompt: string, options: string[]): Promise<void> {
-  const payload = { kind: 'options' as const, speaker, text: prompt, options, votes: {} };
+  const payload = { kind: 'options' as const, speaker, text: prompt, options, votes: {}, closed: false };
   if (isFirebaseConfigured && db) {
     await addDoc(adlibCollectionRef(day), { ...payload, at: serverTimestamp() });
     return;
@@ -92,6 +95,20 @@ export async function sendOptionsMessage(day: number, speaker: string, prompt: s
   const messages = readAdlibDemo(day);
   messages.push({ ...payload, id: crypto.randomUUID(), at: Date.now() });
   writeAdlibDemo(day, messages);
+}
+
+/** Admin-only: closes voting on an options message so players can no longer cast/change a pick. */
+export async function closeOptionsVoting(day: number, messageId: string): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, 'sessions', `day${day}`, 'adlibs', messageId), { closed: true });
+    return;
+  }
+  const messages = readAdlibDemo(day);
+  const idx = messages.findIndex((m) => m.id === messageId);
+  if (idx >= 0) {
+    messages[idx] = { ...messages[idx], closed: true };
+    writeAdlibDemo(day, messages);
+  }
 }
 
 /** Records (or changes) one player's pick on an options message — everyone sees a live per-option tally instead of the pick posting a chat reply. */

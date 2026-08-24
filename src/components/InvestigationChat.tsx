@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import ClueRegisterModal from './ClueRegisterModal';
 import Composer from './Composer';
 import { CHARACTERS } from '../data/investigation/characters';
-import { type AdlibMessage, listenAdlibs, presentEvidence, sendChatMessage, voteOptions } from '../firebase/session';
+import { useGame } from '../context/GameContext';
+import { type AdlibMessage, closeOptionsVoting, listenAdlibs, presentEvidence, sendChatMessage, voteOptions } from '../firebase/session';
 import type { NotebookEntry } from '../hooks/useNotebook';
 
 function avatarFor(speaker: string) {
@@ -80,15 +81,18 @@ function NarrationBubble({ m, onRegister }: NarrationBubbleProps) {
 interface OptionsBubbleProps {
   m: AdlibMessage;
   playerId: string;
+  isAdmin: boolean;
   onRegister: (m: AdlibMessage) => void;
   onVote: (messageId: string, optionIndex: number) => void;
+  onClose: (messageId: string) => void;
 }
 
-/** A poll-style options message — players pick to vote, and everyone sees a live per-option count instead of the pick posting a chat reply. */
-function OptionsBubble({ m, playerId, onRegister, onVote }: OptionsBubbleProps) {
+/** A poll-style options message — players pick to vote, and everyone sees a live per-option count instead of the pick posting a chat reply. The admin can close it to lock in the final tally. */
+function OptionsBubble({ m, playerId, isAdmin, onRegister, onVote, onClose }: OptionsBubbleProps) {
   const avatarSrc = m.speaker ? avatarFor(m.speaker) : undefined;
   const votes = m.votes ?? {};
   const myVote = votes[playerId];
+  const closed = m.closed ?? false;
 
   return (
     <div className="flex max-w-[90%] items-start gap-2">
@@ -117,8 +121,9 @@ function OptionsBubble({ m, playerId, onRegister, onVote }: OptionsBubbleProps) 
                 key={i}
                 type="button"
                 onClick={() => onVote(m.id, i)}
-                className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-left text-xs font-bold transition-colors ${
-                  isMine ? 'border-seal-600 bg-seal-600/10 text-seal-600' : 'border-ink-700/20 bg-paper-50 text-ink-900 hover:border-seal-500/40'
+                disabled={closed}
+                className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-left text-xs font-bold transition-colors disabled:cursor-default ${
+                  isMine ? 'border-seal-600 bg-seal-600/10 text-seal-600' : 'border-ink-700/20 bg-paper-50 text-ink-900 hover:border-seal-500/40 disabled:hover:border-ink-700/20'
                 }`}
               >
                 <span>{opt}</span>
@@ -127,8 +132,21 @@ function OptionsBubble({ m, playerId, onRegister, onVote }: OptionsBubbleProps) 
             );
           })}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
+          {closed ? (
+            <span className="rounded-full bg-ink-700/15 px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink-700/70">마감됨</span>
+          ) : (
+            isAdmin && (
+              <button
+                type="button"
+                onClick={() => onClose(m.id)}
+                className="rounded-full bg-seal-600 px-1.5 py-0.5 font-mono text-[10px] font-bold text-paper-50"
+              >
+                마감하기
+              </button>
+            )
+          )}
           <RegisterDots onClick={() => onRegister(m)} />
         </div>
       </div>
@@ -146,6 +164,7 @@ interface InvestigationChatProps {
 }
 
 export default function InvestigationChat({ day, notebookEntries, nickname, avatar, playerId, onRegisterClue }: InvestigationChatProps) {
+  const game = useGame();
   const [adlibs, setAdlibs] = useState<AdlibMessage[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [presenting, setPresenting] = useState(false);
@@ -178,6 +197,10 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
     voteOptions(day, messageId, playerId, optionIndex);
   }
 
+  function handleClose(messageId: string) {
+    closeOptionsVoting(day, messageId);
+  }
+
   function confirmRegister(title: string) {
     if (!registerTarget) return;
     onRegisterClue(registerTarget.id, { title, desc: registerTarget.text, ink: 'black', status: '확인됨' });
@@ -203,7 +226,17 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
           }
 
           if (m.kind === 'options') {
-            return <OptionsBubble key={m.id} m={m} playerId={playerId} onRegister={setRegisterTarget} onVote={handleVote} />;
+            return (
+              <OptionsBubble
+                key={m.id}
+                m={m}
+                playerId={playerId}
+                isAdmin={game.isAdmin}
+                onRegister={setRegisterTarget}
+                onVote={handleVote}
+                onClose={handleClose}
+              />
+            );
           }
 
           if (m.kind === 'chat') {

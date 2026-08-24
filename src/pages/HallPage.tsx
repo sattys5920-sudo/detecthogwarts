@@ -374,7 +374,8 @@ export default function HallPage() {
         <button
           type="button"
           onClick={() => setComposerOpen(true)}
-          className="tablet-btn tablet-btn-dark fixed bottom-24 right-4 z-20 flex h-12 w-12 items-center justify-center text-2xl font-bold"
+          className="tablet-btn tablet-btn-dark fixed right-4 z-20 flex h-12 w-12 items-center justify-center text-2xl font-bold"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 6rem)' }}
           aria-label="피드 작성"
         >
           +

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { BackProvider } from '../context/BackContext';
 import { useGame } from '../context/GameContext';
+import { useViewportHeight } from '../hooks/useViewportHeight';
 import AnnouncementPopup from './AnnouncementPopup';
 import AssignmentPopup from './AssignmentPopup';
 import BottomTabBar from './BottomTabBar';
@@ -11,11 +12,15 @@ import TopAppBar from './TopAppBar';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { hasEntered } = useGame();
+  const viewportHeight = useViewportHeight();
   if (!hasEntered) return <Navigate to="/" replace />;
 
   return (
     <BackProvider>
-      <div className="fixed inset-0 flex flex-col overflow-hidden">
+      <div
+        className="fixed inset-x-0 top-0 flex flex-col overflow-hidden"
+        style={{ height: viewportHeight ? `${viewportHeight}px` : '100dvh' }}
+      >
         <PaperTexture />
         <ScreenFrame />
         <AnnouncementPopup />

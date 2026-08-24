@@ -105,7 +105,7 @@ export default function AssignmentPopup() {
           <PopupShell
             label="기숙사 배정"
             image={HOUSE_CRESTS[house.id]}
-            lines={['기숙사 배정 모자가 고민 끝에 입을 열었습니다.', `${broadcast.nickname}님은...... ${house.name}!`]}
+            lines={['기숙사 배정 모자가 고민 끝에 입을 열었습니다.', `${broadcast.nickname} 님은...... ${house.name}!`]}
             onConfirm={dismissBroadcast}
           />
         );
@@ -119,7 +119,7 @@ export default function AssignmentPopup() {
           label="패트로누스 배정"
           image={PATRONUS_ICONS[broadcast.patronus]}
           lines={[
-            `${broadcast.nickname}님의 지팡이 끝에서 빛이 모여 하나의 피사체를 만들어 냅니다. ${patronus.name}, ${broadcast.nickname}님의 든든한 친구가 되어 줄 거예요.`,
+            `${broadcast.nickname} 님의 지팡이 끝에서 빛이 모여 하나의 피사체를 만들어 냅니다. ${patronus.name}, ${broadcast.nickname} 님의 든든한 친구가 되어 줄 거예요.`,
           ]}
           onConfirm={dismissBroadcast}
         />

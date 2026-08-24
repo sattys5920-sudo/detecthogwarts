@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import AdminFinalSurvey from '../components/AdminFinalSurvey';
+import AdminFinalSurveyGrading from '../components/AdminFinalSurveyGrading';
 import AdminGmConsole from '../components/AdminGmConsole';
 import AdminScriptReference from '../components/AdminScriptReference';
 import FinalDeduction from '../components/FinalDeduction';
+import FinalSurveyAnswerBoard from '../components/FinalSurveyAnswerBoard';
 import InvestigationChat from '../components/InvestigationChat';
 import Letterhead from '../components/Letterhead';
 import { useGame } from '../context/GameContext';
@@ -85,8 +87,13 @@ export default function ExplorationPage() {
         <>
           <AdminGmConsole key={`console-${day.day}`} day={day.day} />
           {day.finalDay && <AdminFinalSurvey key={`survey-${day.day}`} day={day.day} />}
+          {day.finalDay && <AdminFinalSurveyGrading key={`grading-${day.day}`} />}
           <AdminScriptReference key={`ref-${day.day}`} day={day} />
         </>
+      )}
+
+      {day.finalDay && !game.isAdmin && game.playerId && (
+        <FinalSurveyAnswerBoard playerId={game.playerId} nickname={game.nickname} />
       )}
 
       {day.finalDay && <FinalDeduction notebookEntries={entries} onSolved={() => game.setDeductionSolved(true)} />}

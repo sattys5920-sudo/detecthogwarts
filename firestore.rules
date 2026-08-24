@@ -245,6 +245,31 @@ service cloud.firestore {
         && request.resource.data.sentAt is number;
     }
 
+    // Day 5 최종 설문 답변입니다. 플레이어당 문항당 문서 하나(playerId__questionId)로
+    // 관리자가 정답 · 오답을 채점할 수 있습니다. 이 프로젝트엔 실제 로그인이 없어
+    // "본인 답변만 수정" 같은 신원 검증은 불가능합니다 — 형식만 검증합니다.
+    match /finalSurveyAnswers/{answerId} {
+      allow read: if true;
+      allow delete: if true;
+
+      allow create: if request.resource.data.keys().hasAll(['playerId', 'nickname', 'questionId', 'text', 'grade', 'createdAt'])
+        && request.resource.data.playerId is string
+        && request.resource.data.nickname is string
+        && request.resource.data.questionId is string
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 200
+        && request.resource.data.grade == null;
+
+      allow update: if
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 200)
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['grade'])
+          && request.resource.data.grade in ['correct', 'incorrect', null]);
+    }
+
     // 퀴디치 경기장: 단일 방(room) 문서 하나에 좌석/보드/점수 등 전체 대국 상태를
     // 통째로 저장합니다. 상태가 매우 자주, 다양한 모양으로 바뀌므로(대기/진행/종료)
     // 필드 단위 검증 대신 status 값만 검증하고 나머지는 클라이언트 로직을 신뢰합니다.

@@ -19,6 +19,7 @@ import {
   updateComment,
   updatePost,
 } from '../firebase/posts';
+import { usePlayerAvatars } from '../hooks/usePlayerAvatars';
 
 function formatTime(ms: number) {
   if (!ms) return '방금 전';
@@ -39,9 +40,10 @@ function Avatar({ src, name, size = 8 }: { src: string | null; name: string; siz
   );
 }
 
-function CommentRow({ comment, postAuthorId, onEdit, onDelete }: {
+function CommentRow({ comment, postAuthorId, avatars, onEdit, onDelete }: {
   comment: Comment;
   postAuthorId: string;
+  avatars: Record<string, string | null>;
   onEdit: (text: string) => void;
   onDelete: () => void;
 }) {
@@ -53,7 +55,7 @@ function CommentRow({ comment, postAuthorId, onEdit, onDelete }: {
 
   return (
     <div className="flex items-start gap-2">
-      <Avatar src={comment.authorAvatar} name={comment.authorNickname} />
+      <Avatar src={avatars[comment.authorPlayerId] ?? comment.authorAvatar} name={comment.authorNickname} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-bold text-ink-900">{comment.authorNickname}</span>
@@ -74,7 +76,7 @@ function CommentRow({ comment, postAuthorId, onEdit, onDelete }: {
             <button type="button" onClick={() => setEditing(false)} className="text-xs text-ink-500/60">취소</button>
           </div>
         ) : (
-          <p className="mt-0.5 text-sm text-ink-900">
+          <p className="mt-0.5 text-xs text-ink-900">
             {canSeeSecret ? comment.content : <span className="text-ink-500/50">비밀 댓글입니다.</span>}
           </p>
         )}
@@ -89,7 +91,13 @@ function CommentRow({ comment, postAuthorId, onEdit, onDelete }: {
   );
 }
 
-function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: () => void; onEdit: (title: string, content: string) => void; onDelete: () => void }) {
+function PostDetail({ post, avatars, onBack, onEdit, onDelete }: {
+  post: Post;
+  avatars: Record<string, string | null>;
+  onBack: () => void;
+  onEdit: (title: string, content: string) => void;
+  onDelete: () => void;
+}) {
   const game = useGame();
   const [comments, setComments] = useState<Comment[]>([]);
   const [editing, setEditing] = useState(false);
@@ -123,7 +131,7 @@ function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: ()
 
       <div className="rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
         <div className="flex items-center gap-2">
-          <Avatar src={post.authorAvatar} name={post.authorNickname} size={9} />
+          <Avatar src={avatars[post.authorPlayerId] ?? post.authorAvatar} name={post.authorNickname} size={9} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <p className="text-sm font-bold text-ink-900">{post.authorNickname}</p>
@@ -195,6 +203,7 @@ function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: ()
               key={c.id}
               comment={c}
               postAuthorId={post.authorPlayerId}
+              avatars={avatars}
               onEdit={(text) => updateComment(post.id, c.id, text)}
               onDelete={() => deleteComment(post.id, c.id)}
             />
@@ -203,11 +212,11 @@ function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: ()
 
         {post.allowComments ? (
           <div className="flex flex-col gap-1.5">
-            <Composer onSubmit={handleSubmitComment} placeholder="댓글을 입력하세요" submitLabel="댓글 등록" />
             <label className="flex items-center gap-1.5 pl-1 text-xs text-ink-700/70">
               <input type="checkbox" checked={secretDraft} onChange={(e) => setSecretDraft(e.target.checked)} />
               비밀댓글로 작성
             </label>
+            <Composer onSubmit={handleSubmitComment} placeholder="댓글을 입력하세요" submitLabel="댓글 등록" />
           </div>
         ) : (
           <p className="text-center text-xs text-ink-500/50">댓글이 허용되지 않은 게시글입니다.</p>
@@ -219,6 +228,7 @@ function PostDetail({ post, onBack, onEdit, onDelete }: { post: Post; onBack: ()
 
 export default function HallPage() {
   const game = useGame();
+  const { byId: avatars } = usePlayerAvatars();
   const [posts, setPosts] = useState<Post[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -257,6 +267,7 @@ export default function HallPage() {
         <Letterhead label="연회장" context={SCHOOL_NAME} meta="2026.08.18 · 초승달 · 저녁 식사 시간" />
         <PostDetail
           post={openPost}
+          avatars={avatars}
           onBack={() => setOpenId(null)}
           onEdit={(title, content) => updatePost(openPost.id, title, content, openPost.allowComments)}
           onDelete={() => {
@@ -321,7 +332,7 @@ export default function HallPage() {
               <div className="h-1.5 bg-seal-600" />
               <div className="p-4">
                 <div className="flex items-center gap-2.5">
-                  <Avatar src={posts[0].authorAvatar} name={posts[0].authorNickname} size={10} />
+                  <Avatar src={avatars[posts[0].authorPlayerId] ?? posts[0].authorAvatar} name={posts[0].authorNickname} size={10} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <p className="text-sm font-bold text-ink-900">{posts[0].authorNickname}</p>
@@ -349,7 +360,7 @@ export default function HallPage() {
               <button key={p.id} type="button" onClick={() => setOpenId(p.id)} className="text-left">
                 <div className="paper-frame bg-paper-50 p-3.5 transition hover:border-seal-500/40">
                   <div className="flex items-center gap-2">
-                    <Avatar src={p.authorAvatar} name={p.authorNickname} />
+                    <Avatar src={avatars[p.authorPlayerId] ?? p.authorAvatar} name={p.authorNickname} />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <p className="text-xs font-bold text-ink-900">{p.authorNickname}</p>

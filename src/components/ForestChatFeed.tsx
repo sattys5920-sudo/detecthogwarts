@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Composer from './Composer';
 import { listenForestChat, sendForestChatMessage, type ForestChatMessage } from '../firebase/forestChat';
-import { listenAllPlayers } from '../firebase/players';
+import { usePlayerAvatars } from '../hooks/usePlayerAvatars';
 import type { LogEntry } from '../game/forest/types';
 
 interface FeedItem {
@@ -29,22 +29,10 @@ interface ForestChatFeedProps {
 /** Merges the party's system narration log with real-time player chat into one scrolling feed, with a composer to send messages. */
 export default function ForestChatFeed({ roomId, log, myId, myNickname, maxHeightClass = 'max-h-56' }: ForestChatFeedProps) {
   const [messages, setMessages] = useState<ForestChatMessage[]>([]);
-  const [avatars, setAvatars] = useState<Record<string, string | null>>({});
+  const { byId: avatars } = usePlayerAvatars();
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => listenForestChat(roomId, setMessages), [roomId]);
-
-  useEffect(
-    () =>
-      listenAllPlayers((players) => {
-        const map: Record<string, string | null> = {};
-        players.forEach((p) => {
-          map[p.id] = p.avatarDataUrl;
-        });
-        setAvatars(map);
-      }),
-    [],
-  );
 
   const items: FeedItem[] = [
     ...log.map((l, i) => ({ key: `log-${i}-${l.at}`, at: l.at, kind: 'narration' as const, text: l.text })),
@@ -85,7 +73,7 @@ export default function ForestChatFeed({ roomId, log, myId, myNickname, maxHeigh
           const avatar = item.authorId ? avatars[item.authorId] : null;
           return (
             <div key={item.key} className={`flex max-w-[85%] items-end gap-1.5 ${isMe ? 'ml-auto flex-row-reverse' : ''}`}>
-              <div className="h-6 w-6 flex-none overflow-hidden rounded-full border border-ink-700/20 bg-ink-black text-[9px] font-bold text-paper-50">
+              <div className="h-8 w-8 flex-none overflow-hidden rounded-full border border-ink-700/20 bg-ink-black text-[10px] font-bold text-paper-50">
                 {avatar ? (
                   <img src={avatar} alt="" className="h-full w-full object-cover" />
                 ) : (
@@ -96,7 +84,7 @@ export default function ForestChatFeed({ roomId, log, myId, myNickname, maxHeigh
                 <span className="mb-0.5 text-[10px] font-bold text-ink-700/60">{item.authorNickname}</span>
                 <div className={`flex items-end gap-1.5 ${isMe ? 'flex-row-reverse' : ''}`}>
                   <p
-                    className={`rounded-lg border px-3 py-1.5 text-sm text-ink-900 ${
+                    className={`rounded-lg border px-3 py-1.5 text-xs text-ink-900 ${
                       isMe ? 'border-ink-700/25 bg-paper-200/60' : 'border-ink-700/15 bg-paper-100/60'
                     }`}
                   >

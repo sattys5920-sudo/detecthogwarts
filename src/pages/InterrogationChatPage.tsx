@@ -51,7 +51,7 @@ export default function InterrogationChatPage() {
     id: m.id,
     name: m.sender === 'player' ? game.nickname || '나' : npc.name,
     initial: m.sender === 'player' ? (game.nickname ? game.nickname[0] : '나') : npc.name[0],
-    avatar: m.sender === 'player' ? undefined : npc.avatar,
+    avatar: m.sender === 'player' ? (game.avatarDataUrl ?? undefined) : npc.avatar,
     who: m.sender === 'player' ? 'indigo' : 'red',
     text: m.text,
     me: m.sender === 'player',

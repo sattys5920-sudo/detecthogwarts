@@ -12,34 +12,33 @@ export default function Composer({ onSubmit, placeholder, submitLabel }: Compose
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  function scrollComposerIntoView() {
-    const wrap = wrapRef.current;
-    const main = wrap?.closest('main');
-    if (!wrap || !main) return;
-    // scrollIntoView() on a `sticky` element (or a marker next to one) is unreliable — it reads
-    // the element's stuck/adjusted position and often treats it as already visible even when the
-    // scroll container hasn't actually scrolled there. Computing the offset by hand and nudging
-    // scrollTop directly works regardless of how the sticky positioning is resolved.
-    const overflow = wrap.getBoundingClientRect().bottom - main.getBoundingClientRect().bottom;
-    if (overflow > 0) main.scrollTop += overflow;
+  function scrollToBottom() {
+    const main = wrapRef.current?.closest('main');
+    if (main) main.scrollTop = main.scrollHeight;
+  }
+
+  function handleFocus() {
+    // Exactly when the on-screen keyboard finishes animating in (and the scroll container's
+    // clientHeight actually reflects the shrunk space) varies across browsers/devices — retrying
+    // a few times over the first ~350ms is far more reliable than chasing one precise event. Each
+    // call is a cheap no-op once already scrolled to the bottom.
+    scrollToBottom();
+    requestAnimationFrame(scrollToBottom);
+    [50, 150, 350].forEach((delay) => setTimeout(scrollToBottom, delay));
   }
 
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
-    // The keyboard finishes animating in slightly after focus fires, which is when the on-screen
-    // keyboard actually shrinks the visible area — if the page content was taller than the shrunk
-    // space, the scroll container stays wherever it was (usually the top), leaving this composer
-    // below the fold. Once the resize settles, pull it (and the chat just above it) into view.
-    const onViewportResize = () => {
-      if (document.activeElement !== inputRef.current) return;
-      // AppShell resizes off this same event, via a React state update that hasn't reached the
-      // DOM yet at this point in the dispatch — scrolling now would still measure the old,
-      // unshrunk layout. Wait a frame so the shrink has actually been painted first.
-      requestAnimationFrame(scrollComposerIntoView);
+    const onViewportChange = () => {
+      if (document.activeElement === inputRef.current) scrollToBottom();
     };
-    vv.addEventListener('resize', onViewportResize);
-    return () => vv.removeEventListener('resize', onViewportResize);
+    vv.addEventListener('resize', onViewportChange);
+    vv.addEventListener('scroll', onViewportChange);
+    return () => {
+      vv.removeEventListener('resize', onViewportChange);
+      vv.removeEventListener('scroll', onViewportChange);
+    };
   }, []);
 
   function submit() {
@@ -63,7 +62,7 @@ export default function Composer({ onSubmit, placeholder, submitLabel }: Compose
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && submit()}
-        onFocus={scrollComposerIntoView}
+        onFocus={handleFocus}
         placeholder={placeholder}
         className="min-w-0 flex-1 rounded-sm border border-ink-700/30 bg-paper-50 px-3.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
       />

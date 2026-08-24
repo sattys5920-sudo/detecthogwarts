@@ -10,6 +10,7 @@ import {
   subscribeAllThreads,
   subscribeThreadMessages,
 } from '../firebase/interrogation';
+import { usePlayerAvatars } from '../hooks/usePlayerAvatars';
 
 function formatTime(ms: number) {
   if (!ms) return '-';
@@ -19,6 +20,7 @@ function formatTime(ms: number) {
 function ThreadDetail({ thread, onClose }: { thread: InterrogationThread; onClose: () => void }) {
   const [messages, setMessages] = useState<InterrogationMessage[]>([]);
   const npc = npcById(thread.npcId);
+  const { byNickname: avatarsByNickname } = usePlayerAvatars();
 
   useEffect(() => subscribeThreadMessages(thread.playerId, thread.npcId, setMessages), [thread.playerId, thread.npcId]);
 
@@ -30,7 +32,7 @@ function ThreadDetail({ thread, onClose }: { thread: InterrogationThread; onClos
     id: m.id,
     name: m.sender === 'player' ? thread.playerNickname : (npc?.name ?? thread.npcId),
     initial: m.sender === 'player' ? thread.playerNickname[0] || '?' : npc?.name[0] || '?',
-    avatar: m.sender === 'player' ? undefined : npc?.avatar,
+    avatar: m.sender === 'player' ? (avatarsByNickname[thread.playerNickname] ?? undefined) : npc?.avatar,
     who: m.sender === 'player' ? 'indigo' : 'red',
     text: m.text,
     me: m.sender === 'admin',

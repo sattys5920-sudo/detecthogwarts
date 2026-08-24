@@ -4,6 +4,7 @@ import Composer from './Composer';
 import { CHARACTERS } from '../data/investigation/characters';
 import { useGame } from '../context/GameContext';
 import { type AdlibMessage, closeOptionsVoting, listenAdlibs, presentEvidence, sendChatMessage, voteOptions } from '../firebase/session';
+import { usePlayerAvatars } from '../hooks/usePlayerAvatars';
 import type { NotebookEntry } from '../hooks/useNotebook';
 
 function avatarFor(speaker: string) {
@@ -46,7 +47,7 @@ function NarrationBubble({ m, onRegister }: NarrationBubbleProps) {
   if (!m.speaker) {
     return (
       <div className="flex flex-col items-center gap-0.5">
-        <p className="text-center font-serif-kr text-sm italic leading-relaxed text-ink-900">{m.text}</p>
+        <p className="text-center font-serif-kr text-xs italic leading-relaxed text-ink-900">{m.text}</p>
         <div className="flex items-center gap-1">
           <span className="font-mono text-[10px] text-ink-500/40">{formatTime(m.at)}</span>
           <RegisterDots onClick={() => onRegister(m)} />
@@ -64,7 +65,7 @@ function NarrationBubble({ m, onRegister }: NarrationBubbleProps) {
           {m.speaker[0]}
         </span>
       )}
-      <div className="flex flex-col items-start gap-1 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-sm text-ink-900">
+      <div className="flex flex-col items-start gap-1 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-xs text-ink-900">
         <span>
           <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>
           {m.text}
@@ -105,7 +106,7 @@ function OptionsBubble({ m, playerId, isAdmin, onRegister, onVote, onClose }: Op
           </span>
         )
       ) : null}
-      <div className="flex flex-col items-start gap-1.5 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-2 text-sm text-ink-900">
+      <div className="flex flex-col items-start gap-1.5 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-2 text-xs text-ink-900">
         {m.text && (
           <span>
             {m.speaker && <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>}
@@ -165,6 +166,7 @@ interface InvestigationChatProps {
 
 export default function InvestigationChat({ day, notebookEntries, nickname, avatar, playerId, onRegisterClue }: InvestigationChatProps) {
   const game = useGame();
+  const { byNickname: avatarsByNickname } = usePlayerAvatars();
   const [adlibs, setAdlibs] = useState<AdlibMessage[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [presenting, setPresenting] = useState(false);
@@ -241,12 +243,13 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
 
           if (m.kind === 'chat') {
             const isMe = m.speaker === nickname;
+            const avatarSrc = (m.speaker ? avatarsByNickname[m.speaker] : null) ?? m.authorAvatar;
             return (
               <div key={m.id} className={`flex max-w-[85%] items-end gap-2 ${isMe ? 'ml-auto flex-row-reverse' : ''}`}>
-                {m.authorAvatar ? (
-                  <img src={m.authorAvatar} alt="" className="h-7 w-7 flex-none rounded-full border border-ink-700/20 object-cover" />
+                {avatarSrc ? (
+                  <img src={avatarSrc} alt="" className="h-8 w-8 flex-none rounded-full border border-ink-700/20 object-cover" />
                 ) : (
-                  <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-ink-black text-[10px] font-bold text-paper-50">
+                  <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-ink-black text-[10px] font-bold text-paper-50">
                     {m.speaker ? m.speaker[0] : '?'}
                   </span>
                 )}
@@ -254,7 +257,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
                   <span className="mb-0.5 text-[10px] font-bold text-ink-700/60">{m.speaker}</span>
                   <div className={`flex items-end gap-1.5 ${isMe ? 'flex-row-reverse' : ''}`}>
                     <p
-                      className={`rounded-lg border px-3 py-1.5 text-sm text-ink-900 ${
+                      className={`rounded-lg border px-3 py-1.5 text-xs text-ink-900 ${
                         isMe ? 'border-ink-700/25 bg-paper-200/60' : 'border-ink-700/15 bg-paper-100/60'
                       }`}
                     >
@@ -270,8 +273,6 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
           return <NarrationBubble key={m.id} m={m} onRegister={setRegisterTarget} />;
         })}
       </div>
-
-      <Composer onSubmit={handleSendChat} placeholder="다른 플레이어에게 메시지를 보내세요" submitLabel="전송" />
 
       <div className="flex flex-col gap-1.5">
         <button
@@ -303,6 +304,8 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
           </div>
         )}
       </div>
+
+      <Composer onSubmit={handleSendChat} placeholder="다른 플레이어에게 메시지를 보내세요" submitLabel="전송" />
 
       {registerTarget && (
         <ClueRegisterModal

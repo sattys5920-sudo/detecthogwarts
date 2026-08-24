@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useDeclareActiveView } from '../context/ActiveViewContext';
 import { useGame } from '../context/GameContext';
 import { type DormMessage, listenDormMessages, sendDormMessage } from '../firebase/dormChat';
+import { usePlayerAvatars } from '../hooks/usePlayerAvatars';
 import ChatLog, { type ChatMessage } from './ChatLog';
 import Composer from './Composer';
 
@@ -16,6 +17,7 @@ function inkFor(id: string) {
 export default function DormChat({ houseId }: { houseId: string }) {
   const game = useGame();
   const [messages, setMessages] = useState<DormMessage[]>([]);
+  const { byId: avatars } = usePlayerAvatars();
   const listRef = useRef<HTMLDivElement>(null);
 
   useDeclareActiveView(`dorm:${houseId}`);
@@ -38,6 +40,7 @@ export default function DormChat({ houseId }: { houseId: string }) {
     id: m.id,
     name: m.authorNickname,
     initial: m.authorNickname ? m.authorNickname[0] : '?',
+    avatar: avatars[m.authorPlayerId] ?? m.authorAvatar ?? undefined,
     who: inkFor(m.authorPlayerId || m.authorNickname),
     text: m.text,
     me: m.authorPlayerId === game.playerId,

@@ -21,7 +21,7 @@ export const SORTING_QUESTIONS: SortingQuestion[] = [
     group: 'situational',
     prompt: '탐사 중, 낯선 소리가 들리는 문 앞에 섰다. 당신의 선택은?',
     options: [
-      { key: 'A', text: '문을 열어본다', primary: 'flame', secondary: 'wind' },
+      { key: 'A', text: '문을 열어 본다', primary: 'flame', secondary: 'wind' },
       { key: 'B', text: '주변을 살핀다', primary: 'wind', secondary: 'moonlight' },
       { key: 'C', text: '소리의 정체를 추측하고 준비한다', primary: 'moonlight', secondary: 'wind' },
       { key: 'D', text: '다른 사람을 부른다', primary: 'earth', secondary: 'flame' },
@@ -33,9 +33,9 @@ export const SORTING_QUESTIONS: SortingQuestion[] = [
     prompt: '친구가 고민을 털어놓았다. 당신은?',
     options: [
       { key: 'A', text: '친구가 직접 해결하도록 설득한다', primary: 'earth', secondary: 'flame' },
-      { key: 'B', text: '자세히 들어본다', primary: 'moonlight', secondary: 'earth' },
-      { key: 'C', text: '사실대로 알린다', primary: 'flame', secondary: 'moonlight' },
-      { key: 'D', text: '다른 방법을 찾는다', primary: 'wind', secondary: 'earth' },
+      { key: 'B', text: '일단 자세히 듣기만 한다', primary: 'moonlight', secondary: 'earth' },
+      { key: 'C', text: '사실에 의거해 조언한다', primary: 'flame', secondary: 'moonlight' },
+      { key: 'D', text: '더 좋은 방법을 함께 궁리해 본다', primary: 'wind', secondary: 'earth' },
     ],
   },
   {
@@ -46,7 +46,7 @@ export const SORTING_QUESTIONS: SortingQuestion[] = [
       { key: 'A', text: '교수에게 가져간다', primary: 'flame', secondary: 'earth' },
       { key: 'B', text: '내용을 확인한다', primary: 'moonlight', secondary: 'wind' },
       { key: 'C', text: '친구들과 공유한다', primary: 'earth', secondary: 'flame' },
-      { key: 'D', text: '보지 않고 지나간다', primary: 'flame', secondary: 'earth' },
+      { key: 'D', text: '관심을 두지 않고 지나간다', primary: 'flame', secondary: 'earth' },
     ],
   },
   {
@@ -112,7 +112,7 @@ export const SORTING_QUESTIONS: SortingQuestion[] = [
       { key: 'A', text: '가장 밝은 별', primary: 'flame', reason: '눈에 띄는 것 · 목표' },
       { key: 'B', text: '별 사이의 빈 공간', primary: 'moonlight', reason: '관찰 · 사고 · 의문' },
       { key: 'C', text: '달과 구름', primary: 'earth', reason: '감성 · 관계 · 안정' },
-      { key: 'D', text: '끝없는 어둠', primary: 'wind', reason: '미지 · 야망 · 깊이' },
+      { key: 'D', text: '끝이 보이지 않는 어둠', primary: 'wind', reason: '미지 · 야망 · 깊이' },
     ],
   },
   {
@@ -120,8 +120,8 @@ export const SORTING_QUESTIONS: SortingQuestion[] = [
     group: 'abstract',
     prompt: '가장 마음에 와닿는 문장은?',
     options: [
-      { key: 'A', text: '아무도 가지 않은 길', primary: 'flame', reason: '도전 · 용기' },
-      { key: 'B', text: '누구와 함께 걷느냐', primary: 'earth', reason: '우정 · 충성' },
+      { key: 'A', text: '아무도 가지 않은 길을 걷는다', primary: 'flame', reason: '도전 · 용기' },
+      { key: 'B', text: '인생은 동반자의 형태에 따라 달라진다', primary: 'earth', reason: '우정 · 충성' },
       { key: 'C', text: '모든 것에는 이유가 있다', primary: 'moonlight', reason: '지식 · 진실' },
       { key: 'D', text: '원하는 것에는 대가가 있다', primary: 'wind', reason: '욕망 · 야망 · 대가' },
     ],

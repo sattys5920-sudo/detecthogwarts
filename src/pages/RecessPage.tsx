@@ -7,7 +7,10 @@ import Letterhead from '../components/Letterhead';
 import { usePageBack } from '../context/BackContext';
 import { useGame } from '../context/GameContext';
 import { HOUSES } from '../data/school';
+import { subscribeParty } from '../firebase/forest';
 import { listenRecessLock, listenRoomLock, setRecessLock, setRoomLock } from '../firebase/locks';
+import { subscribeRoom } from '../firebase/quidditch';
+import { MAX_SEATS as FOREST_MAX_SEATS } from '../game/forest/engine';
 import dormIcon from '../assets/rooms/dorm.png';
 import forestAIcon from '../assets/rooms/forestA.png';
 import forestBIcon from '../assets/rooms/forestB.png';
@@ -97,9 +100,17 @@ const ROOMS: Room[] = [
 ];
 
 const DAVINCI_MAX_PLAYS = 10;
+const FOREST_ROOM_LETTERS = ['a', 'b', 'c'];
+const QUIDDITCH_ROOM_LETTERS = ['a', 'b', 'c', 'd', 'e'];
+const QUIDDITCH_MAX_SEATS = 2;
 
 function davinciPlaysKey(day: number) {
   return `arcanum-davinci-plays-day${day}`;
+}
+
+/** The room letter a linkTo path ends in, e.g. '/forest/c' -> 'c'. */
+function roomLetter(linkTo: string) {
+  return linkTo.split('/').pop() ?? '';
 }
 
 export default function RecessPage() {
@@ -116,12 +127,36 @@ export default function RecessPage() {
   const [davinciPlays, setDavinciPlays] = useState(() => Number(localStorage.getItem(davinciPlaysKey(game.currentDay)) ?? 0));
   const [roomLocks, setRoomLocks] = useState<Record<string, boolean>>({});
   const [recessLocked, setRecessLocked] = useState(false);
+  const [forestStatus, setForestStatus] = useState<Record<string, { count: number; inProgress: boolean }>>({});
+  const [quidditchStatus, setQuidditchStatus] = useState<Record<string, { count: number; inProgress: boolean }>>({});
   const room = ROOMS.find((r) => r.id === activeRoom);
   const house = HOUSES.find((h) => h.id === game.houseId);
 
   useEffect(() => {
     const unsubs = ROOMS.filter((r) => r.lockable).map((r) =>
       listenRoomLock(r.id, (locked) => setRoomLocks((prev) => ({ ...prev, [r.id]: locked }))),
+    );
+    return () => unsubs.forEach((u) => u());
+  }, []);
+
+  useEffect(() => {
+    const unsubs = FOREST_ROOM_LETTERS.map((letter) =>
+      subscribeParty(letter, (party) => {
+        setForestStatus((prev) => ({
+          ...prev,
+          [letter]: { count: party.seats.filter((s) => s !== null).length, inProgress: party.status !== 'lobby' },
+        }));
+      }),
+    );
+    return () => unsubs.forEach((u) => u());
+  }, []);
+
+  useEffect(() => {
+    const unsubs = QUIDDITCH_ROOM_LETTERS.map((letter) =>
+      subscribeRoom(letter, (g) => {
+        const count = (g.seats.A ? 1 : 0) + (g.seats.B ? 1 : 0);
+        setQuidditchStatus((prev) => ({ ...prev, [letter]: { count, inProgress: g.status === 'playing' } }));
+      }),
     );
     return () => unsubs.forEach((u) => u());
   }, []);
@@ -264,14 +299,37 @@ export default function RecessPage() {
           <div className="flex flex-col gap-3">
             {ROOMS.map((r) => {
               const locked = r.lockable && roomLocks[r.id] && !game.isAdmin;
+              const isForest = r.linkTo?.startsWith('/forest/');
+              const isQuidditch = r.linkTo?.startsWith('/quidditch/');
+              const live = isForest
+                ? forestStatus[roomLetter(r.linkTo!)]
+                : isQuidditch
+                  ? quidditchStatus[roomLetter(r.linkTo!)]
+                  : undefined;
+              const maxSeats = isForest ? FOREST_MAX_SEATS : isQuidditch ? QUIDDITCH_MAX_SEATS : 0;
+              const inProgressLabel = isForest ? '탐사 중' : isQuidditch ? '경기 중' : '';
               return (
                 <button key={r.id} type="button" onClick={() => enterRoom(r)} disabled={locked} className="text-left disabled:opacity-50">
                   <Card className="flex items-center gap-3 hover:border-ink-700/30">
                     <img src={ROOM_ICONS[r.id]} alt="" className="h-12 w-12 flex-none rounded-lg border border-ink-700/20 object-cover" />
-                    <p className="font-serif-kr font-semibold text-ink-900">
-                      {r.name}
-                      {locked && <span className="ml-1.5 font-mono text-[10px] font-bold text-ink-500/60">(잠김)</span>}
-                    </p>
+                    <div className="flex-1">
+                      <p className="font-serif-kr font-semibold text-ink-900">
+                        {r.name}
+                        {locked && <span className="ml-1.5 font-mono text-[10px] font-bold text-ink-500/60">(잠김)</span>}
+                      </p>
+                      {live && (
+                        <div className="mt-0.5 flex items-center gap-1.5">
+                          <span className="font-mono text-[10px] text-ink-500/60">
+                            정원 {live.count}/{maxSeats}명
+                          </span>
+                          {live.inProgress && (
+                            <span className="rounded-sm border border-seal-500/40 bg-seal-600/10 px-1.5 py-0.5 text-[10px] font-bold text-seal-600">
+                              {inProgressLabel}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </Card>
                 </button>
               );

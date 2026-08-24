@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import NibIcon from './NibIcon';
 
 interface ComposerProps {
@@ -9,16 +9,22 @@ interface ComposerProps {
 
 export default function Composer({ onSubmit, placeholder, submitLabel }: ComposerProps) {
   const [text, setText] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   function submit() {
     if (!text.trim()) return;
     onSubmit(text.trim());
     setText('');
+    // Tapping the send button moves focus off the input, which dismisses the mobile keyboard —
+    // re-focus right after sending so the keyboard stays up for the next message, and only
+    // closes when the user actually taps away.
+    inputRef.current?.focus();
   }
 
   return (
     <div className="flex items-center gap-2">
       <input
+        ref={inputRef}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && submit()}

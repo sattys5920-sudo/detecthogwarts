@@ -20,8 +20,8 @@ import {
 } from '../firebase/quidditch';
 import { MAX_TURNS, type PieceType, type QuidditchGame, type Team } from '../game/quidditchEngine';
 
-const VALID_ROOMS = ['a', 'b', 'c'];
-const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B', c: 'C' };
+const VALID_ROOMS = ['a', 'b', 'c', 'd', 'e'];
+const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B', c: 'C', d: 'D', e: 'E' };
 
 const TEAM_LABEL: Record<Team, string> = { A: 'A팀', B: 'B팀' };
 const TEAM_CHIP: Record<Team, string> = { A: 'bg-seal-600', B: 'bg-ink-indigo' };

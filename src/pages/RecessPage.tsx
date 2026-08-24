@@ -19,9 +19,12 @@ const ROOM_ICONS: Record<string, string> = {
   library: libraryIcon,
   forestExpeditionA: forestAIcon,
   forestExpeditionB: forestBIcon,
+  forestExpeditionC: forestAIcon,
   quidditchArenaA: quidditchIcon,
   quidditchArenaB: quidditchIcon,
   quidditchArenaC: quidditchIcon,
+  quidditchArenaD: quidditchIcon,
+  quidditchArenaE: quidditchIcon,
   herbarium: herbIcon,
   dorm: dormIcon,
 };
@@ -49,6 +52,12 @@ const ROOMS: Room[] = [
     linkTo: '/forest/b',
   },
   {
+    id: 'forestExpeditionC',
+    name: '금지된 숲 탐사 C',
+    desc: '2~4인 협동 TRPG 탐사. 10단계를 넘어 보스를 처치하면 클리어입니다.',
+    linkTo: '/forest/c',
+  },
+  {
     id: 'quidditchArenaA',
     name: '퀴디치 경기장 A',
     desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
@@ -65,6 +74,18 @@ const ROOMS: Room[] = [
     name: '퀴디치 경기장 C',
     desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch/c',
+  },
+  {
+    id: 'quidditchArenaD',
+    name: '퀴디치 경기장 D',
+    desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
+    linkTo: '/quidditch/d',
+  },
+  {
+    id: 'quidditchArenaE',
+    name: '퀴디치 경기장 E',
+    desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
+    linkTo: '/quidditch/e',
   },
   {
     id: 'herbarium',

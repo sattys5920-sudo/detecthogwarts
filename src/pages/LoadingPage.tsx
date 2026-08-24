@@ -196,6 +196,7 @@ function ProfileStep() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [nickname, setNickname] = useState('');
   const [grade, setGrade] = useState<number | null>(null);
+  const [pet, setPet] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -241,7 +242,7 @@ function ProfileStep() {
     }
     setSubmitting(true);
     try {
-      await game.completeProfile(trimmed, grade);
+      await game.completeProfile(trimmed, grade, pet);
       navigate('/hall');
     } catch {
       setError('제출에 실패했습니다. 다시 시도해 주세요.');
@@ -306,6 +307,17 @@ function ProfileStep() {
           ))}
         </div>
       </div>
+
+      <label className="mt-3 block font-serif-kr text-sm text-ink-700/80">
+        나의 펫 <span className="text-xs text-ink-500/50">(선택)</span>
+        <input
+          value={pet}
+          onChange={(e) => setPet(e.target.value)}
+          placeholder="예: 부엉이 헤르메스"
+          maxLength={30}
+          className={inputClass}
+        />
+      </label>
 
       {error && <p className="mt-2 text-xs text-seal-600">{error}</p>}
 

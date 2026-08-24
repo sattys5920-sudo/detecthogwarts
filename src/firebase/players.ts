@@ -16,6 +16,10 @@ export interface PlayerRecord {
   computedPatronus: PatronusId | null;
   /** Admin-assigned Patronus species, settable any time after signup — used by the 금지된 숲 익스펙토 패트로눔 skill. */
   patronus: PatronusId | null;
+  /** Free-text pet name/description the player set for themselves — optional, shown on their own profile and in the student list. */
+  pet: string | null;
+  /** Synced from the player's own device so other players can see it in the student list. */
+  avatarDataUrl: string | null;
   createdAt: number;
 }
 
@@ -70,6 +74,8 @@ function fromFirestoreDoc(id: string, data: Record<string, unknown>): PlayerReco
     assignedAt: assignedAt?.toMillis?.() ?? null,
     computedPatronus: (data.computedPatronus as PatronusId | null) ?? null,
     patronus: (data.patronus as PatronusId | null) ?? null,
+    pet: (data.pet as string | null) ?? null,
+    avatarDataUrl: (data.avatarDataUrl as string | null) ?? null,
     createdAt: createdAt?.toMillis?.() ?? 0,
   };
 }
@@ -87,6 +93,8 @@ export async function createPlayerRecord(id: string, username: string): Promise<
       assignedAt: null,
       computedPatronus: null,
       patronus: null,
+      pet: null,
+      avatarDataUrl: null,
       createdAt: serverTimestamp(),
     });
     return;
@@ -104,6 +112,8 @@ export async function createPlayerRecord(id: string, username: string): Promise<
     assignedAt: null,
     computedPatronus: null,
     patronus: null,
+    pet: null,
+    avatarDataUrl: null,
     createdAt: Date.now(),
   });
   writeDemoPlayers(players);
@@ -148,6 +158,46 @@ export async function submitProfile(id: string, nickname: string, grade: number)
   const idx = players.findIndex((p) => p.id === id);
   if (idx >= 0) {
     players[idx] = { ...players[idx], nickname, grade };
+    writeDemoPlayers(players);
+  }
+}
+
+/** Post-signup edits from 내 정보 — each field is written on its own, matching the security rules' single-field update clauses. */
+export async function updateNickname(id: string, nickname: string): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, COLLECTION_NAME, id), { nickname });
+    return;
+  }
+  const players = readDemoPlayers();
+  const idx = players.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    players[idx] = { ...players[idx], nickname };
+    writeDemoPlayers(players);
+  }
+}
+
+export async function updatePet(id: string, pet: string | null): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, COLLECTION_NAME, id), { pet });
+    return;
+  }
+  const players = readDemoPlayers();
+  const idx = players.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    players[idx] = { ...players[idx], pet };
+    writeDemoPlayers(players);
+  }
+}
+
+export async function updateAvatar(id: string, avatarDataUrl: string | null): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, COLLECTION_NAME, id), { avatarDataUrl });
+    return;
+  }
+  const players = readDemoPlayers();
+  const idx = players.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    players[idx] = { ...players[idx], avatarDataUrl };
     writeDemoPlayers(players);
   }
 }

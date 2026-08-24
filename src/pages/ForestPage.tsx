@@ -26,8 +26,8 @@ import { patronusById } from '../game/forest/patronus';
 import { maxMpFor, skillMpCostAtLevel, skillValueAtLevel, SKILLS } from '../game/forest/skills';
 import type { ForestParty, LogEntry, PatronusDef, Player, SkillDef } from '../game/forest/types';
 
-const VALID_ROOMS = ['a', 'b'];
-const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B' };
+const VALID_ROOMS = ['a', 'b', 'c'];
+const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B', c: 'C' };
 const VOTE_DURATION_SEC = VOTE_DURATION_MS / 1000;
 
 function fmtSec(totalSeconds: number) {

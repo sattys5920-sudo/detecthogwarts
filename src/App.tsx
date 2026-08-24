@@ -18,6 +18,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import ProfilePage from './pages/ProfilePage';
 import QuidditchPage from './pages/QuidditchPage';
 import RecessPage from './pages/RecessPage';
+import StudentsPage from './pages/StudentsPage';
 
 export default function App() {
   return (
@@ -89,6 +90,14 @@ export default function App() {
             element={
               <AppShell>
                 <ProfilePage />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/students"
+            element={
+              <AppShell>
+                <StudentsPage />
               </AppShell>
             }
           />

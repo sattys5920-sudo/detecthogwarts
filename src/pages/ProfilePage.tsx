@@ -60,6 +60,8 @@ export default function ProfilePage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(game.nickname);
+  const [editingPet, setEditingPet] = useState(false);
+  const [petDraft, setPetDraft] = useState(game.pet ?? '');
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
 
   useEffect(() => {
@@ -104,6 +106,14 @@ export default function ProfilePage() {
       game.setNickname(trimmed);
     }
     setEditingName(false);
+  }
+
+  function savePet() {
+    const trimmed = petDraft.trim();
+    if (trimmed.length <= 30) {
+      game.setPet(trimmed);
+    }
+    setEditingPet(false);
   }
 
   return (
@@ -156,6 +166,34 @@ export default function ProfilePage() {
             className="font-gothic mt-2 text-2xl text-ink-black"
           >
             {game.nickname || '이름 없음'} <span className="text-xs text-ink-500/40">(수정)</span>
+          </button>
+        )}
+
+        {editingPet ? (
+          <div className="mt-1.5 flex items-center justify-center gap-1.5">
+            <input
+              value={petDraft}
+              onChange={(e) => setPetDraft(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && savePet()}
+              placeholder="예: 부엉이 헤르메스"
+              maxLength={30}
+              autoFocus
+              className="w-40 rounded-lg border border-ink-700/20 bg-paper-100/60 px-2 py-1 text-center text-sm text-ink-900 outline-none focus:border-seal-500"
+            />
+            <button type="button" onClick={savePet} className="text-xs font-bold text-seal-600">
+              저장
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setPetDraft(game.pet ?? '');
+              setEditingPet(true);
+            }}
+            className="mt-1 block text-sm text-ink-700/70"
+          >
+            {game.pet ? `🐾 ${game.pet}` : '펫 등록하기'} <span className="text-[11px] text-ink-500/40">(수정)</span>
           </button>
         )}
 
@@ -247,6 +285,16 @@ export default function ProfilePage() {
           </Card>
         </div>
       )}
+
+      <div>
+        <SectionTitle className="mb-2">학생 목록</SectionTitle>
+        <Card className="flex items-center justify-between gap-2">
+          <p className="text-sm text-ink-700/70">가입한 학생들의 프로필 · 기숙사 · 펫을 한눈에 확인해 보세요.</p>
+          <Button variant="ghost" className="flex-none px-3 py-1.5 text-xs" onClick={() => navigate('/students')}>
+            보기
+          </Button>
+        </Card>
+      </div>
 
       <div>
         <SectionTitle className="mb-2">알림 설정</SectionTitle>

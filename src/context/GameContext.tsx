@@ -1,6 +1,18 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { createAccount, verifyAccount } from '../firebase/accounts';
-import { countSignedUpPlayers, createPlayerRecord, getPlayerOnce, listenPlayer, MAX_PLAYERS, submitPatronusTestResult, submitProfile, submitTestResult } from '../firebase/players';
+import {
+  countSignedUpPlayers,
+  createPlayerRecord,
+  getPlayerOnce,
+  listenPlayer,
+  MAX_PLAYERS,
+  submitPatronusTestResult,
+  submitProfile,
+  submitTestResult,
+  updateAvatar,
+  updateNickname,
+  updatePet,
+} from '../firebase/players';
 import { topPatronus } from '../data/patronusTest';
 import type { HouseId } from '../data/sortingTest';
 import type { PatronusId } from '../game/forest/types';
@@ -35,6 +47,8 @@ interface PlayerState {
   /** Result of the player's own patronus aptitude test — a recommendation shown only to admins, never to the player. */
   computedPatronus: PatronusId | null;
   patronus: PatronusId | null;
+  /** Free-text pet the player set for themselves — optional. */
+  pet: string | null;
   stats: PlayerStats;
   currentDay: number;
   deductionSolved: boolean;
@@ -67,6 +81,7 @@ const emptyState: PlayerState = {
   computedHouse: null,
   computedPatronus: null,
   patronus: null,
+  pet: null,
   stats: defaultStats,
   currentDay: 1,
   deductionSolved: false,
@@ -105,10 +120,11 @@ interface GameContextValue extends PlayerState {
   logIn: (username: string, password: string) => Promise<'ok' | 'not-found' | 'wrong-password'>;
   submitTest: (testScores: Record<HouseId, number>, computedHouse: HouseId) => Promise<void>;
   submitPatronusTest: (scores: Record<PatronusId, number>) => Promise<void>;
-  completeProfile: (nickname: string, grade: number) => Promise<void>;
+  completeProfile: (nickname: string, grade: number, pet: string) => Promise<void>;
   adminEnter: () => Promise<void>;
   setNickname: (nickname: string) => void;
   setAvatar: (dataUrl: string | null) => void;
+  setPet: (pet: string) => void;
   adjustStat: (key: keyof PlayerStats, delta: number) => void;
   growMaxStat: (key: MaxStatKey, delta: number) => void;
   advanceDay: () => void;
@@ -191,6 +207,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       computedHouse: player?.computedHouse ?? null,
       computedPatronus: player?.computedPatronus ?? null,
       patronus: player?.patronus ?? null,
+      pet: player?.pet ?? null,
+      avatarDataUrl: player?.avatarDataUrl ?? prev.avatarDataUrl,
       houseId: player?.assignedHouse ?? prev.houseId,
       joinedAt: prev.joinedAt ?? Date.now(),
     }));
@@ -212,11 +230,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, computedPatronus }));
   }, []);
 
-  const completeProfile = useCallback(async (nickname: string, grade: number) => {
+  const completeProfile = useCallback(async (nickname: string, grade: number, pet: string) => {
     const playerId = playerIdRef.current;
     if (!playerId) return;
+    const trimmedPet = pet.trim();
     await submitProfile(playerId, nickname, grade);
-    setState((prev) => ({ ...prev, nickname, grade }));
+    if (trimmedPet) await updatePet(playerId, trimmedPet);
+    setState((prev) => ({ ...prev, nickname, grade, pet: trimmedPet || null }));
   }, []);
 
   const adminEnter = useCallback(async () => {
@@ -239,10 +259,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const setNickname = useCallback((nickname: string) => {
     setState((prev) => ({ ...prev, nickname }));
+    const playerId = playerIdRef.current;
+    if (playerId) updateNickname(playerId, nickname);
   }, []);
 
   const setAvatar = useCallback((dataUrl: string | null) => {
     setState((prev) => ({ ...prev, avatarDataUrl: dataUrl }));
+    const playerId = playerIdRef.current;
+    if (playerId) updateAvatar(playerId, dataUrl);
+  }, []);
+
+  const setPet = useCallback((pet: string) => {
+    const trimmed = pet.trim();
+    setState((prev) => ({ ...prev, pet: trimmed || null }));
+    const playerId = playerIdRef.current;
+    if (playerId) updatePet(playerId, trimmed || null);
   }, []);
 
   const adjustStat = useCallback((key: keyof PlayerStats, delta: number) => {
@@ -319,6 +350,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     adminEnter,
     setNickname,
     setAvatar,
+    setPet,
     adjustStat,
     growMaxStat,
     advanceDay,

@@ -57,7 +57,7 @@ service cloud.firestore {
       allow read: if true;
 
       allow create: if request.resource.data.keys().hasAll(
-          ['username', 'nickname', 'grade', 'testScores', 'computedHouse', 'assignedHouse', 'assignedAt', 'computedPatronus', 'patronus', 'createdAt']
+          ['username', 'nickname', 'grade', 'testScores', 'computedHouse', 'assignedHouse', 'assignedAt', 'computedPatronus', 'patronus', 'pet', 'avatarDataUrl', 'createdAt']
         )
         && request.resource.data.username is string
         && request.resource.data.username.size() > 0
@@ -69,7 +69,9 @@ service cloud.firestore {
         && request.resource.data.assignedHouse == null
         && request.resource.data.assignedAt == null
         && request.resource.data.computedPatronus == null
-        && request.resource.data.patronus == null;
+        && request.resource.data.patronus == null
+        && request.resource.data.pet == null
+        && request.resource.data.avatarDataUrl == null;
 
       allow update: if
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['testScores', 'computedHouse'])
@@ -80,14 +82,23 @@ service cloud.firestore {
           && request.resource.data.nickname.size() > 0
           && request.resource.data.nickname.size() <= 20
           && request.resource.data.grade in [10, 11, 12])
+        // 가입 이후 '내 정보'에서 언제든 닉네임/펫/사진을 따로 고칠 수 있습니다.
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nickname'])
+          && request.resource.data.nickname is string
+          && request.resource.data.nickname.size() > 0
+          && request.resource.data.nickname.size() <= 20)
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pet'])
+          && (request.resource.data.pet == null || (request.resource.data.pet is string && request.resource.data.pet.size() <= 30)))
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatarDataUrl'])
+          && (request.resource.data.avatarDataUrl == null || (request.resource.data.avatarDataUrl is string && request.resource.data.avatarDataUrl.size() <= 300000)))
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assignedHouse', 'assignedAt'])
           && request.resource.data.assignedHouse in ['flame', 'moonlight', 'earth', 'wind'])
         // 패트로누스 적성 검사 결과(추천)입니다 — 플레이어 본인에게는 보여주지 않고 관리자 페이지에만 표시됩니다.
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['computedPatronus'])
-          && request.resource.data.computedPatronus in ['snake', 'tiger', 'squirrel', 'panther', 'lark', 'cat', 'fox', 'snail', 'gecko', 'giraffe'])
+          && request.resource.data.computedPatronus in ['snake', 'tiger', 'squirrel', 'panther', 'lark', 'cat', 'fox', 'snail', 'gecko', 'giraffe', 'pony', 'otter'])
         // 금지된 숲의 패트로누스 스킬에 쓰일 종을 관리자가 언제든 지정/재지정할 수 있습니다.
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['patronus'])
-          && request.resource.data.patronus in ['snake', 'tiger', 'squirrel', 'panther', 'lark', 'cat', 'fox', 'snail', 'gecko', 'giraffe']);
+          && request.resource.data.patronus in ['snake', 'tiger', 'squirrel', 'panther', 'lark', 'cat', 'fox', 'snail', 'gecko', 'giraffe', 'pony', 'otter']);
 
       // 관리자 페이지의 "가입 데이터 초기화" 버튼이 지워야 하므로 삭제를
       // 허용합니다. 이 프로젝트엔 Firebase Auth 기반 신원 검증이 없어 이 허용은

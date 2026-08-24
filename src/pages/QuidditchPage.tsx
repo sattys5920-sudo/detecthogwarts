@@ -14,11 +14,12 @@ import {
   leaveWaitingRoom,
   RoomFullError,
   seatedTeamOf,
+  submitEndTurn,
   submitMove,
   submitPass,
   subscribeRoom,
 } from '../firebase/quidditch';
-import { MAX_TURNS, type PieceType, type QuidditchGame, type Team } from '../game/quidditchEngine';
+import { ACTIONS_PER_TURN, MAX_TURNS, type PieceType, type QuidditchGame, type Team } from '../game/quidditchEngine';
 
 const VALID_ROOMS = ['a', 'b', 'c', 'd', 'e'];
 const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B', c: 'C', d: 'D', e: 'E' };
@@ -26,10 +27,10 @@ const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B', c: 'C', d: 'D', e: 
 const TEAM_LABEL: Record<Team, string> = { A: 'A팀', B: 'B팀' };
 const TEAM_CHIP: Record<Team, string> = { A: 'bg-seal-600', B: 'bg-ink-indigo' };
 const PIECE_LEGEND: { type: PieceType; label: string }[] = [
-  { type: 'keeper', label: '파수꾼' },
+  { type: 'keeper', label: '골키퍼' },
   { type: 'seeker', label: '수색꾼' },
-  { type: 'chaser', label: '추격꾼' },
-  { type: 'beater', label: '타격수' },
+  { type: 'chaser', label: '추격자' },
+  { type: 'beater', label: '몰이꾼' },
 ];
 
 function ScoreChip({ team, room }: { team: Team; room: QuidditchGame }) {
@@ -324,6 +325,15 @@ export default function QuidditchPage() {
     }
   }
 
+  async function handleEndTurn() {
+    if (!game.playerId) return;
+    try {
+      await submitEndTurn(roomId, game.playerId);
+    } catch {
+      // stale — board will resync from the next snapshot.
+    }
+  }
+
   const myTurn = room.currentTeam === mySeat;
   const turnMs = room.turnDeadline - now;
 
@@ -356,15 +366,29 @@ export default function QuidditchPage() {
         </div>
 
         <div className={`flex items-center justify-between rounded-lg border-2 px-3 py-2 ${myTurn ? 'border-seal-600 bg-seal-600/10' : 'border-ink-700/15 bg-paper-100/60'}`}>
-          <p className="text-sm font-bold text-ink-900">{myTurn ? '내 턴입니다 — 기물을 선택하세요' : `${room.seats[room.currentTeam]?.nickname ?? TEAM_LABEL[room.currentTeam]}님의 턴`}</p>
+          <div>
+            <p className="text-sm font-bold text-ink-900">{myTurn ? '내 턴입니다 — 기물을 선택하세요' : `${room.seats[room.currentTeam]?.nickname ?? TEAM_LABEL[room.currentTeam]}님의 턴`}</p>
+            <p className="font-mono text-[10px] text-ink-700/60">행동 {room.actedPieceIds.length} / {ACTIONS_PER_TURN}</p>
+          </div>
           <p className={`font-mono text-xl font-bold ${turnMs < 8000 ? 'text-seal-600' : 'text-ink-900'}`}>{Math.max(0, Math.ceil(turnMs / 1000))}s</p>
         </div>
+
+        {myTurn && (
+          <button
+            type="button"
+            onClick={handleEndTurn}
+            disabled={room.actedPieceIds.length === 0}
+            className="tablet-btn self-end px-3 py-1.5 text-[11px] font-bold disabled:opacity-40"
+          >
+            턴 종료
+          </button>
+        )}
 
         <QuidditchBoard game={room} mySeat={mySeat} onMove={handleMove} onPass={handlePass} />
 
         <p className="flex items-center justify-center gap-1.5 text-[10px] text-ink-700/60">
           <span className="inline-block h-2.5 w-2.5 rounded-full border-2 border-dashed border-gold-400" aria-hidden="true" />
-          점선 테두리 = 퀘이플을 든 추격꾼이 그 동료에게 패스할 수 있음 (이동 대신 즉시 전달)
+          점선 테두리 = 퀘이플을 든 추격자가 그 동료에게 패스할 수 있음 (이동 대신 즉시 전달)
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-lg border border-ink-700/15 bg-paper-100/50 px-2.5 py-1.5">

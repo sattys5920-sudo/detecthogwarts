@@ -37,6 +37,10 @@ export interface QuidditchGame {
   quafflePos: { row: number; col: number } | null;
   quaffleHolderId: string | null;
   snitch: SnitchState | null;
+  /** Team that most recently had a seeker land on the snitch's square without capturing it yet — landing there a second time in a row captures it. */
+  snitchSpottedBy: Team | null;
+  /** Pieces that have already acted this turn — a turn is up to ACTIONS_PER_TURN actions, no piece may act twice. */
+  actedPieceIds: string[];
   turnCount: number;
   currentTeam: Team;
   turnStartedAt: number;
@@ -51,20 +55,21 @@ export interface QuidditchGame {
 
 export const BOARD_SIZE = 8;
 export const TURN_MS = 30_000;
-export const MAX_TURNS = 20;
+export const MAX_TURNS = 10;
 export const SNITCH_SPAWN_TURN = 5;
+export const ACTIONS_PER_TURN = 2;
 export const CENTER = { row: 3, col: 3 };
 const MAX_LOG = 30;
 
 const SCORES = {
   goal: 10,
-  steal: 3,
   save: 3,
   strike: 2,
-  captureChaser: 2,
-  captureBeater: 2,
-  captureSeeker: 5,
-  snitchCatch: 50,
+  captureChaser: 3,
+  captureBeater: 3,
+  captureKeeper: 5,
+  captureSeeker: 20,
+  snitchCatch: 30,
 } as const;
 
 const ORTHO: [number, number][] = [
@@ -109,11 +114,10 @@ function captureScore(type: PieceType): number {
       return SCORES.captureChaser;
     case 'beater':
       return SCORES.captureBeater;
+    case 'keeper':
+      return SCORES.captureKeeper;
     case 'seeker':
       return SCORES.captureSeeker;
-    case 'keeper':
-      // Unreachable: chasers/seekers can't capture a keeper (see legalMoves) and beaters only push it.
-      return 0;
   }
 }
 
@@ -128,7 +132,7 @@ function rayDestinations(
   piece: Piece,
   dirs: [number, number][],
   maxRange: number,
-  opts: { noCaptureLanding?: boolean; cannotCaptureType?: PieceType } = {},
+  opts: { noCaptureLanding?: boolean; canCapture?: (type: PieceType) => boolean } = {},
 ): MoveDest[] {
   const out: MoveDest[] = [];
   for (const [dr, dc] of dirs) {
@@ -143,7 +147,7 @@ function rayDestinations(
       }
       if (occ.team === piece.team) break;
       if (opts.noCaptureLanding) break;
-      if (opts.cannotCaptureType && occ.type === opts.cannotCaptureType) break;
+      if (opts.canCapture && !opts.canCapture(occ.type)) break;
       out.push({ row, col, capture: true });
       break;
     }
@@ -151,32 +155,68 @@ function rayDestinations(
   return out;
 }
 
+/** True once a piece has already used its one action this turn. */
+function hasActed(game: QuidditchGame, pieceId: string): boolean {
+  return game.actedPieceIds.includes(pieceId);
+}
+
 export function legalMoves(game: QuidditchGame, pieceId: string): MoveDest[] {
   const piece = game.pieces.find((p) => p.id === pieceId);
-  if (!piece || piece.team !== game.currentTeam || game.status !== 'playing') return [];
+  if (!piece || piece.team !== game.currentTeam || game.status !== 'playing' || hasActed(game, pieceId)) return [];
   switch (piece.type) {
-    case 'keeper':
-      return rayDestinations(game.pieces, piece, ALL8, 1, { cannotCaptureType: 'keeper' });
+    case 'keeper': {
+      // A goalkeeper only fights near its own goal — far from home, it can move but not capture.
+      const nearHomeGoal = Math.abs(piece.row - goalRowOf(piece.team)) <= 2;
+      return rayDestinations(game.pieces, piece, ORTHO, 2, nearHomeGoal ? {} : { canCapture: () => false });
+    }
     case 'chaser':
-      return rayDestinations(game.pieces, piece, ORTHO, 3, { cannotCaptureType: 'keeper' });
+      return rayDestinations(game.pieces, piece, ORTHO, 2, { canCapture: (t) => t === 'chaser' || t === 'keeper' });
     case 'beater':
-      return rayDestinations(game.pieces, piece, ORTHO, 3, { noCaptureLanding: true });
+      return rayDestinations(game.pieces, piece, DIAG, 3, { noCaptureLanding: true });
     case 'seeker':
-      return rayDestinations(game.pieces, piece, ALL8, 3, { cannotCaptureType: 'keeper' });
+      return rayDestinations(game.pieces, piece, ALL8, 2, { canCapture: (t) => t === 'seeker' || t === 'chaser' });
   }
 }
 
-/** Adjacent (8-direction) friendly chasers a quaffle-carrying chaser may pass to instead of moving. */
+/** Which direction (if any, one of the 8) piece `b` lies from piece `a`, for straight-line quaffle passing. */
+function lineDirection(a: { row: number; col: number }, b: { row: number; col: number }): [number, number] | null {
+  const dr = b.row - a.row;
+  const dc = b.col - a.col;
+  if (dr === 0 && dc === 0) return null;
+  if (dr === 0) return [0, dc > 0 ? 1 : -1];
+  if (dc === 0) return [dr > 0 ? 1 : -1, 0];
+  if (Math.abs(dr) === Math.abs(dc)) return [dr > 0 ? 1 : -1, dc > 0 ? 1 : -1];
+  return null;
+}
+
+/** A pass travels any straight line (rank, file, or diagonal) and is blocked only by an enemy piece standing between the two. */
+function hasClearPassLane(pieces: Piece[], from: Piece, to: Piece): boolean {
+  const dir = lineDirection(from, to);
+  if (!dir) return false;
+  const [dr, dc] = dir;
+  let row = from.row + dr;
+  let col = from.col + dc;
+  while (row !== to.row || col !== to.col) {
+    const occ = pieceAt(pieces, row, col);
+    if (occ && occ.team !== from.team) return false;
+    row += dr;
+    col += dc;
+  }
+  return true;
+}
+
+/** Friendly chasers reachable by a straight-line pass — no movement, ends the acting piece's action like a normal move. */
 export function legalPassTargets(game: QuidditchGame, pieceId: string): string[] {
   const piece = game.pieces.find((p) => p.id === pieceId);
-  if (!piece || piece.team !== game.currentTeam || game.status !== 'playing') return [];
+  if (!piece || piece.team !== game.currentTeam || game.status !== 'playing' || hasActed(game, pieceId)) return [];
   if (piece.type !== 'chaser' || !piece.hasQuaffle) return [];
   return game.pieces
-    .filter((p) => p.team === piece.team && p.type === 'chaser' && p.id !== piece.id && chebyshev(p, piece) === 1)
+    .filter((p) => p.team === piece.team && p.type === 'chaser' && p.id !== piece.id)
+    .filter((p) => hasClearPassLane(game.pieces, piece, p))
     .map((p) => p.id);
 }
 
-/** Instantly hands the quaffle to an adjacent friendly chaser — no movement, ends the turn like a normal move. */
+/** Instantly hands the quaffle to a friendly chaser in a clear straight line — counts as this piece's action for the turn. */
 export function applyPass(game: QuidditchGame, pieceId: string, targetId: string): QuidditchGame {
   if (game.status !== 'playing') throw new Error('게임이 진행 중이 아닙니다.');
   if (!legalPassTargets(game, pieceId).includes(targetId)) throw new Error('패스할 수 없는 대상입니다.');
@@ -189,15 +229,18 @@ export function applyPass(game: QuidditchGame, pieceId: string, targetId: string
   mover.hasQuaffle = false;
   target.hasQuaffle = true;
 
-  const log = pushLog(game.log, mkLog(game.turnCount, team, `${team}팀 추격꾼이 동료에게 퀘이플을 패스했습니다.`));
+  const log = pushLog(game.log, mkLog(game.turnCount, team, `${team}팀 추격자가 동료에게 퀘이플을 패스했습니다.`));
 
-  return endTurn({
-    ...game,
-    pieces,
-    quaffleHolderId: target.id,
-    log,
-    updatedAt: Date.now(),
-  });
+  return completeAction(
+    {
+      ...game,
+      pieces,
+      quaffleHolderId: target.id,
+      log,
+      updatedAt: Date.now(),
+    },
+    pieceId,
+  );
 }
 
 const STRIKE_DIR_PRIORITY: [number, number][] = [
@@ -216,7 +259,7 @@ function findStrikeTarget(pieces: Piece[], mover: Piece): { victim: Piece; pushT
     const row = mover.row + dr;
     const col = mover.col + dc;
     const victim = pieceAt(pieces, row, col);
-    if (!victim || victim.team === mover.team || victim.type === 'keeper') continue;
+    if (!victim || victim.team === mover.team) continue;
     const pr = row + dr;
     const pc = col + dc;
     if (!inBounds(pr, pc) || pieceAt(pieces, pr, pc)) continue;
@@ -266,6 +309,8 @@ export function createInitialGame(seatA: SeatInfo, seatB: SeatInfo): QuidditchGa
     quafflePos: { ...CENTER },
     quaffleHolderId: null,
     snitch: null,
+    snitchSpottedBy: null,
+    actedPieceIds: [],
     turnCount: 0,
     currentTeam: 'A',
     turnStartedAt: now,
@@ -274,7 +319,7 @@ export function createInitialGame(seatA: SeatInfo, seatB: SeatInfo): QuidditchGa
     scores: { A: 0, B: 0 },
     winner: null,
     winReason: null,
-    log: [mkLog(0, null, '경기가 시작되었습니다.')],
+    log: [mkLog(0, null, '경기가 시작되었습니다. 한 턴에 서로 다른 기물 2개까지 행동할 수 있습니다.')],
     updatedAt: now,
   };
 }
@@ -288,6 +333,8 @@ export function emptyRoom(): QuidditchGame {
     quafflePos: null,
     quaffleHolderId: null,
     snitch: null,
+    snitchSpottedBy: null,
+    actedPieceIds: [],
     turnCount: 0,
     currentTeam: 'A',
     turnStartedAt: now,
@@ -316,8 +363,9 @@ function decideWinnerByScore(pieces: Piece[], scores: { A: number; B: number }):
   return 'draw';
 }
 
-function endTurn(game: QuidditchGame): QuidditchGame {
-  let { snitch } = game;
+/** Completes the whole turn: spawns/moves the snitch, checks turn/game-end conditions, hands play to the other team. */
+function advanceTurn(game: QuidditchGame): QuidditchGame {
+  let { snitch, snitchSpottedBy } = game;
   let { status, winner, winReason, scores } = game;
   const turnCount = game.turnCount + 1;
   let log = game.log;
@@ -328,12 +376,15 @@ function endTurn(game: QuidditchGame): QuidditchGame {
   } else if (status === 'playing' && snitch) {
     snitch = moveSnitch(snitch);
     const occupant = game.pieces.find((p) => p.row === snitch!.row && p.col === snitch!.col && p.type === 'seeker');
-    if (occupant) {
+    if (occupant && snitchSpottedBy === occupant.team) {
       scores = { ...scores, [occupant.team]: scores[occupant.team] + SCORES.snitchCatch };
       status = 'finished';
       winner = occupant.team;
       winReason = 'snitch';
-      log = pushLog(log, mkLog(turnCount, occupant.team, `스니치가 ${occupant.team}팀 수색꾼에게 날아들어 포획되었습니다! 승리!`));
+      log = pushLog(log, mkLog(turnCount, occupant.team, `스니치가 다시 ${occupant.team}팀 수색꾼의 자리로 날아들어 포획되었습니다! 승리!`));
+    } else if (occupant) {
+      snitchSpottedBy = occupant.team;
+      log = pushLog(log, mkLog(turnCount, occupant.team, `스니치가 ${occupant.team}팀 수색꾼 옆으로 이동했습니다 — 발견 상태!`));
     }
   }
 
@@ -348,17 +399,35 @@ function endTurn(game: QuidditchGame): QuidditchGame {
   return {
     ...game,
     snitch,
+    snitchSpottedBy,
     status,
     winner,
     winReason,
     scores,
     turnCount,
     log,
+    actedPieceIds: [],
     currentTeam: status === 'finished' ? game.currentTeam : otherTeam(game.currentTeam),
     turnStartedAt: now,
     turnDeadline: now + TURN_MS,
     updatedAt: now,
   };
+}
+
+/** Records that `pieceId` used its action this turn; once ACTIONS_PER_TURN pieces have acted, the full turn ends. */
+function completeAction(game: QuidditchGame, pieceId: string): QuidditchGame {
+  const actedPieceIds = [...game.actedPieceIds, pieceId];
+  if (game.status === 'finished' || actedPieceIds.length >= ACTIONS_PER_TURN) {
+    return advanceTurn({ ...game, actedPieceIds });
+  }
+  return { ...game, actedPieceIds, updatedAt: Date.now() };
+}
+
+/** Lets the active team end their turn early after using fewer than ACTIONS_PER_TURN actions. */
+export function endTurnManually(game: QuidditchGame): QuidditchGame {
+  if (game.status !== 'playing') throw new Error('게임이 진행 중이 아닙니다.');
+  const log = pushLog(game.log, mkLog(game.turnCount, game.currentTeam, `${game.currentTeam}팀이 턴을 마쳤습니다.`));
+  return advanceTurn({ ...game, log });
 }
 
 export function applyMove(game: QuidditchGame, pieceId: string, dest: { row: number; col: number }): QuidditchGame {
@@ -374,6 +443,7 @@ export function applyMove(game: QuidditchGame, pieceId: string, dest: { row: num
   const turnCount = game.turnCount;
   let quafflePos = game.quafflePos ? { ...game.quafflePos } : null;
   let quaffleHolderId = game.quaffleHolderId;
+  let snitchSpottedBy = game.snitchSpottedBy;
   const scores = { ...game.scores };
   let log = game.log;
   let survivingPieces = pieces;
@@ -390,13 +460,13 @@ export function applyMove(game: QuidditchGame, pieceId: string, dest: { row: num
     if (enemyKeeperAdjacent) {
       scores[opp] += SCORES.save;
       dropQuaffleToCenter();
-      log = pushLog(log, mkLog(turnCount, opp, `${opp}팀 파수꾼이 골을 막아냈습니다! (세이브 +3)`));
+      log = pushLog(log, mkLog(turnCount, opp, `${opp}팀 골키퍼가 골을 막아냈습니다! (세이브 +3)`));
     } else {
       mover.row = dest.row;
       mover.col = dest.col;
       scores[team] += SCORES.goal;
       dropQuaffleToCenter();
-      log = pushLog(log, mkLog(turnCount, team, `${team}팀 추격꾼이 골을 넣었습니다! (+10)`));
+      log = pushLog(log, mkLog(turnCount, team, `${team}팀 추격자가 골을 넣었습니다! (+10)`));
     }
   } else if (match.capture) {
     const victim = pieces.find((p) => p.row === dest.row && p.col === dest.col && p.team === opp)!;
@@ -429,45 +499,36 @@ export function applyMove(game: QuidditchGame, pieceId: string, dest: { row: num
         quaffleHolderId = null;
         log = pushLog(
           log,
-          mkLog(turnCount, team, `${team}팀 타격수가 퀘이플을 든 ${opp}팀 ${withEul(pieceLabel(target.victim.type))} 타격해 퀘이플을 떨어뜨렸습니다! (+2)`),
+          mkLog(turnCount, team, `${team}팀 몰이꾼이 퀘이플을 든 ${opp}팀 ${withEul(pieceLabel(target.victim.type))} 밀쳐 퀘이플을 떨어뜨렸습니다! (+2)`),
         );
       } else {
-        log = pushLog(log, mkLog(turnCount, team, `${team}팀 타격수가 ${opp}팀 ${withEul(pieceLabel(target.victim.type))} 밀쳐냈습니다! (+2)`));
+        log = pushLog(log, mkLog(turnCount, team, `${team}팀 몰이꾼이 ${opp}팀 ${withEul(pieceLabel(target.victim.type))} 밀쳐냈습니다! (+2)`));
       }
     } else {
-      log = pushLog(log, mkLog(turnCount, team, `${team}팀 타격수가 이동했습니다.`));
+      log = pushLog(log, mkLog(turnCount, team, `${team}팀 몰이꾼이 이동했습니다.`));
     }
   } else if (mover.type === 'seeker' && game.snitch && dest.row === game.snitch.row && dest.col === game.snitch.col) {
     mover.row = dest.row;
     mover.col = dest.col;
-    scores[team] += SCORES.snitchCatch;
-    snitchCaught = true;
-    log = pushLog(log, mkLog(turnCount, team, `${team}팀 수색꾼이 황금 스니치를 잡았습니다! 승리!`));
+    if (game.snitchSpottedBy === team) {
+      scores[team] += SCORES.snitchCatch;
+      snitchCaught = true;
+      log = pushLog(log, mkLog(turnCount, team, `${team}팀 수색꾼이 다시 한번 황금 스니치를 붙잡아 포획했습니다! 승리!`));
+    } else {
+      snitchSpottedBy = team;
+      log = pushLog(log, mkLog(turnCount, team, `${team}팀 수색꾼이 황금 스니치를 발견했습니다! 한 번 더 붙잡으면 포획할 수 있습니다.`));
+    }
   } else if (quafflePos && dest.row === quafflePos.row && dest.col === quafflePos.col && mover.type === 'chaser') {
     mover.row = dest.row;
     mover.col = dest.col;
     mover.hasQuaffle = true;
     quaffleHolderId = mover.id;
     quafflePos = null;
-    log = pushLog(log, mkLog(turnCount, team, `${team}팀 추격꾼이 퀘이플을 잡았습니다.`));
+    log = pushLog(log, mkLog(turnCount, team, `${team}팀 추격자가 퀘이플을 잡았습니다.`));
   } else {
     mover.row = dest.row;
     mover.col = dest.col;
-    if (mover.type === 'chaser') {
-      const victimHolder = survivingPieces.find((p) => p.team === opp && p.hasQuaffle && chebyshev(p, mover) === 1);
-      if (victimHolder) {
-        const idx = survivingPieces.findIndex((p) => p.id === victimHolder.id);
-        survivingPieces = survivingPieces.map((p, i) => (i === idx ? { ...p, hasQuaffle: false } : p));
-        mover.hasQuaffle = true;
-        quaffleHolderId = mover.id;
-        scores[team] += SCORES.steal;
-        log = pushLog(log, mkLog(turnCount, team, `${team}팀 추격꾼이 퀘이플을 빼앗았습니다! (+3)`));
-      } else {
-        log = pushLog(log, mkLog(turnCount, team, `${team}팀 추격꾼이 이동했습니다.`));
-      }
-    } else {
-      log = pushLog(log, mkLog(turnCount, team, `${team}팀 ${withI(pieceLabel(mover.type))} 이동했습니다.`));
-    }
+    log = pushLog(log, mkLog(turnCount, team, `${team}팀 ${withI(pieceLabel(mover.type))} 이동했습니다.`));
   }
 
   survivingPieces = survivingPieces.map((p) => (p.id === mover.id ? mover : p));
@@ -477,6 +538,7 @@ export function applyMove(game: QuidditchGame, pieceId: string, dest: { row: num
     pieces: survivingPieces,
     quafflePos,
     quaffleHolderId,
+    snitchSpottedBy,
     scores,
     log,
     updatedAt: Date.now(),
@@ -491,19 +553,19 @@ export function applyMove(game: QuidditchGame, pieceId: string, dest: { row: num
     };
   }
 
-  return endTurn(draft);
+  return completeAction(draft, pieceId);
 }
 
 function pieceLabel(type: PieceType) {
   switch (type) {
     case 'keeper':
-      return '파수꾼';
+      return '골키퍼';
     case 'seeker':
       return '수색꾼';
     case 'chaser':
-      return '추격꾼';
+      return '추격자';
     case 'beater':
-      return '타격수';
+      return '몰이꾼';
   }
 }
 
@@ -527,5 +589,5 @@ export function passTurnIfExpired(game: QuidditchGame): QuidditchGame | null {
   if (Date.now() < game.turnDeadline) return null;
   const team = game.currentTeam;
   const log = pushLog(game.log, mkLog(game.turnCount, team, `${team}팀이 시간 안에 행동하지 않아 턴이 자동으로 넘어갔습니다.`));
-  return endTurn({ ...game, log });
+  return advanceTurn({ ...game, log });
 }

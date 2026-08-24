@@ -4,6 +4,7 @@ import {
   applyPass,
   createInitialGame,
   emptyRoom,
+  endTurnManually,
   passTurnIfExpired,
   type QuidditchGame,
   type SeatInfo,
@@ -174,6 +175,26 @@ export async function submitPass(roomId: string, playerId: string, pieceId: stri
   if (current.status !== 'playing') return;
   if (seatedTeamOf(current, playerId) !== current.currentTeam) return;
   writeDemoRoom(roomId, applyPass(current, pieceId, targetId));
+}
+
+export async function submitEndTurn(roomId: string, playerId: string): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    const ref = doc(db, COLLECTION, roomId);
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error('경기를 찾을 수 없습니다.');
+      const current = snap.data() as QuidditchGame;
+      if (current.status !== 'playing') throw new Error('경기가 진행 중이 아닙니다.');
+      if (seatedTeamOf(current, playerId) !== current.currentTeam) throw new Error('내 턴이 아닙니다.');
+      tx.set(ref, endTurnManually(current));
+    });
+    return;
+  }
+
+  const current = readDemoRoom(roomId);
+  if (current.status !== 'playing') return;
+  if (seatedTeamOf(current, playerId) !== current.currentTeam) return;
+  writeDemoRoom(roomId, endTurnManually(current));
 }
 
 /** Idempotent — safe to call from any connected client on a timer. No-ops unless the deadline has actually passed. */

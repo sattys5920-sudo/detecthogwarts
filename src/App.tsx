@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './components/AppShell';
 import NotificationWatcher from './components/NotificationWatcher';
-import SiteBackgroundVideo from './components/SiteBackgroundVideo';
 import SvgDefs from './components/SvgDefs';
 import { ActiveViewProvider } from './context/ActiveViewContext';
 import { GameProvider } from './context/GameContext';
@@ -26,7 +25,6 @@ export default function App() {
       <ActiveViewProvider>
         <SvgDefs />
         <NotificationWatcher />
-        <SiteBackgroundVideo />
         <Routes>
           <Route path="/" element={<LoadingPage />} />
           <Route

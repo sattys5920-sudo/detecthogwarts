@@ -12,6 +12,8 @@ export interface PlayerRecord {
   computedHouse: HouseId | null;
   assignedHouse: HouseId | null;
   assignedAt: number | null;
+  /** Result of the player's own patronus aptitude test — shown only to admins as a recommendation, never to the player. */
+  computedPatronus: PatronusId | null;
   /** Admin-assigned Patronus species, settable any time after signup — used by the 금지된 숲 익스펙토 패트로눔 skill. */
   patronus: PatronusId | null;
   createdAt: number;
@@ -51,6 +53,7 @@ function fromFirestoreDoc(id: string, data: Record<string, unknown>): PlayerReco
     computedHouse: (data.computedHouse as HouseId | null) ?? null,
     assignedHouse: (data.assignedHouse as HouseId | null) ?? null,
     assignedAt: assignedAt?.toMillis?.() ?? null,
+    computedPatronus: (data.computedPatronus as PatronusId | null) ?? null,
     patronus: (data.patronus as PatronusId | null) ?? null,
     createdAt: createdAt?.toMillis?.() ?? 0,
   };
@@ -67,6 +70,7 @@ export async function createPlayerRecord(id: string, username: string): Promise<
       computedHouse: null,
       assignedHouse: null,
       assignedAt: null,
+      computedPatronus: null,
       patronus: null,
       createdAt: serverTimestamp(),
     });
@@ -83,6 +87,7 @@ export async function createPlayerRecord(id: string, username: string): Promise<
     computedHouse: null,
     assignedHouse: null,
     assignedAt: null,
+    computedPatronus: null,
     patronus: null,
     createdAt: Date.now(),
   });
@@ -99,6 +104,21 @@ export async function submitTestResult(id: string, testScores: Record<HouseId, n
   const idx = players.findIndex((p) => p.id === id);
   if (idx >= 0) {
     players[idx] = { ...players[idx], testScores, computedHouse };
+    writeDemoPlayers(players);
+  }
+}
+
+/** Stores the player's own patronus aptitude test result — a recommendation shown only in the admin panel, never revealed to the player directly. */
+export async function submitPatronusTestResult(id: string, computedPatronus: PatronusId): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, COLLECTION_NAME, id), { computedPatronus });
+    return;
+  }
+
+  const players = readDemoPlayers();
+  const idx = players.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    players[idx] = { ...players[idx], computedPatronus };
     writeDemoPlayers(players);
   }
 }

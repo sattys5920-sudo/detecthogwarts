@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { createAccount, verifyAccount } from '../firebase/accounts';
-import { createPlayerRecord, getPlayerOnce, listenPlayer, submitProfile, submitTestResult } from '../firebase/players';
+import { createPlayerRecord, getPlayerOnce, listenPlayer, submitPatronusTestResult, submitProfile, submitTestResult } from '../firebase/players';
+import { topPatronus } from '../data/patronusTest';
 import type { HouseId } from '../data/sortingTest';
 import type { PatronusId } from '../game/forest/types';
 
@@ -31,6 +32,8 @@ interface PlayerState {
   playerId: string | null;
   testScores: Record<HouseId, number> | null;
   computedHouse: HouseId | null;
+  /** Result of the player's own patronus aptitude test — a recommendation shown only to admins, never to the player. */
+  computedPatronus: PatronusId | null;
   patronus: PatronusId | null;
   stats: PlayerStats;
   currentDay: number;
@@ -62,6 +65,7 @@ const emptyState: PlayerState = {
   playerId: null,
   testScores: null,
   computedHouse: null,
+  computedPatronus: null,
   patronus: null,
   stats: defaultStats,
   currentDay: 1,
@@ -85,7 +89,7 @@ function clampStat(stats: PlayerStats, key: keyof PlayerStats, value: number): n
   return Math.max(0, value);
 }
 
-export type OnboardingStage = 'account' | 'test' | 'profile' | 'done';
+export type OnboardingStage = 'account' | 'test' | 'patronusTest' | 'profile' | 'done';
 
 interface GameContextValue extends PlayerState {
   hasEntered: boolean;
@@ -100,6 +104,7 @@ interface GameContextValue extends PlayerState {
   signUp: (username: string, password: string) => Promise<'ok' | 'taken'>;
   logIn: (username: string, password: string) => Promise<'ok' | 'not-found' | 'wrong-password'>;
   submitTest: (testScores: Record<HouseId, number>, computedHouse: HouseId) => Promise<void>;
+  submitPatronusTest: (scores: Record<PatronusId, number>) => Promise<void>;
   completeProfile: (nickname: string, grade: number) => Promise<void>;
   adminEnter: () => Promise<void>;
   setNickname: (nickname: string) => void;
@@ -151,7 +156,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, [state.playerId]);
 
-  const stage: OnboardingStage = !state.playerId ? 'account' : !state.testScores ? 'test' : !state.nickname ? 'profile' : 'done';
+  const stage: OnboardingStage = !state.playerId
+    ? 'account'
+    : !state.testScores
+      ? 'test'
+      : !state.computedPatronus
+        ? 'patronusTest'
+        : !state.nickname
+          ? 'profile'
+          : 'done';
 
   const signUp = useCallback(async (username: string, password: string) => {
     const playerId = crypto.randomUUID();
@@ -174,6 +187,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       grade: player?.grade ?? null,
       testScores: player?.testScores ?? null,
       computedHouse: player?.computedHouse ?? null,
+      computedPatronus: player?.computedPatronus ?? null,
       patronus: player?.patronus ?? null,
       houseId: player?.assignedHouse ?? prev.houseId,
       joinedAt: prev.joinedAt ?? Date.now(),
@@ -186,6 +200,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (!playerId) return;
     await submitTestResult(playerId, testScores, computedHouse);
     setState((prev) => ({ ...prev, testScores, computedHouse }));
+  }, []);
+
+  const submitPatronusTest = useCallback(async (scores: Record<PatronusId, number>) => {
+    const playerId = playerIdRef.current;
+    if (!playerId) return;
+    const computedPatronus = topPatronus(scores);
+    await submitPatronusTestResult(playerId, computedPatronus);
+    setState((prev) => ({ ...prev, computedPatronus }));
   }, []);
 
   const completeProfile = useCallback(async (nickname: string, grade: number) => {
@@ -207,6 +229,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       nickname: ADMIN_NICKNAME,
       testScores: ADMIN_ZERO_SCORES,
       computedHouse: 'moonlight',
+      computedPatronus: 'snake',
       grade: 12,
       joinedAt: prev.joinedAt ?? Date.now(),
     }));
@@ -289,6 +312,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     signUp,
     logIn,
     submitTest,
+    submitPatronusTest,
     completeProfile,
     adminEnter,
     setNickname,

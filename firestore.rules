@@ -57,7 +57,7 @@ service cloud.firestore {
       allow read: if true;
 
       allow create: if request.resource.data.keys().hasAll(
-          ['username', 'nickname', 'grade', 'testScores', 'computedHouse', 'assignedHouse', 'assignedAt', 'patronus', 'createdAt']
+          ['username', 'nickname', 'grade', 'testScores', 'computedHouse', 'assignedHouse', 'assignedAt', 'computedPatronus', 'patronus', 'createdAt']
         )
         && request.resource.data.username is string
         && request.resource.data.username.size() > 0
@@ -68,6 +68,7 @@ service cloud.firestore {
         && request.resource.data.computedHouse == null
         && request.resource.data.assignedHouse == null
         && request.resource.data.assignedAt == null
+        && request.resource.data.computedPatronus == null
         && request.resource.data.patronus == null;
 
       allow update: if
@@ -81,6 +82,9 @@ service cloud.firestore {
           && request.resource.data.grade in [10, 11, 12])
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assignedHouse', 'assignedAt'])
           && request.resource.data.assignedHouse in ['flame', 'moonlight', 'earth', 'wind'])
+        // 패트로누스 적성 검사 결과(추천)입니다 — 플레이어 본인에게는 보여주지 않고 관리자 페이지에만 표시됩니다.
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['computedPatronus'])
+          && request.resource.data.computedPatronus in ['snake', 'tiger', 'squirrel', 'panther', 'lark', 'cat', 'fox', 'snail', 'gecko', 'giraffe'])
         // 금지된 숲의 패트로누스 스킬에 쓰일 종을 관리자가 언제든 지정/재지정할 수 있습니다.
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['patronus'])
           && request.resource.data.patronus in ['snake', 'tiger', 'squirrel', 'panther', 'lark', 'cat', 'fox', 'snail', 'gecko', 'giraffe']);

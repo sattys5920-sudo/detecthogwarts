@@ -5,8 +5,10 @@ import Card from '../components/Card';
 import InkBlot from '../components/InkBlot';
 import OwlIntro from '../components/OwlIntro';
 import PaperTexture from '../components/PaperTexture';
+import PatronusTest from '../components/PatronusTest';
 import SortingTest from '../components/SortingTest';
 import { useGame } from '../context/GameContext';
+import type { PatronusId } from '../game/forest/types';
 import { type HouseId, topHouse } from '../data/sortingTest';
 
 const ADMIN_PASSCODE = '316316316';
@@ -170,6 +172,20 @@ function TestStep() {
   );
 }
 
+function PatronusTestStep() {
+  const game = useGame();
+
+  async function handleTestComplete(scores: Record<PatronusId, number>) {
+    await game.submitPatronusTest(scores);
+  }
+
+  return (
+    <OwlIntro>
+      <PatronusTest onComplete={handleTestComplete} />
+    </OwlIntro>
+  );
+}
+
 function ProfileStep() {
   const game = useGame();
   const navigate = useNavigate();
@@ -232,7 +248,7 @@ function ProfileStep() {
   return (
     <Card className="relative w-full max-w-xs text-left">
       <p className="font-mono text-[11px] tracking-wide text-seal-600">입학 서류 · 신상 기록</p>
-      <p className="mt-1 font-serif-kr text-sm text-ink-700/80">적성 검사가 끝났습니다. 마지막으로 서류에 인적사항을 기입해 주세요.</p>
+      <p className="mt-1 font-serif-kr text-sm text-ink-700/80">모든 적성 검사가 끝났습니다. 마지막으로 서류에 인적사항을 기입해 주세요.</p>
 
       <div className="mt-4 flex justify-center">
         <div className="relative h-16 w-16">
@@ -388,6 +404,8 @@ export default function LoadingPage() {
         <AccountStep />
       ) : game.stage === 'test' ? (
         <TestStep />
+      ) : game.stage === 'patronusTest' ? (
+        <PatronusTestStep />
       ) : (
         <ProfileStep />
       )}

@@ -27,12 +27,13 @@ function formatTime(ms: number) {
 function PlayerRow({ player }: { player: PlayerRecord }) {
   const [selected, setSelected] = useState<HouseId>(player.assignedHouse ?? player.computedHouse ?? 'flame');
   const [sending, setSending] = useState(false);
-  const [selectedPatronus, setSelectedPatronus] = useState<PatronusId>(player.patronus ?? PATRONUS_LIST[0].id);
+  const [selectedPatronus, setSelectedPatronus] = useState<PatronusId>(player.patronus ?? player.computedPatronus ?? PATRONUS_LIST[0].id);
   const [sendingPatronus, setSendingPatronus] = useState(false);
   const computed = houseOf(player.computedHouse);
   const assigned = houseOf(player.assignedHouse);
   const testDone = player.computedHouse !== null;
   const currentPatronus = PATRONUS_LIST.find((p) => p.id === player.patronus) ?? null;
+  const computedPatronus = PATRONUS_LIST.find((p) => p.id === player.computedPatronus) ?? null;
 
   async function send() {
     setSending(true);
@@ -115,6 +116,14 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
       <div className="flex flex-col gap-1.5 border-t border-ink-700/10 pt-3">
         <p className="text-xs text-ink-700/70">
           패트로누스: {currentPatronus ? <b className="text-seal-600">{currentPatronus.name} ({currentPatronus.effectLabel})</b> : <b className="text-ink-500/60">미지정</b>}
+        </p>
+        <p className="text-xs text-ink-700/70">
+          검사 추천:{' '}
+          {computedPatronus ? (
+            <b className="text-ink-900">{computedPatronus.name} ({computedPatronus.effectLabel})</b>
+          ) : (
+            <b className="text-ink-500/60">검사 미완료</b>
+          )}
         </p>
         <div className="flex items-center gap-2">
           <select

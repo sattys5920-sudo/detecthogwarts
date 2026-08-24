@@ -35,7 +35,7 @@ function PopupShell({ label, image, lines, onConfirm }: { label: string; image?:
           {image && <img src={image} alt="" className="mx-auto mt-3 h-24 w-auto flex-none" />}
           <div className="mt-3">
             {lines.map((line, i) => (
-              <p key={i} className={`font-serif-kr text-sm leading-relaxed text-ink-900 ${i > 0 ? 'mt-3' : ''}`}>
+              <p key={i} className={`font-serif-kr text-xs leading-relaxed text-ink-900 ${i > 0 ? 'mt-3' : ''}`}>
                 {line}
               </p>
             ))}
@@ -105,7 +105,7 @@ export default function AssignmentPopup() {
           <PopupShell
             label="기숙사 배정"
             image={HOUSE_CRESTS[house.id]}
-            lines={['기숙사 배정 모자가 고민 끝에 입을 열었습니다.', `${broadcast.nickname} 님은...... ${house.name}!`]}
+            lines={['기숙사 배정 모자가 고민 끝에 입을 열었습니다.', `${broadcast.nickname}....... ${house.name}!`]}
             onConfirm={dismissBroadcast}
           />
         );

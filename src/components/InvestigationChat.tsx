@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import ClueRegisterModal from './ClueRegisterModal';
 import Composer from './Composer';
 import { CHARACTERS } from '../data/investigation/characters';
-import { type AdlibMessage, listenAdlibs, presentEvidence, sendChatMessage } from '../firebase/session';
+import { type AdlibMessage, listenAdlibs, presentEvidence, sendChatMessage, voteOptions } from '../firebase/session';
 import type { NotebookEntry } from '../hooks/useNotebook';
 
 function avatarFor(speaker: string) {
@@ -79,12 +79,16 @@ function NarrationBubble({ m, onRegister }: NarrationBubbleProps) {
 
 interface OptionsBubbleProps {
   m: AdlibMessage;
+  playerId: string;
   onRegister: (m: AdlibMessage) => void;
-  onPick: (text: string) => void;
+  onVote: (messageId: string, optionIndex: number) => void;
 }
 
-function OptionsBubble({ m, onRegister, onPick }: OptionsBubbleProps) {
+/** A poll-style options message — players pick to vote, and everyone sees a live per-option count instead of the pick posting a chat reply. */
+function OptionsBubble({ m, playerId, onRegister, onVote }: OptionsBubbleProps) {
   const avatarSrc = m.speaker ? avatarFor(m.speaker) : undefined;
+  const votes = m.votes ?? {};
+  const myVote = votes[playerId];
 
   return (
     <div className="flex max-w-[90%] items-start gap-2">
@@ -104,12 +108,24 @@ function OptionsBubble({ m, onRegister, onPick }: OptionsBubbleProps) {
             {m.text}
           </span>
         )}
-        <div className="flex flex-wrap gap-1.5">
-          {(m.options ?? []).map((opt, i) => (
-            <button key={i} type="button" onClick={() => onPick(opt)} className="tablet-btn px-2.5 py-1 text-xs font-bold">
-              {opt}
-            </button>
-          ))}
+        <div className="flex flex-col gap-1.5">
+          {(m.options ?? []).map((opt, i) => {
+            const count = Object.values(votes).filter((v) => v === i).length;
+            const isMine = myVote === i;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onVote(m.id, i)}
+                className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-left text-xs font-bold transition-colors ${
+                  isMine ? 'border-seal-600 bg-seal-600/10 text-seal-600' : 'border-ink-700/20 bg-paper-50 text-ink-900 hover:border-seal-500/40'
+                }`}
+              >
+                <span>{opt}</span>
+                <span className="flex-none rounded-full bg-ink-black px-1.5 py-0.5 font-mono text-[10px] text-paper-50">{count}명</span>
+              </button>
+            );
+          })}
         </div>
         <div className="flex items-center gap-1">
           <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
@@ -125,10 +141,11 @@ interface InvestigationChatProps {
   notebookEntries: NotebookEntry[];
   nickname: string;
   avatar: string | null;
+  playerId: string;
   onRegisterClue: (sourceId: string, clue: NonNullable<AdlibMessage['clue']>) => void;
 }
 
-export default function InvestigationChat({ day, notebookEntries, nickname, avatar, onRegisterClue }: InvestigationChatProps) {
+export default function InvestigationChat({ day, notebookEntries, nickname, avatar, playerId, onRegisterClue }: InvestigationChatProps) {
   const [adlibs, setAdlibs] = useState<AdlibMessage[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [presenting, setPresenting] = useState(false);
@@ -157,6 +174,10 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
     sendChatMessage(day, nickname, text, avatar);
   }
 
+  function handleVote(messageId: string, optionIndex: number) {
+    voteOptions(day, messageId, playerId, optionIndex);
+  }
+
   function confirmRegister(title: string) {
     if (!registerTarget) return;
     onRegisterClue(registerTarget.id, { title, desc: registerTarget.text, ink: 'black', status: '확인됨' });
@@ -182,7 +203,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
           }
 
           if (m.kind === 'options') {
-            return <OptionsBubble key={m.id} m={m} onRegister={setRegisterTarget} onPick={handleSendChat} />;
+            return <OptionsBubble key={m.id} m={m} playerId={playerId} onRegister={setRegisterTarget} onVote={handleVote} />;
           }
 
           if (m.kind === 'chat') {

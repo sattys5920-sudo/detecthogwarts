@@ -181,7 +181,12 @@ service cloud.firestore {
               && request.resource.data.options.size() >= 1
               && request.resource.data.options.size() <= 5));
 
-        allow update: if false;
+        // 선택지 메시지(kind: 'options')에 플레이어별 투표를 기록합니다 — 관리자가
+        // 아니라 각 플레이어가 직접 votes 맵에 자기 선택을 써넣는 방식입니다.
+        allow update: if resource.data.kind == 'options'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes'])
+          && request.resource.data.votes is map
+          && request.resource.data.votes.size() <= 50;
         // 관리자 페이지의 "전체 콘텐츠 초기화" 버튼이 하루치 진행 로그를
         // 지울 수 있도록 삭제를 허용합니다.
         allow delete: if true;

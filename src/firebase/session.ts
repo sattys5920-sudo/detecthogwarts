@@ -1,4 +1,4 @@
-import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from 'firebase/firestore';
 import type { ClueDef } from '../data/investigation/types';
 import { db, isFirebaseConfigured } from './config';
 
@@ -9,6 +9,8 @@ export interface AdlibMessage {
   text: string;
   clue?: ClueDef;
   options?: string[];
+  /** For kind 'options': each player's chosen option index, keyed by playerId. Everyone sees live counts instead of picking to post a chat reply. */
+  votes?: Record<string, number>;
   authorAvatar?: string | null;
   at: number;
 }
@@ -56,6 +58,7 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
             text: data.text,
             clue: data.clue,
             options: data.options,
+            votes: data.votes ?? {},
             authorAvatar: data.authorAvatar ?? null,
             at: data.at?.toMillis?.() ?? 0,
           } satisfies AdlibMessage;
@@ -81,7 +84,7 @@ export async function sendAdlib(day: number, speaker: string, text: string): Pro
 }
 
 export async function sendOptionsMessage(day: number, speaker: string, prompt: string, options: string[]): Promise<void> {
-  const payload = { kind: 'options' as const, speaker, text: prompt, options };
+  const payload = { kind: 'options' as const, speaker, text: prompt, options, votes: {} };
   if (isFirebaseConfigured && db) {
     await addDoc(adlibCollectionRef(day), { ...payload, at: serverTimestamp() });
     return;
@@ -89,6 +92,20 @@ export async function sendOptionsMessage(day: number, speaker: string, prompt: s
   const messages = readAdlibDemo(day);
   messages.push({ ...payload, id: crypto.randomUUID(), at: Date.now() });
   writeAdlibDemo(day, messages);
+}
+
+/** Records (or changes) one player's pick on an options message — everyone sees a live per-option tally instead of the pick posting a chat reply. */
+export async function voteOptions(day: number, messageId: string, playerId: string, optionIndex: number): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, 'sessions', `day${day}`, 'adlibs', messageId), { [`votes.${playerId}`]: optionIndex });
+    return;
+  }
+  const messages = readAdlibDemo(day);
+  const idx = messages.findIndex((m) => m.id === messageId);
+  if (idx >= 0) {
+    messages[idx] = { ...messages[idx], votes: { ...messages[idx].votes, [playerId]: optionIndex } };
+    writeAdlibDemo(day, messages);
+  }
 }
 
 export async function sendChatMessage(day: number, nickname: string, text: string, authorAvatar: string | null): Promise<void> {

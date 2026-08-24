@@ -1,7 +1,7 @@
 import type { PatronusDef, PatronusId } from './types';
 
 /**
- * The 10 Patronus species. Every player casts the same spell name — 익스펙토 패트로눔 — but
+ * The 12 Patronus species. Every player casts the same spell name — 익스펙토 패트로눔 — but
  * its effect is entirely determined by the species an admin assigned them after signup.
  * All duration values are in the affected target's own turns (see engine.ts's per-turn
  * status ticking), not global combat rounds — matching every other status effect already.

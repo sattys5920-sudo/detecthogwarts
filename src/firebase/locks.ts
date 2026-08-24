@@ -64,3 +64,11 @@ export function listenRecessLock(callback: (locked: boolean) => void): () => voi
 export function setRecessLock(locked: boolean): Promise<void> {
   return setLock('sessions', 'recess', locked);
 }
+
+export function listenInterrogationLock(callback: (locked: boolean) => void): () => void {
+  return listenLock('sessions', 'interrogation', callback);
+}
+
+export function setInterrogationLock(locked: boolean): Promise<void> {
+  return setLock('sessions', 'interrogation', locked);
+}

@@ -22,6 +22,8 @@ import {
   type WordProblemAnswer,
   type WordProblemPuzzle,
 } from '../data/logicPuzzles';
+import { HOUSES } from '../data/school';
+import type { House } from '../types/game';
 import {
   activatePuzzle,
   listenHouseAnswer,
@@ -32,6 +34,55 @@ import {
   type PuzzleState,
 } from '../firebase/logicPuzzle';
 import Card from './Card';
+
+function HouseStatusRow({ puzzle, house, state }: { puzzle: DailyPuzzle; house: House; state: PuzzleState }) {
+  const [answer, setAnswer] = useState<PuzzleAnswerDoc | null>(null);
+
+  useEffect(() => listenHouseAnswer(puzzle.id, house.id, setAnswer), [puzzle.id, house.id]);
+
+  const rankPoints = puzzle.rankPoints ?? PUZZLE_RANK_POINTS;
+  const rank = state.solvedOrder.indexOf(house.id);
+  const solved = rank >= 0;
+  const attempts = answer?.puzzleId === puzzle.id ? (answer.attempts ?? 0) : 0;
+  const outOfAttempts = !solved && attempts >= PUZZLE_MAX_ATTEMPTS;
+
+  let statusLabel: string;
+  let statusClass: string;
+  if (solved) {
+    statusLabel = `풀었음 · ${rank + 1} 등 · +${rankPoints[rank] ?? 0} 점`;
+    statusClass = 'text-seal-600';
+  } else if (outOfAttempts) {
+    statusLabel = `실패 · 기회 소진 (${attempts}/${PUZZLE_MAX_ATTEMPTS})`;
+    statusClass = 'text-ink-700';
+  } else if (attempts > 0) {
+    statusLabel = `시도 중 (${attempts}/${PUZZLE_MAX_ATTEMPTS})`;
+    statusClass = 'text-gold-600';
+  } else {
+    statusLabel = '아직 시도 안 함';
+    statusClass = 'text-ink-500/50';
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-sm border border-ink-700/10 bg-paper-50 px-2.5 py-1.5">
+      <span className="flex items-center gap-1.5 text-xs font-bold text-ink-900">
+        <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ backgroundColor: house.color }} />
+        {house.name}
+      </span>
+      <span className={`font-mono text-[11px] font-bold ${statusClass}`}>{statusLabel}</span>
+    </div>
+  );
+}
+
+function HouseStatusPanel({ puzzle, state }: { puzzle: DailyPuzzle; state: PuzzleState }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="font-mono text-[10px] font-bold text-ink-500/60">기숙사별 현황</p>
+      {HOUSES.map((h) => (
+        <HouseStatusRow key={h.id} puzzle={puzzle} house={h} state={state} />
+      ))}
+    </div>
+  );
+}
 
 function AdminPuzzleControl({ state }: { state: PuzzleState | null }) {
   const [selected, setSelected] = useState(DAILY_PUZZLES[0]?.id ?? '');
@@ -76,6 +127,7 @@ function AdminPuzzleControl({ state }: { state: PuzzleState | null }) {
           출제하기
         </button>
       </div>
+      {active && state && <HouseStatusPanel puzzle={active} state={state} />}
     </div>
   );
 }

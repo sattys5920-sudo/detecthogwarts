@@ -373,7 +373,7 @@ function FutoshikiGrid({
               const digit = e.target.value.replace(new RegExp(`[^1-${n}]`, 'g'), '').slice(-1);
               onChange(r, c, digit ? Number(digit) : null);
             }}
-            className={`aspect-square w-full border border-ink-700/20 text-center text-[11px] font-bold outline-none ${
+            className={`aspect-square min-w-0 min-h-0 w-full border border-ink-700/20 p-0 text-center text-[10px] font-bold outline-none ${
               locked ? 'bg-paper-200 text-ink-900' : 'bg-paper-50 text-seal-600 focus:bg-seal-600/10'
             }`}
           />,

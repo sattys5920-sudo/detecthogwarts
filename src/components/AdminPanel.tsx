@@ -13,7 +13,7 @@ import type { PatronusId } from '../game/forest/types';
 
 const RESET_PHRASE = '초기화';
 
-const ADMIN_NICKNAME = '호그와트';
+const ADMIN_USERNAME = 'admin';
 
 function houseOf(id: HouseId | null) {
   return HOUSES.find((h) => h.id === id) ?? null;
@@ -288,7 +288,7 @@ function DangerZone() {
 
 export default function AdminPanel() {
   const [players, setPlayers] = useState<PlayerRecord[]>([]);
-  const members = players.filter((p) => p.nickname !== ADMIN_NICKNAME);
+  const members = players.filter((p) => p.username !== ADMIN_USERNAME);
   const pending = members.filter((p) => !(p.assignedHouse !== null && p.patronus !== null));
   const doneCount = members.length - pending.length;
 

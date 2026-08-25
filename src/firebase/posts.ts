@@ -93,6 +93,19 @@ export async function setPostPinned(id: string, pinned: boolean): Promise<void> 
   }
 }
 
+export async function setPostAllowComments(id: string, allowComments: boolean): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, POSTS, id), { allowComments });
+    return;
+  }
+  const store = readDemo();
+  const idx = store.posts.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    store.posts[idx] = { ...store.posts[idx], allowComments };
+    writeDemo(store);
+  }
+}
+
 export async function deletePost(id: string): Promise<void> {
   if (isFirebaseConfigured && db) {
     await deleteDoc(doc(db, POSTS, id));

@@ -15,6 +15,7 @@ import {
   listenComments,
   listenPosts,
   type Post,
+  setPostAllowComments,
   setPostPinned,
   updateComment,
   updatePost,
@@ -188,6 +189,11 @@ function PostDetail({ post, avatars, onBack, onEdit, onDelete }: {
             {game.isAdmin && (
               <button type="button" onClick={() => setPostPinned(post.id, !post.pinned)} className="hover:text-seal-600 hover:underline">
                 {post.pinned ? '공지 고정 해제' : '공지로 고정'}
+              </button>
+            )}
+            {game.isAdmin && (
+              <button type="button" onClick={() => setPostAllowComments(post.id, !post.allowComments)} className="hover:text-seal-600 hover:underline">
+                {post.allowComments ? '댓글 닫기' : '댓글 열기'}
               </button>
             )}
           </div>

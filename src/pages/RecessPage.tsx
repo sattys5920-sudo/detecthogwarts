@@ -133,6 +133,7 @@ export default function RecessPage() {
   const [forestStatus, setForestStatus] = useState<Record<string, { count: number; inProgress: boolean; mine: boolean }>>({});
   const [quidditchStatus, setQuidditchStatus] = useState<Record<string, { count: number; inProgress: boolean; mine: boolean }>>({});
   const [busyModal, setBusyModal] = useState(false);
+  const [adminDormHouseId, setAdminDormHouseId] = useState<string | null>(null);
   const room = ROOMS.find((r) => r.id === activeRoom);
   const house = HOUSES.find((h) => h.id === game.houseId);
 
@@ -287,11 +288,46 @@ export default function RecessPage() {
         ) : room.id === 'dorm' ? (
           <div className="flex flex-col gap-3">
             <LogicPuzzlePanel houseId={house?.id ?? null} isAdmin={game.isAdmin} />
+            {game.isAdmin && (
+              <div className="flex flex-col gap-2 rounded-sm border border-ink-700/15 bg-paper-50 p-3">
+                <p className="text-center font-mono text-[11px] text-ink-500/70">관전할 기숙사를 선택하세요</p>
+                <div className="flex justify-center gap-2">
+                  {HOUSES.map((h) => (
+                    <button
+                      key={h.id}
+                      type="button"
+                      onClick={() => setAdminDormHouseId(h.id)}
+                      className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold text-paper-50 ${
+                        adminDormHouseId === h.id ? 'ring-2 ring-seal-500 ring-offset-2' : ''
+                      }`}
+                      style={{ backgroundColor: h.color, borderColor: h.accent }}
+                    >
+                      {h.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
-              <p className="mb-2.5 text-center font-mono text-[11px] text-ink-500/70">
-                {house ? `${house.name} 단체 대화` : '기숙사 배정 후 이용 가능합니다'}
-              </p>
-              {house ? <DormChat houseId={house.id} /> : <p className="py-6 text-center text-sm text-ink-500/60">아직 기숙사가 배정되지 않았어요.</p>}
+              {game.isAdmin ? (
+                adminDormHouseId ? (
+                  <>
+                    <p className="mb-2.5 text-center font-mono text-[11px] text-ink-500/70">
+                      {HOUSES.find((h) => h.id === adminDormHouseId)?.name} 단체 대화 (관전 중 — 메시지는 보낼 수 없어요)
+                    </p>
+                    <DormChat houseId={adminDormHouseId} readOnly />
+                  </>
+                ) : (
+                  <p className="py-6 text-center text-sm text-ink-500/60">위에서 기숙사를 선택하면 대화를 볼 수 있어요.</p>
+                )
+              ) : (
+                <>
+                  <p className="mb-2.5 text-center font-mono text-[11px] text-ink-500/70">
+                    {house ? `${house.name} 단체 대화` : '기숙사 배정 후 이용 가능합니다'}
+                  </p>
+                  {house ? <DormChat houseId={house.id} /> : <p className="py-6 text-center text-sm text-ink-500/60">아직 기숙사가 배정되지 않았어요.</p>}
+                </>
+              )}
             </div>
           </div>
         ) : null}

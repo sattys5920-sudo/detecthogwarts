@@ -14,7 +14,7 @@ function inkFor(id: string) {
   return INK_CYCLE[sum % INK_CYCLE.length];
 }
 
-export default function DormChat({ houseId }: { houseId: string }) {
+export default function DormChat({ houseId, readOnly }: { houseId: string; readOnly?: boolean }) {
   const game = useGame();
   const [messages, setMessages] = useState<DormMessage[]>([]);
   const { byId: avatars } = usePlayerAvatars();
@@ -54,7 +54,7 @@ export default function DormChat({ houseId }: { houseId: string }) {
         )}
         <ChatLog messages={chatMessages} />
       </div>
-      <Composer onSubmit={handleSend} placeholder="메시지를 입력하세요" submitLabel="전송" />
+      {!readOnly && <Composer onSubmit={handleSend} placeholder="메시지를 입력하세요" submitLabel="전송" />}
     </div>
   );
 }

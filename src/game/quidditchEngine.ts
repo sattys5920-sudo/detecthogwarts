@@ -55,7 +55,7 @@ export interface QuidditchGame {
 
 export const BOARD_SIZE = 8;
 export const TURN_MS = 120_000;
-export const MAX_TURNS = 10;
+export const MAX_TURNS = 30;
 export const SNITCH_SPAWN_TURN = 5;
 export const ACTIONS_PER_TURN = 2;
 export const CENTER = { row: 3, col: 3 };

@@ -57,6 +57,21 @@ const TONE_STYLE: Record<'good' | 'bad' | 'risk' | 'neutral', string> = {
   neutral: 'border-ink-700/15 bg-paper-100 text-ink-700/60',
 };
 
+type CombatTab = 'attack' | 'defense' | 'heal' | 'special';
+
+const SKILL_TAB: Record<SkillDef['id'], Exclude<CombatTab, 'special'>> = {
+  personalAttack: 'attack', aoeAttack: 'attack',
+  personalDefense: 'defense', aoeDefense: 'defense',
+  personalHeal: 'heal', aoeHeal: 'heal', personalMpHeal: 'heal', aoeMpHeal: 'heal',
+};
+
+const COMBAT_TABS: { key: CombatTab; label: string }[] = [
+  { key: 'attack', label: '공격' },
+  { key: 'defense', label: '방어' },
+  { key: 'heal', label: '회복' },
+  { key: 'special', label: '특수' },
+];
+
 function signed(n: number): string {
   return n > 0 ? `+${n}` : `${n}`;
 }
@@ -296,6 +311,7 @@ export default function ForestPage() {
   const [nowTick, setNowTick] = useState(() => Date.now());
   const [voteReveal, setVoteReveal] = useState(false);
   const [combatIntro, setCombatIntro] = useState(false);
+  const [combatTab, setCombatTab] = useState<CombatTab>('attack');
   const lastSeenVoteResultRef = useRef<string | null>(null);
   const combatBannerShownRef = useRef(false);
   const roomLabel = ROOM_LABEL[roomId] ?? '';
@@ -865,32 +881,22 @@ export default function ForestPage() {
             ) : (
               <Card className="flex flex-col gap-2.5">
                 <p className="font-gothic text-lg text-ink-black">내 턴 — 행동 선택</p>
-                <div className="grid grid-cols-1 gap-1">
-                  {SKILLS.map((s) => {
-                    const level = me.skillLevels[s.id] ?? 0;
-                    const cost = skillMpCostAtLevel(s, level);
-                    const canAfford = me.mp >= cost;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        disabled={busy || !canAfford}
-                        onClick={() => onSkillClick(s)}
-                        className="flex items-center justify-between rounded-lg border border-ink-700/15 bg-paper-100/60 px-2.5 py-1.5 text-left hover:border-seal-500/40 disabled:opacity-40"
-                      >
-                        <span className="text-xs font-bold text-ink-900">
-                          {s.name} <span className="text-[10px] font-normal text-ink-500/60">Lv.{level} · ({skillTag(s)})</span>
-                        </span>
-                        <span className="font-mono text-[10px] text-ink-500/60">
-                          위력{skillValueAtLevel(s, level)} · <span className={canAfford ? '' : 'text-seal-600'}>MP{cost}</span>
-                        </span>
-                      </button>
-                    );
-                  })}
+                <div className="grid grid-cols-4 gap-1">
+                  {COMBAT_TABS.map((t) => (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => setCombatTab(t.key)}
+                      className={`rounded-lg border px-2 py-1.5 text-xs font-bold ${
+                        combatTab === t.key ? 'border-seal-600 bg-seal-600/10 text-seal-600' : 'border-ink-700/15 text-ink-700/60'
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
                 </div>
-                {myPatronus && (
-                  <div>
-                    <p className="mb-1 text-[10px] font-bold text-ink-500/60">고유 주문</p>
+                {combatTab === 'special' ? (
+                  myPatronus ? (
                     <button
                       type="button"
                       disabled={busy || me.mp < myPatronus.baseMpCost}
@@ -900,6 +906,32 @@ export default function ForestPage() {
                       <span className="text-xs font-bold text-seal-600">익스펙토 패트로눔 <span className="text-[10px] font-normal text-ink-500/60">({myPatronus.name} · {myPatronus.effectLabel})</span></span>
                       <span className={`font-mono text-[10px] ${me.mp >= myPatronus.baseMpCost ? 'text-ink-500/60' : 'text-seal-600'}`}>MP{myPatronus.baseMpCost}</span>
                     </button>
+                  ) : (
+                    <p className="py-3 text-center text-xs text-ink-500/50">아직 배정된 패트로누스가 없어 특수 주문을 쓸 수 없습니다.</p>
+                  )
+                ) : (
+                  <div className="grid grid-cols-1 gap-1">
+                    {SKILLS.filter((s) => SKILL_TAB[s.id] === combatTab).map((s) => {
+                      const level = me.skillLevels[s.id] ?? 0;
+                      const cost = skillMpCostAtLevel(s, level);
+                      const canAfford = me.mp >= cost;
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          disabled={busy || !canAfford}
+                          onClick={() => onSkillClick(s)}
+                          className="flex items-center justify-between rounded-lg border border-ink-700/15 bg-paper-100/60 px-2.5 py-1.5 text-left hover:border-seal-500/40 disabled:opacity-40"
+                        >
+                          <span className="text-xs font-bold text-ink-900">
+                            {s.name} <span className="text-[10px] font-normal text-ink-500/60">Lv.{level} · ({skillTag(s)})</span>
+                          </span>
+                          <span className="font-mono text-[10px] text-ink-500/60">
+                            위력{skillValueAtLevel(s, level)} · <span className={canAfford ? '' : 'text-seal-600'}>MP{cost}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
                 <button

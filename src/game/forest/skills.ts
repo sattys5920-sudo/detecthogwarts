@@ -21,6 +21,7 @@ export const SKILLS: SkillDef[] = [
   { id: 'aoeHeal', name: '레나르보', description: '모든 아군의 HP를 회복한다.', targetType: 'allyAll', effectType: 'healHp', baseValue: 12, valuePerLevel: 4, baseMpCost: 15 },
   { id: 'personalMpHeal', name: '마나 리스토', description: '아군 1 명의 MP를 회복한다.', targetType: 'ally', effectType: 'healMp', baseValue: 15, valuePerLevel: 4, baseMpCost: 5 },
   { id: 'aoeMpHeal', name: '마나 리스토 막시마', description: '모든 아군의 MP를 회복한다.', targetType: 'allyAll', effectType: 'healMp', baseValue: 8, valuePerLevel: 2, baseMpCost: 12 },
+  { id: 'finiteIncantatem', name: '피니테 인칸타템', description: '아군 1 명에게 걸린 상태 이상을 해제한다.', targetType: 'ally', effectType: 'cleanse', baseValue: 0, valuePerLevel: 0, baseMpCost: 8 },
 ];
 
 export function skillById(id: SkillId): SkillDef {
@@ -41,6 +42,7 @@ const EFFECT_LABEL: Record<SkillDef['effectType'], string> = {
   defense: '방어',
   healHp: 'HP 회복',
   healMp: 'MP 회복',
+  cleanse: '상태 이상 해제',
 };
 
 /** Short "(전체 공격)" style tag summarizing who a skill hits and what it does, for display next to its name. */

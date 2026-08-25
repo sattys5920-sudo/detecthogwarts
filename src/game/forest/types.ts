@@ -61,7 +61,7 @@ export function emptyBuffs(): PlayerBuffs {
 
 // ---------- skills ----------
 
-/** The 8 fixed combat skills every player has access to; only their level (via skill points) differs per player. */
+/** The fixed combat skills every player has access to; only their level (via skill points) differs per player. */
 export type SkillId =
   | 'personalAttack'
   | 'aoeAttack'
@@ -70,10 +70,11 @@ export type SkillId =
   | 'personalHeal'
   | 'aoeHeal'
   | 'personalMpHeal'
-  | 'aoeMpHeal';
+  | 'aoeMpHeal'
+  | 'finiteIncantatem';
 
 export type SkillTargetType = 'enemy' | 'enemyAll' | 'ally' | 'allyAll';
-export type SkillEffectType = 'damage' | 'defense' | 'healHp' | 'healMp';
+export type SkillEffectType = 'damage' | 'defense' | 'healHp' | 'healMp' | 'cleanse';
 
 export interface SkillDef {
   id: SkillId;
@@ -99,6 +100,7 @@ export function emptySkillLevels(): Record<SkillId, number> {
     aoeHeal: 0,
     personalMpHeal: 0,
     aoeMpHeal: 0,
+    finiteIncantatem: 0,
   };
 }
 

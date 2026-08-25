@@ -23,6 +23,9 @@ export const TOTAL_STAGES = 10;
 export const MAX_SEATS = 4;
 export const VOTE_DURATION_MS = 3 * 60_000;
 
+/** Negative status types 피니테 인칸타템 clears — everything except the clearly positive buffs (intBoost/agiBoost/critBoost/followAttack/regenHp/regenMp). */
+const CLEANSABLE_STATUS_TYPES: StatusType[] = ['burn', 'bleed', 'stun', 'weaken', 'vulnerable', 'slow', 'poison', 'daze', 'agiDown', 'charm', 'confuse'];
+
 function now() {
   return Date.now();
 }
@@ -1154,6 +1157,21 @@ function castSkill(party: ForestParty, playerId: string, skillId: SkillId, actio
       const targetName = next.seats.find((p) => p?.id === targetId)?.nickname ?? '동료';
       next = pushLog(next, `${player.nickname}의 ${skill.name}! ${targetName}의 MP ${amount} 회복. (MP -${mpCost})`);
     }
+    return next;
+  }
+
+  if (skill.effectType === 'cleanse') {
+    const targetId = action.targetPlayerId ?? playerId;
+    const targetPlayer = next.seats.find((p) => p?.id === targetId);
+    const targetName = targetPlayer?.nickname ?? '동료';
+    const hadCleansable = (targetPlayer?.statusEffects ?? []).some((e) => CLEANSABLE_STATUS_TYPES.includes(e.type));
+    next = updatePlayer(next, targetId, (p) => ({ ...p, statusEffects: p.statusEffects.filter((e) => !CLEANSABLE_STATUS_TYPES.includes(e.type)) }));
+    next = pushLog(
+      next,
+      hadCleansable
+        ? `${player.nickname}의 ${skill.name}! ${targetName}의 상태 이상이 모두 해제되었다. (MP -${mpCost})`
+        : `${player.nickname}의 ${skill.name}! ${targetName}에게는 해제할 상태 이상이 없었다. (MP -${mpCost})`,
+    );
     return next;
   }
 

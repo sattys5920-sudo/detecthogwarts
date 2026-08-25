@@ -62,7 +62,7 @@ type CombatTab = 'attack' | 'defense' | 'heal' | 'special';
 const SKILL_TAB: Record<SkillDef['id'], Exclude<CombatTab, 'special'>> = {
   personalAttack: 'attack', aoeAttack: 'attack',
   personalDefense: 'defense', aoeDefense: 'defense',
-  personalHeal: 'heal', aoeHeal: 'heal', personalMpHeal: 'heal', aoeMpHeal: 'heal',
+  personalHeal: 'heal', aoeHeal: 'heal', personalMpHeal: 'heal', aoeMpHeal: 'heal', finiteIncantatem: 'heal',
 };
 
 const COMBAT_TABS: { key: CombatTab; label: string }[] = [
@@ -192,7 +192,9 @@ function SkillPanel({ player, onUpgrade }: { player: Player; onUpgrade: (skillId
               <div key={s.id} className="flex items-center justify-between gap-2 rounded-lg border border-ink-700/10 bg-paper-100/50 px-2.5 py-1.5">
                 <div>
                   <p className="text-xs font-bold text-ink-900">{s.name} <span className="font-mono text-[10px] text-ink-500/60">Lv.{level} · ({skillTag(s)})</span></p>
-                  <p className="text-[10px] text-ink-500/60">위력 {skillValueAtLevel(s, level)} · MP {skillMpCostAtLevel(s, level)}</p>
+                  <p className="text-[10px] text-ink-500/60">
+                    {s.effectType !== 'cleanse' && <>위력 {skillValueAtLevel(s, level)} · </>}MP {skillMpCostAtLevel(s, level)}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -927,7 +929,8 @@ export default function ForestPage() {
                             {s.name} <span className="text-[10px] font-normal text-ink-500/60">Lv.{level} · ({skillTag(s)})</span>
                           </span>
                           <span className="font-mono text-[10px] text-ink-500/60">
-                            위력{skillValueAtLevel(s, level)} · <span className={canAfford ? '' : 'text-seal-600'}>MP{cost}</span>
+                            {s.effectType !== 'cleanse' && <>위력{skillValueAtLevel(s, level)} · </>}
+                            <span className={canAfford ? '' : 'text-seal-600'}>MP{cost}</span>
                           </span>
                         </button>
                       );

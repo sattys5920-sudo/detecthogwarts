@@ -29,6 +29,25 @@ export function skillById(id: SkillId): SkillDef {
   return skill;
 }
 
+const TARGET_LABEL: Record<SkillDef['targetType'], string> = {
+  enemy: '지정 1인',
+  enemyAll: '전체',
+  ally: '아군 1인',
+  allyAll: '아군 전체',
+};
+
+const EFFECT_LABEL: Record<SkillDef['effectType'], string> = {
+  damage: '공격',
+  defense: '방어',
+  healHp: 'HP 회복',
+  healMp: 'MP 회복',
+};
+
+/** Short "(전체 공격)" style tag summarizing who a skill hits and what it does, for display next to its name. */
+export function skillTag(skill: SkillDef): string {
+  return `${TARGET_LABEL[skill.targetType]} ${EFFECT_LABEL[skill.effectType]}`;
+}
+
 export function skillValueAtLevel(skill: SkillDef, level: number): number {
   return skill.baseValue + level * skill.valuePerLevel;
 }

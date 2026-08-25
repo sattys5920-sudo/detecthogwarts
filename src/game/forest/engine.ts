@@ -194,10 +194,18 @@ function pickWeightedEvents(party: ForestParty, count: number): ForestEvent[] {
   return picked;
 }
 
-const CATEGORY_LABEL: Record<EventCategory, string> = {
+export const CATEGORY_LABEL: Record<EventCategory, string> = {
   heal: '회복', spellPower: '주문력 강화', intelligence: '지능 강화', agility: '민첩 강화', buff: '일시적 강화',
   hint: '단서', monster: '몬스터 조우', eliteMonster: '강력한 몬스터', trap: '함정', penalty: '위험',
   partyChoice: '동료 관련', riskyChoice: '위험한 선택', special: '특별한 발견', neutral: '평범한 길',
+};
+
+/** Buff/debuff/neutral classification for each event category, for a quick at-a-glance tag on reveal. */
+export const EVENT_TONE: Record<EventCategory, 'good' | 'bad' | 'risk' | 'neutral'> = {
+  heal: 'good', spellPower: 'good', intelligence: 'good', agility: 'good', buff: 'good', special: 'good', partyChoice: 'good',
+  penalty: 'bad', trap: 'bad', monster: 'bad', eliteMonster: 'bad',
+  riskyChoice: 'risk',
+  hint: 'neutral', neutral: 'neutral',
 };
 
 export function generatePaths(party: ForestParty): ForestParty {

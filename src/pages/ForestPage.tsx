@@ -20,11 +20,11 @@ import {
   subscribeParty,
   upgradeSkill,
 } from '../firebase/forest';
-import { allSeatsReady, currentActingPlayerId, MAX_SEATS, TOTAL_STAGES, VOTE_DURATION_MS } from '../game/forest/engine';
+import { allSeatsReady, CATEGORY_LABEL, currentActingPlayerId, EVENT_TONE, MAX_SEATS, TOTAL_STAGES, VOTE_DURATION_MS } from '../game/forest/engine';
 import { eventById } from '../game/forest/events';
 import { patronusById } from '../game/forest/patronus';
-import { maxMpFor, skillMpCostAtLevel, skillValueAtLevel, SKILLS } from '../game/forest/skills';
-import type { ForestParty, LogEntry, PatronusDef, Player, SkillDef } from '../game/forest/types';
+import { maxMpFor, skillMpCostAtLevel, skillTag, skillValueAtLevel, SKILLS } from '../game/forest/skills';
+import type { EventEffect, ForestParty, LogEntry, PatronusDef, Player, SkillDef } from '../game/forest/types';
 
 const VALID_ROOMS = ['a', 'b', 'c'];
 const ROOM_LABEL: Record<string, string> = { a: 'A', b: 'B', c: 'C' };
@@ -45,6 +45,49 @@ const STATUS_LABEL: Record<string, string> = {
   poison: '☠️ 중독', daze: '💫 동요', intBoost: '🧠 지능 강화', agiBoost: '🐆 민첩 강화', agiDown: '🐌 민첩 저하',
   critBoost: '✨ 크리티컬 강화', followAttack: '🐦 추가 공격', regenHp: '💚 지속 회복', regenMp: '🔷 MP 회복', charm: '💫 매혹',
 };
+
+const TONE_LABEL: Record<'good' | 'bad' | 'risk' | 'neutral', string> = {
+  good: '버프', bad: '디버프', risk: '위험한 선택', neutral: '중립',
+};
+
+const TONE_STYLE: Record<'good' | 'bad' | 'risk' | 'neutral', string> = {
+  good: 'border-seal-500/40 bg-seal-600/10 text-seal-600',
+  bad: 'border-ink-700/30 bg-ink-700/10 text-ink-700',
+  risk: 'border-gold-500/50 bg-gold-400/15 text-gold-600',
+  neutral: 'border-ink-700/15 bg-paper-100 text-ink-700/60',
+};
+
+function signed(n: number): string {
+  return n > 0 ? `+${n}` : `${n}`;
+}
+
+/** Plain-language breakdown of what an event's effect actually does, for the reveal card. */
+function eventEffectLines(effect: EventEffect): string[] {
+  const lines: string[] = [];
+  if (effect.hp) lines.push(`${effect.targetLowestHp ? '체력이 가장 낮은 동료의 ' : '파티 전원의 '}HP ${signed(effect.hp)}`);
+  if (effect.maxHp) lines.push(`파티 전원 최대 HP ${signed(effect.maxHp)}`);
+  if (effect.spellPower) lines.push(`파티 전원 주문력 ${signed(effect.spellPower)}`);
+  if (effect.agility) lines.push(`파티 전원 민첩 ${signed(effect.agility)}`);
+  if (effect.intelligence) lines.push(`파티 전원 지능 ${signed(effect.intelligence)} (MP 최대치도 함께 증가)`);
+  if (effect.skillPoints) lines.push(`파티 전원 스킬 포인트 ${signed(effect.skillPoints)}`);
+  if (effect.status) lines.push(`${STATUS_LABEL[effect.status.type] ?? effect.status.type} ${effect.status.turns}턴 부여`);
+  if (effect.hint) lines.push('다음 갈림길의 정보가 미리 공개됨');
+  if (effect.triggersMonster) lines.push('몬스터와 마주칠 수 있음');
+  if (effect.triggersEliteMonster) lines.push('강력한 몬스터와 마주침');
+  if (effect.triggersTrap) {
+    const t = effect.triggersTrap;
+    lines.push(`함정 판정 (DC ${t.dc}) — 실패 시 HP ${signed(-t.failHp)}${t.failStatus ? ` + ${STATUS_LABEL[t.failStatus] ?? t.failStatus}` : ''}`);
+  }
+  if (effect.riskyCheck) {
+    const r = effect.riskyCheck;
+    lines.push(`위험한 판정 (DC ${r.dc})`);
+    const succ = eventEffectLines(r.successBonus).join(', ');
+    const fail = eventEffectLines(r.failPenalty).join(', ');
+    if (succ) lines.push(`· 성공 시: ${succ}`);
+    if (fail) lines.push(`· 실패 시: ${fail}`);
+  }
+  return lines;
+}
 
 type TargetMode = { kind: 'skill'; skill: SkillDef } | { kind: 'patronus'; patronus: PatronusDef };
 type PendingAction = TargetMode & { targetMonsterIndex?: number; targetPlayerId?: string; targetLabel: string };
@@ -133,7 +176,7 @@ function SkillPanel({ player, onUpgrade }: { player: Player; onUpgrade: (skillId
             return (
               <div key={s.id} className="flex items-center justify-between gap-2 rounded-lg border border-ink-700/10 bg-paper-100/50 px-2.5 py-1.5">
                 <div>
-                  <p className="text-xs font-bold text-ink-900">{s.name} <span className="font-mono text-[10px] text-ink-500/60">Lv.{level}</span></p>
+                  <p className="text-xs font-bold text-ink-900">{s.name} <span className="font-mono text-[10px] text-ink-500/60">Lv.{level} · ({skillTag(s)})</span></p>
                   <p className="text-[10px] text-ink-500/60">위력 {skillValueAtLevel(s, level)} · MP {skillMpCostAtLevel(s, level)}</p>
                 </div>
                 <button
@@ -644,6 +687,8 @@ export default function ForestPage() {
     }
 
     const event = eventById(party.currentEventId);
+    const tone = EVENT_TONE[event.category];
+    const lines = eventEffectLines(event.effect);
     const recentLogs = party.log.filter((l) => l.stage === party.stage).slice(-4);
     const statusContent = party.seats
       .filter((p): p is Player => !!p)
@@ -658,6 +703,17 @@ export default function ForestPage() {
             <p className="font-mono text-[11px] tracking-wide text-seal-600">🌙 이벤트 발생</p>
             <p className="mt-2 font-gothic text-xl text-ink-black">{event.title}</p>
             <p className="mt-1 text-sm text-ink-700/80">{event.description}</p>
+            <div className="mt-2.5 flex items-center justify-center gap-1.5">
+              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${TONE_STYLE[tone]}`}>{TONE_LABEL[tone]}</span>
+              <span className="rounded-full border border-ink-700/15 bg-paper-100 px-2 py-0.5 text-[10px] text-ink-700/70">{CATEGORY_LABEL[event.category]}</span>
+            </div>
+            {lines.length > 0 && (
+              <div className="mt-2 flex flex-col gap-1 rounded-lg border border-ink-700/10 bg-paper-100/60 px-3 py-2 text-left">
+                {lines.map((line, i) => (
+                  <p key={i} className="text-xs text-ink-700/80">· {line}</p>
+                ))}
+              </div>
+            )}
             <div className="mt-3 flex flex-col gap-1 text-left">
               {recentLogs.map((l, i) => (
                 <p key={i} className="text-xs text-ink-700/70">{l.text}</p>
@@ -822,7 +878,9 @@ export default function ForestPage() {
                         onClick={() => onSkillClick(s)}
                         className="flex items-center justify-between rounded-lg border border-ink-700/15 bg-paper-100/60 px-2.5 py-1.5 text-left hover:border-seal-500/40 disabled:opacity-40"
                       >
-                        <span className="text-xs font-bold text-ink-900">{s.name} <span className="text-[10px] font-normal text-ink-500/60">Lv.{level}</span></span>
+                        <span className="text-xs font-bold text-ink-900">
+                          {s.name} <span className="text-[10px] font-normal text-ink-500/60">Lv.{level} · ({skillTag(s)})</span>
+                        </span>
                         <span className="font-mono text-[10px] text-ink-500/60">
                           위력{skillValueAtLevel(s, level)} · <span className={canAfford ? '' : 'text-seal-600'}>MP{cost}</span>
                         </span>

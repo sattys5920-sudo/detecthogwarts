@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, type ReactNode, useContext, useRef, useState } from 'react';
 
 interface BackgroundAudioValue {
   playing: boolean;
@@ -10,31 +10,12 @@ const BackgroundAudioContext = createContext<BackgroundAudioValue | undefined>(u
 /**
  * Mounts the single persistent background-music <audio> element once at the App root (so it
  * keeps playing across every page/route change) and exposes play/pause state + a toggle to
- * anywhere in the tree — e.g. the 내 정보 settings page. Browsers block unmuted autoplay before
- * any user gesture on the page — the initial play() attempt covers browsers that allow it (e.g.
- * after a previous visit), and a one-time listener on the very first tap/click/key anywhere on
- * the page starts it for everyone else.
+ * anywhere in the tree — e.g. the 내 정보 settings page. Off by default; only starts once the
+ * player explicitly turns it on.
  */
 export function BackgroundAudioProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const events: (keyof DocumentEventMap)[] = ['pointerdown', 'keydown'];
-    const startOnGesture = () => {
-      audio.play().then(() => setPlaying(true)).catch(() => {});
-    };
-
-    audio
-      .play()
-      .then(() => setPlaying(true))
-      .catch(() => events.forEach((evt) => document.addEventListener(evt, startOnGesture, { once: true })));
-
-    return () => events.forEach((evt) => document.removeEventListener(evt, startOnGesture));
-  }, []);
 
   function toggle() {
     const audio = audioRef.current;

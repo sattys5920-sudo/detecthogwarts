@@ -116,8 +116,14 @@ const FOREST_ROOM_LETTERS = ['a', 'b', 'c'];
 const QUIDDITCH_ROOM_LETTERS = ['a', 'b', 'c', 'd', 'e'];
 const QUIDDITCH_MAX_SEATS = 2;
 
-function davinciPlaysKey(day: number) {
-  return `arcanum-davinci-plays-day${day}`;
+/** Local (not UTC) YYYY-MM-DD — so the daily count actually rolls over at local midnight. */
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function davinciPlaysKey(dateKey: string) {
+  return `arcanum-davinci-plays-${dateKey}`;
 }
 
 /** The room letter a linkTo path ends in, e.g. '/forest/c' -> 'c'. */
@@ -136,7 +142,8 @@ export default function RecessPage() {
   const [davinciSession, setDavinciSession] = useState(0);
   const [davinciPlaying, setDavinciPlaying] = useState(false);
   const [davinciResult, setDavinciResult] = useState<'win' | 'lose' | null>(null);
-  const [davinciPlays, setDavinciPlays] = useState(() => Number(localStorage.getItem(davinciPlaysKey(game.currentDay)) ?? 0));
+  const [davinciDateKey, setDavinciDateKey] = useState(todayKey);
+  const [davinciPlays, setDavinciPlays] = useState(() => Number(localStorage.getItem(davinciPlaysKey(todayKey())) ?? 0));
   const [roomLocks, setRoomLocks] = useState<Record<string, boolean>>({});
   const [recessLocked, setRecessLocked] = useState(false);
   const [forestStatus, setForestStatus] = useState<Record<string, { count: number; inProgress: boolean; mine: boolean }>>({});
@@ -186,6 +193,17 @@ export default function RecessPage() {
 
   useEffect(() => listenRecessLock(setRecessLocked), []);
 
+  // Rolls the daily play count over at local midnight even if the tab is left open across the boundary.
+  useEffect(() => {
+    const id = setInterval(() => {
+      const key = todayKey();
+      if (key === davinciDateKey) return;
+      setDavinciDateKey(key);
+      setDavinciPlays(Number(localStorage.getItem(davinciPlaysKey(key)) ?? 0));
+    }, 30000);
+    return () => clearInterval(id);
+  }, [davinciDateKey]);
+
   const exitRoom = useCallback(() => {
     if (davinciPlaying) exitDavinci();
     setActiveRoom(null);
@@ -225,7 +243,7 @@ export default function RecessPage() {
   function startDavinci() {
     const next = davinciPlays + 1;
     setDavinciPlays(next);
-    localStorage.setItem(davinciPlaysKey(game.currentDay), String(next));
+    localStorage.setItem(davinciPlaysKey(davinciDateKey), String(next));
     setDavinciResult(null);
     setDavinciSession((s) => s + 1);
     setDavinciPlaying(true);

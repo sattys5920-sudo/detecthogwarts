@@ -46,12 +46,32 @@ export interface KakuroPuzzle {
   vruns: KakuroRun[];
 }
 
-export type DailyPuzzle = LogicGridPuzzle | SudokuPuzzle | KakuroPuzzle;
+export type KenKenOp = 'add' | 'multiply';
+
+export interface KenKenCage {
+  /** [row, col] of every cell in this cage; the first cell is where the clue label is drawn. */
+  cells: [number, number][];
+  /** null = single-cell cage — the cell must simply equal `target`. */
+  op: KenKenOp | null;
+  target: number;
+}
+
+export interface KenKenPuzzle {
+  id: string;
+  day: number;
+  type: 'kenken';
+  title: string;
+  size: number;
+  cages: KenKenCage[];
+}
+
+export type DailyPuzzle = LogicGridPuzzle | SudokuPuzzle | KakuroPuzzle | KenKenPuzzle;
 
 export type LogicGridAnswer = Record<PuzzleCategoryKey, (string | null)[]>;
 export type SudokuAnswer = (number | null)[][];
 export type KakuroAnswer = (number | null)[][];
-export type PuzzleAnswerValue = LogicGridAnswer | SudokuAnswer | KakuroAnswer;
+export type KenKenAnswer = (number | null)[][];
+export type PuzzleAnswerValue = LogicGridAnswer | SudokuAnswer | KakuroAnswer | KenKenAnswer;
 
 export const PUZZLE_CATEGORIES: PuzzleCategory[] = [
   { key: 'house', label: '기숙사' },
@@ -154,6 +174,32 @@ export const DAILY_PUZZLES: DailyPuzzle[] = [
       { cells: [[4, 6], [5, 6]], sum: 16 },
     ],
   },
+  {
+    id: 'puzzle4',
+    day: 4,
+    type: 'kenken',
+    title: '하우스컵 켄켄 퀴즈',
+    size: 6,
+    cages: [
+      { cells: [[0, 0], [0, 1]], op: 'multiply', target: 3 },
+      { cells: [[0, 2], [0, 3], [1, 2]], op: 'multiply', target: 48 },
+      { cells: [[0, 4], [0, 5]], op: 'multiply', target: 10 },
+      { cells: [[1, 0], [1, 1], [2, 0]], op: 'multiply', target: 18 },
+      { cells: [[1, 3]], op: null, target: 3 },
+      { cells: [[1, 4], [1, 5]], op: 'multiply', target: 20 },
+      { cells: [[2, 1]], op: null, target: 6 },
+      { cells: [[2, 2], [2, 3]], op: 'multiply', target: 5 },
+      { cells: [[2, 4], [3, 4]], op: 'add', target: 7 },
+      { cells: [[2, 5]], op: null, target: 2 },
+      { cells: [[3, 0], [3, 1], [3, 2], [4, 2]], op: 'multiply', target: 48 },
+      { cells: [[3, 3]], op: null, target: 5 },
+      { cells: [[3, 5], [4, 3], [4, 4], [4, 5]], op: 'add', target: 12 },
+      { cells: [[4, 0], [4, 1], [5, 0]], op: 'add', target: 14 },
+      { cells: [[5, 1]], op: null, target: 2 },
+      { cells: [[5, 2], [5, 3], [5, 4]], op: 'multiply', target: 12 },
+      { cells: [[5, 5]], op: null, target: 6 },
+    ],
+  },
 ];
 
 export function puzzleById(id: string): DailyPuzzle | undefined {
@@ -169,7 +215,10 @@ export function emptyPuzzleAnswer(puzzle: DailyPuzzle): PuzzleAnswerValue {
   if (puzzle.type === 'sudoku') {
     return puzzle.given.map((row) => row.map((v) => (v === 0 ? null : v)));
   }
-  return puzzle.grid.map((row) => row.map(() => null));
+  if (puzzle.type === 'kakuro') {
+    return puzzle.grid.map((row) => row.map(() => null));
+  }
+  return Array.from({ length: puzzle.size }, () => Array<number | null>(puzzle.size).fill(null));
 }
 
 export function isPuzzleAnswerFilled(puzzle: DailyPuzzle, answer: PuzzleAnswerValue): boolean {
@@ -184,15 +233,22 @@ export function isPuzzleAnswerFilled(puzzle: DailyPuzzle, answer: PuzzleAnswerVa
     const a = answer as SudokuAnswer;
     return a.length === 9 && a.every((row) => row.length === 9 && row.every((v) => v !== null && v >= 1 && v <= 9));
   }
-  const a = answer as KakuroAnswer;
-  for (let r = 0; r < puzzle.rows; r++) {
-    for (let c = 0; c < puzzle.cols; c++) {
-      if (puzzle.grid[r][c]) continue;
-      const v = a[r]?.[c];
-      if (v === null || v === undefined || v < 1 || v > 9) return false;
+  if (puzzle.type === 'kakuro') {
+    const a = answer as KakuroAnswer;
+    for (let r = 0; r < puzzle.rows; r++) {
+      for (let c = 0; c < puzzle.cols; c++) {
+        if (puzzle.grid[r][c]) continue;
+        const v = a[r]?.[c];
+        if (v === null || v === undefined || v < 1 || v > 9) return false;
+      }
     }
+    return true;
   }
-  return true;
+  const a = answer as KenKenAnswer;
+  return (
+    a.length === puzzle.size &&
+    a.every((row) => row.length === puzzle.size && row.every((v) => v !== null && v >= 1 && v <= puzzle.size))
+  );
 }
 
 /** Standard Sudoku validity: every given clue preserved, every row/column/3x3 box holds 1-9 exactly once. */
@@ -228,6 +284,30 @@ function isValidKakuroCompletion(hruns: KakuroRun[], vruns: KakuroRun[], answer:
   return true;
 }
 
+/** KenKen validity: every row/column holds 1..size exactly once, and every cage's cells combine (via its op) to its target. */
+function isValidKenKenCompletion(puzzle: KenKenPuzzle, answer: KenKenAnswer): boolean {
+  const n = puzzle.size;
+  const isFullSet = (vals: (number | null | undefined)[]) =>
+    new Set(vals).size === n && vals.every((v) => typeof v === 'number' && v >= 1 && v <= n);
+  for (let i = 0; i < n; i++) {
+    if (!isFullSet(answer[i])) return false;
+    if (!isFullSet(answer.map((row) => row[i]))) return false;
+  }
+  for (const cage of puzzle.cages) {
+    const vals = cage.cells.map(([r, c]) => answer[r]?.[c]);
+    if (vals.some((v) => v === null || v === undefined)) return false;
+    const nums = vals as number[];
+    if (cage.op === null) {
+      if (nums[0] !== cage.target) return false;
+    } else if (cage.op === 'add') {
+      if (nums.reduce((sum, v) => sum + v, 0) !== cage.target) return false;
+    } else {
+      if (nums.reduce((product, v) => product * v, 1) !== cage.target) return false;
+    }
+  }
+  return true;
+}
+
 export function isPuzzleAnswerCorrect(puzzle: DailyPuzzle, answer: PuzzleAnswerValue): boolean {
   if (puzzle.type === 'logicGrid') {
     const a = answer as LogicGridAnswer;
@@ -237,5 +317,8 @@ export function isPuzzleAnswerCorrect(puzzle: DailyPuzzle, answer: PuzzleAnswerV
     const a = (answer as SudokuAnswer).map((row) => row.map((v) => v ?? 0));
     return isValidSudokuCompletion(puzzle.given, a);
   }
-  return isValidKakuroCompletion(puzzle.hruns, puzzle.vruns, answer as KakuroAnswer);
+  if (puzzle.type === 'kakuro') {
+    return isValidKakuroCompletion(puzzle.hruns, puzzle.vruns, answer as KakuroAnswer);
+  }
+  return isValidKenKenCompletion(puzzle, answer as KenKenAnswer);
 }

@@ -9,6 +9,8 @@ import {
   type DailyPuzzle,
   type KakuroAnswer,
   type KakuroPuzzle,
+  type KenKenAnswer,
+  type KenKenPuzzle,
   type LogicGridAnswer,
   type LogicGridPuzzle,
   type PuzzleAnswerValue,
@@ -244,6 +246,76 @@ function KakuroGrid({
   );
 }
 
+function kenKenCageLabel(op: KenKenPuzzle['cages'][number]['op'], target: number): string {
+  if (op === 'add') return `${target}+`;
+  if (op === 'multiply') return `${target}×`;
+  return `${target}`;
+}
+
+function KenKenGrid({
+  puzzle,
+  answer,
+  onChange,
+  disabled,
+}: {
+  puzzle: KenKenPuzzle;
+  answer: KenKenAnswer;
+  onChange: (row: number, col: number, value: number | null) => void;
+  disabled?: boolean;
+}) {
+  const n = puzzle.size;
+  const cageIndex: number[][] = Array.from({ length: n }, () => Array(n).fill(-1));
+  const labelAt: Record<string, string> = {};
+  puzzle.cages.forEach((cage, idx) => {
+    cage.cells.forEach(([r, c]) => {
+      cageIndex[r][c] = idx;
+    });
+    const [r0, c0] = cage.cells[0];
+    labelAt[`${r0}_${c0}`] = kenKenCageLabel(cage.op, cage.target);
+  });
+
+  return (
+    <div
+      className="mx-auto grid w-full max-w-[320px] border-2 border-ink-900 bg-paper-50"
+      style={{ gridTemplateColumns: `repeat(${n}, 1fr)` }}
+    >
+      {Array.from({ length: n }).map((_, r) =>
+        Array.from({ length: n }).map((_, c) => {
+          const thisCage = cageIndex[r][c];
+          const rightThick = c === n - 1 || cageIndex[r][c + 1] !== thisCage;
+          const bottomThick = r === n - 1 || cageIndex[r + 1][c] !== thisCage;
+          const label = labelAt[`${r}_${c}`];
+          const value = answer[r]?.[c];
+          return (
+            <div
+              key={`${r}-${c}`}
+              className="relative aspect-square"
+              style={{
+                borderRight: rightThick ? '2px solid var(--color-ink-900)' : '1px solid rgba(31,41,51,0.15)',
+                borderBottom: bottomThick ? '2px solid var(--color-ink-900)' : '1px solid rgba(31,41,51,0.15)',
+              }}
+            >
+              {label && <span className="absolute top-0 left-0.5 text-[7px] leading-tight font-bold text-seal-600">{label}</span>}
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                readOnly={disabled}
+                value={value ?? ''}
+                onChange={(e) => {
+                  const digit = e.target.value.replace(new RegExp(`[^1-${n}]`, 'g'), '').slice(-1);
+                  onChange(r, c, digit ? Number(digit) : null);
+                }}
+                className="h-full w-full border-0 bg-transparent text-center text-xs font-bold text-ink-900 outline-none focus:bg-seal-600/10"
+              />
+            </div>
+          );
+        }),
+      )}
+    </div>
+  );
+}
+
 function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: string; state: PuzzleState }) {
   const [remote, setRemote] = useState<PuzzleAnswerDoc | null>(null);
   const [answer, setAnswer] = useState<PuzzleAnswerValue>(() => emptyPuzzleAnswer(puzzle));
@@ -274,7 +346,7 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
   }
 
   function setGridCell(row: number, col: number, value: number | null) {
-    const a = answer as SudokuAnswer | KakuroAnswer;
+    const a = answer as SudokuAnswer | KakuroAnswer | KenKenAnswer;
     commit(a.map((rowVals, r) => (r === row ? rowVals.map((v, c) => (c === col ? value : v)) : rowVals)));
   }
 
@@ -319,6 +391,12 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
           가로줄 합이며, 같은 줄 안에서 숫자(1~9)는 겹칠 수 없습니다.
         </p>
       )}
+      {puzzle.type === 'kenken' && (
+        <p className="text-xs leading-relaxed text-ink-900">
+          가로줄 · 세로줄마다 1~{puzzle.size}이 한 번씩 들어가야 합니다. 굵은 선으로 묶인 칸(우리)끼리는 왼쪽
+          위에 적힌 숫자·기호대로 계산한 값이 나와야 해요 (× = 곱, + = 합, 기호 없음 = 그 칸 하나의 값).
+        </p>
+      )}
 
       {locked ? (
         <p className="rounded-lg border border-seal-500/40 bg-seal-600/10 px-3 py-2 text-center text-sm font-bold text-seal-600">
@@ -334,6 +412,9 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
           )}
           {puzzle.type === 'kakuro' && (
             <KakuroGrid puzzle={puzzle} answer={answer as KakuroAnswer} onChange={setGridCell} disabled={outOfAttempts} />
+          )}
+          {puzzle.type === 'kenken' && (
+            <KenKenGrid puzzle={puzzle} answer={answer as KenKenAnswer} onChange={setGridCell} disabled={outOfAttempts} />
           )}
           {wrongFlash && !outOfAttempts && (
             <p className="text-center text-xs font-bold text-seal-600">아직 정답이 아니에요. 다시 확인해 보세요.</p>

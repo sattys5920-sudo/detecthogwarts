@@ -13,7 +13,7 @@ function houseName(id: string | null) {
 }
 
 function StudentRow({ player }: { player: PlayerRecord }) {
-  const house = houseName(player.assignedHouse ?? player.computedHouse);
+  const house = houseName(player.assignedHouse);
   const initial = player.nickname ? player.nickname[0] : '?';
 
   return (
@@ -27,9 +27,12 @@ function StudentRow({ player }: { player: PlayerRecord }) {
       <div className="min-w-0 flex-1">
         <p className="font-gothic truncate text-lg text-ink-black">{player.nickname}</p>
         <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-          <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2 py-0.5 text-[10px] font-bold text-ink-700">
-            {house ? `${house} 기숙사` : '기숙사 미배정'}
-          </span>
+          {house && (
+            <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2 py-0.5 text-[10px] font-bold text-ink-700">{house} 기숙사</span>
+          )}
+          {player.grade && (
+            <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2 py-0.5 text-[10px] font-bold text-ink-700">{player.grade} 학년</span>
+          )}
           {player.pet && (
             <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2 py-0.5 text-[10px] font-bold text-ink-700">🐾 {player.pet}</span>
           )}

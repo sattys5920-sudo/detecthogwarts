@@ -41,57 +41,66 @@ interface Room {
   desc: string;
   lockable?: boolean;
   linkTo?: string;
+  costsStamina?: boolean;
 }
 
 const ROOMS: Room[] = [
-  { id: 'library', name: '도서관', desc: '도서관에 상주하는, 게임을 좋아하는 귀신 크리스토 백작과 게임을 해서 이겨 보세요.' },
+  { id: 'library', name: '도서관', desc: '도서관에 상주하는, 게임을 좋아하는 귀신 크리스토 백작과 게임을 해서 이겨 보세요.', costsStamina: true },
   {
     id: 'forestExpeditionA',
     name: '금지된 숲 탐사 A',
     desc: '2~4 인 협동 TRPG 탐사. 10 단계를 넘어 보스를 처치하면 클리어입니다.',
     linkTo: '/forest/a',
+    costsStamina: true,
   },
   {
     id: 'forestExpeditionB',
     name: '금지된 숲 탐사 B',
     desc: '2~4 인 협동 TRPG 탐사. 10 단계를 넘어 보스를 처치하면 클리어입니다.',
     linkTo: '/forest/b',
+    costsStamina: true,
   },
   {
     id: 'forestExpeditionC',
     name: '금지된 숲 탐사 C',
     desc: '2~4 인 협동 TRPG 탐사. 10 단계를 넘어 보스를 처치하면 클리어입니다.',
     linkTo: '/forest/c',
+    costsStamina: true,
   },
   {
     id: 'quidditchArenaA',
     name: '퀴디치 경기장 A',
     desc: '체스판 위에서 펼쳐지는 실시간 1 대 1 퀴디치 대결. 2 명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch/a',
+    costsStamina: true,
   },
   {
     id: 'quidditchArenaB',
     name: '퀴디치 경기장 B',
     desc: '체스판 위에서 펼쳐지는 실시간 1 대 1 퀴디치 대결. 2 명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch/b',
+    costsStamina: true,
   },
   {
     id: 'quidditchArenaC',
     name: '퀴디치 경기장 C',
     desc: '체스판 위에서 펼쳐지는 실시간 1 대 1 퀴디치 대결. 2 명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch/c',
+    costsStamina: true,
   },
   {
     id: 'quidditchArenaD',
     name: '퀴디치 경기장 D',
     desc: '체스판 위에서 펼쳐지는 실시간 1 대 1 퀴디치 대결. 2 명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch/d',
+    costsStamina: true,
   },
   {
     id: 'quidditchArenaE',
     name: '퀴디치 경기장 E',
     desc: '체스판 위에서 펼쳐지는 실시간 1 대 1 퀴디치 대결. 2 명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch/e',
+    costsStamina: true,
   },
   {
     id: 'herbarium',
@@ -133,6 +142,7 @@ export default function RecessPage() {
   const [forestStatus, setForestStatus] = useState<Record<string, { count: number; inProgress: boolean; mine: boolean }>>({});
   const [quidditchStatus, setQuidditchStatus] = useState<Record<string, { count: number; inProgress: boolean; mine: boolean }>>({});
   const [busyModal, setBusyModal] = useState(false);
+  const [staminaModal, setStaminaModal] = useState(false);
   const [adminDormHouseId, setAdminDormHouseId] = useState<string | null>(null);
   const room = ROOMS.find((r) => r.id === activeRoom);
   const house = HOUSES.find((h) => h.id === game.houseId);
@@ -186,6 +196,11 @@ export default function RecessPage() {
   function enterRoom(r: Room) {
     if (recessLocked && !game.isAdmin) return;
     if (r.lockable && roomLocks[r.id] && !game.isAdmin) return;
+
+    if (r.costsStamina && game.stats.stamina <= 0 && !game.isAdmin) {
+      setStaminaModal(true);
+      return;
+    }
 
     // A seat held in a forest/quidditch room (waiting or already underway) blocks entering
     // ANY other room — including 도서관/기숙사 — until that seat is properly left or the
@@ -364,6 +379,7 @@ export default function RecessPage() {
           <div className="flex flex-col gap-3">
             {ROOMS.map((r) => {
               const locked = r.lockable && roomLocks[r.id] && !game.isAdmin;
+              const staminaBlocked = Boolean(r.costsStamina) && game.stats.stamina <= 0 && !game.isAdmin;
               const isForest = r.linkTo?.startsWith('/forest/');
               const isQuidditch = r.linkTo?.startsWith('/quidditch/');
               const live = isForest
@@ -374,13 +390,22 @@ export default function RecessPage() {
               const maxSeats = isForest ? FOREST_MAX_SEATS : isQuidditch ? QUIDDITCH_MAX_SEATS : 0;
               const inProgressLabel = isForest ? '탐사 중' : isQuidditch ? '경기 중' : '';
               return (
-                <button key={r.id} type="button" onClick={() => enterRoom(r)} disabled={locked} className="text-left disabled:opacity-50">
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => enterRoom(r)}
+                  disabled={locked}
+                  className={`text-left disabled:opacity-50 ${staminaBlocked ? 'opacity-50' : ''}`}
+                >
                   <Card className="flex items-center gap-3 hover:border-ink-700/30">
                     <img src={ROOM_ICONS[r.id]} alt="" className="h-12 w-12 flex-none rounded-lg border border-ink-700/20 object-cover" />
                     <div className="flex-1">
                       <p className="font-serif-kr font-semibold text-ink-900">
                         {r.name}
                         {locked && <span className="ml-1.5 font-mono text-[10px] font-bold text-ink-500/60">(잠김)</span>}
+                        {!locked && staminaBlocked && (
+                          <span className="ml-1.5 font-mono text-[10px] font-bold text-ink-500/60">(스태미나 부족)</span>
+                        )}
                       </p>
                       {live && (
                         <div className="mt-0.5 flex items-center gap-1.5">
@@ -408,6 +433,18 @@ export default function RecessPage() {
           <Card className="w-full max-w-xs text-center">
             <p className="text-sm font-semibold leading-relaxed text-ink-900">지금 하고 있던 활동을 끝내고 시도해 주세요.</p>
             <Button className="mt-4 w-full" onClick={() => setBusyModal(false)}>
+              확인
+            </Button>
+          </Card>
+        </div>
+      )}
+
+      {staminaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-black/50 px-6" role="alertdialog" aria-modal="true">
+          <Card className="w-full max-w-xs text-center">
+            <p className="text-sm font-semibold leading-relaxed text-ink-900">스태미나가 부족합니다.</p>
+            <p className="mt-1 text-xs text-ink-700/60">약초 농장에서 스태미나를 회복하고 다시 시도해 주세요.</p>
+            <Button className="mt-4 w-full" onClick={() => setStaminaModal(false)}>
               확인
             </Button>
           </Card>

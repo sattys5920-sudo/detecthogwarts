@@ -25,6 +25,7 @@ interface GameState {
   drawnJoker: Tile | null;
   winner: Turn | null;
   log: string[];
+  hasGuessedThisTurn: boolean;
 }
 
 function buildDeck(): Tile[] {
@@ -150,6 +151,7 @@ function initGame(): GameState {
     pendingId: null,
     drawnJoker: null,
     winner: null,
+    hasGuessedThisTurn: false,
     log: [
       `주사위 결과 — 당신: ${pDie}, 크리스토 백작: ${cDie}`,
       firstTurn === 'player' ? '당신이 먼저 시작합니다.' : '크리스토 백작이 먼저 시작합니다.',
@@ -295,7 +297,7 @@ export default function DaVinciCodeGame({ onFinished, onExit }: DaVinciCodeGameP
       }
 
       if (!s.winner) {
-        s = { ...s, turn: 'player', phase: 'awaitingDraw', pendingId: null };
+        s = { ...s, turn: 'player', phase: 'awaitingDraw', pendingId: null, hasGuessedThisTurn: false };
         setState(s);
       }
       runningRef.current = false;
@@ -345,7 +347,7 @@ export default function DaVinciCodeGame({ onFinished, onExit }: DaVinciCodeGameP
       const correct = target.value === value;
       if (correct) {
         const nextComputer = prev.computer.map((t, i) => (i === guessIndex ? { ...t, revealed: true } : t));
-        let next = pushLog({ ...prev, computer: nextComputer }, `정답입니다! 크리스토 백작의 카드: ${tileLabel(target.value)}`);
+        let next = pushLog({ ...prev, computer: nextComputer, hasGuessedThisTurn: true }, `정답입니다! 크리스토 백작의 카드: ${tileLabel(target.value)}`);
         if (isAllRevealed(nextComputer)) {
           next = { ...next, winner: 'player', phase: 'gameover' };
           next = pushLog(next, '크리스토 백작의 카드를 모두 맞혔습니다! 당신의 승리입니다.');
@@ -430,7 +432,7 @@ export default function DaVinciCodeGame({ onFinished, onExit }: DaVinciCodeGameP
         </div>
       )}
 
-      {justGuessedCorrectly && state.pendingId === null && (
+      {justGuessedCorrectly && state.hasGuessedThisTurn && (
         <button type="button" onClick={passTurn} className="tablet-btn tablet-btn-ghost self-center px-4 py-1.5 text-xs font-bold">
           차례 넘기기
         </button>

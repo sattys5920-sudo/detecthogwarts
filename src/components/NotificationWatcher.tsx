@@ -139,7 +139,7 @@ export default function NotificationWatcher() {
       const prefs = prefsRef.current;
       const viewing = activeViewRef.current === `dorm:${houseId}`;
       for (const m of newer) {
-        const mentioned = nickname && m.text.includes(`@${nickname}`);
+        const mentioned = (nickname && m.text.includes(`@${nickname}`)) || m.text.includes('@전체');
         if (mentioned) {
           if (prefs.master && prefs.mention) {
             createNotificationIfAbsent({

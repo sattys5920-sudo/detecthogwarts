@@ -10,11 +10,7 @@
     ],
     "headers": [
       {
-        "source": "/index.html",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate" }]
-      },
-      {
-        "source": "/sw.js",
+        "source": "**",
         "headers": [{ "key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate" }]
       },
       {

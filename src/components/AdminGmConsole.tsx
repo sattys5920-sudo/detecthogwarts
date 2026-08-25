@@ -105,7 +105,7 @@ export default function AdminGmConsole({ day }: { day: number }) {
 
         <label className="flex items-center gap-1.5 text-xs text-ink-700/70">
           <input type="checkbox" checked={optionsMode} onChange={(e) => setOptionsMode(e.target.checked)} />
-          선택지 보내기 (최대 {MAX_OPTIONS}개, 플레이어가 눌러서 바로 답합니다)
+          선택지 보내기 (최대 {MAX_OPTIONS} 개, 플레이어가 눌러서 바로 답합니다)
         </label>
 
         {optionsMode && (

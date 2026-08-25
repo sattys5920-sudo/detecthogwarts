@@ -36,11 +36,11 @@ function AccountStep() {
   async function handleSignUp() {
     const uname = username.trim();
     if (!/^[A-Za-z0-9_]{3,20}$/.test(uname)) {
-      setError('아이디는 영문 · 숫자 · 밑줄(_)로 3~20자 입력해 주세요.');
+      setError('아이디는 영문 · 숫자 · 밑줄(_)로 3~20 자 입력해 주세요.');
       return;
     }
     if (password.length < 4) {
-      setError('비밀번호는 4자 이상 입력해 주세요.');
+      setError('비밀번호는 4 자 이상 입력해 주세요.');
       return;
     }
     if (password !== passwordConfirm) {
@@ -55,7 +55,7 @@ function AccountStep() {
         return;
       }
       if (result === 'full') {
-        setError('가입 정원(12명)이 모두 찼습니다.');
+        setError('가입 정원(12 명)이 모두 찼습니다.');
         return;
       }
     } catch {
@@ -118,7 +118,7 @@ function AccountStep() {
             setUsername(e.target.value);
             setError('');
           }}
-          placeholder="영문 · 숫자 · 밑줄, 3~20자"
+          placeholder="영문 · 숫자 · 밑줄, 3~20 자"
           className={inputClass}
         />
       </label>
@@ -233,7 +233,7 @@ function ProfileStep() {
       return;
     }
     if (trimmed.length > 12) {
-      setError('이름은 12자 이내로 입력해 주세요.');
+      setError('이름은 12 자 이내로 입력해 주세요.');
       return;
     }
     if (!grade) {
@@ -302,7 +302,7 @@ function ProfileStep() {
                 grade === g ? 'border-seal-600 bg-seal-600 text-paper-50' : 'border-ink-700/20 bg-paper-100/60 text-ink-700'
               }`}
             >
-              {g}학년
+              {g} 학년
             </button>
           ))}
         </div>

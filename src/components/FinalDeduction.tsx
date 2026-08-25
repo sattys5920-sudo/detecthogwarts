@@ -38,7 +38,7 @@ export default function FinalDeduction({ notebookEntries, onSolved }: { notebook
           })}
         </ul>
         <p className="text-xs text-ink-700/70">
-          {collected.length} / {REQUIRED_FLAGS.length}개 확보. 탐사 활동으로 돌아가 부족한 단서를 더 조사해 수첩에 등록하세요.
+          {collected.length} / {REQUIRED_FLAGS.length} 개 확보. 탐사 활동으로 돌아가 부족한 단서를 더 조사해 수첩에 등록하세요.
         </p>
         <button
           type="button"
@@ -78,7 +78,7 @@ export default function FinalDeduction({ notebookEntries, onSolved }: { notebook
         <div className="flex flex-col gap-3 rounded-sm border border-seal-500/40 bg-paper-100 p-3.5 text-sm leading-relaxed text-ink-900">
           <p className="font-bold text-seal-600">ENDING A — 진실을 밝힌다</p>
           <p>아르카디아는 사라진 것이 아니었다. 이름만 사라졌을 뿐이었다.</p>
-          <p>60년 전 은폐된 사건과 현재의 살인이 하나의 선으로 이어진다.</p>
+          <p>60 년 전 은폐된 사건과 현재의 살인이 하나의 선으로 이어진다.</p>
           <p className="italic">교장: &quot;이제 학교는 더 이상 침묵하지 않겠습니다.&quot;</p>
           <p>진실이 밝혀지는 순간, 아름다움이라는 이름으로 포장된 희생은 그 본래의 잔혹함을 드러낸다.</p>
         </div>
@@ -90,7 +90,7 @@ export default function FinalDeduction({ notebookEntries, onSolved }: { notebook
           <p>범인은 특정했지만 모든 연결고리를 설명하지 못했다.</p>
           <p>사건은 끝나지 않았다. 아르카디아의 잔재가 아직 남아 있기 때문이다.</p>
           <p className="text-xs text-ink-500/60">
-            (핵심 단서 {collected.length} / {REQUIRED_FLAGS.length}개만 확보됨. 조사 활동으로 돌아가 부족한 단서를 더 모으면 다시 지목할 수 있습니다.)
+            (핵심 단서 {collected.length} / {REQUIRED_FLAGS.length} 개만 확보됨. 조사 활동으로 돌아가 부족한 단서를 더 모으면 다시 지목할 수 있습니다.)
           </p>
           <button
             type="button"

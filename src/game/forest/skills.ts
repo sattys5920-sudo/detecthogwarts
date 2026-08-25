@@ -13,13 +13,13 @@ export function maxMpFor(intelligence: number): number {
 export const SKILL_MAX_LEVEL = 5;
 
 export const SKILLS: SkillDef[] = [
-  { id: 'personalAttack', name: '마법탄', description: '적 1명을 공격한다.', targetType: 'enemy', effectType: 'damage', baseValue: 20, valuePerLevel: 6, baseMpCost: 5 },
+  { id: 'personalAttack', name: '마법탄', description: '적 1 명을 공격한다.', targetType: 'enemy', effectType: 'damage', baseValue: 20, valuePerLevel: 6, baseMpCost: 5 },
   { id: 'aoeAttack', name: '마법 폭풍', description: '모든 적을 동시에 공격한다.', targetType: 'enemyAll', effectType: 'damage', baseValue: 10, valuePerLevel: 3, baseMpCost: 12 },
-  { id: 'personalDefense', name: '프로테고', description: '아군 1명을 방어한다.', targetType: 'ally', effectType: 'defense', baseValue: 30, valuePerLevel: 8, baseMpCost: 6 },
+  { id: 'personalDefense', name: '프로테고', description: '아군 1 명을 방어한다.', targetType: 'ally', effectType: 'defense', baseValue: 30, valuePerLevel: 8, baseMpCost: 6 },
   { id: 'aoeDefense', name: '프로테고 막시마', description: '모든 아군에게 방어 효과를 부여한다.', targetType: 'allyAll', effectType: 'defense', baseValue: 15, valuePerLevel: 4, baseMpCost: 14 },
-  { id: 'personalHeal', name: '에피스키', description: '아군 1명의 HP를 회복한다.', targetType: 'ally', effectType: 'healHp', baseValue: 25, valuePerLevel: 7, baseMpCost: 7 },
+  { id: 'personalHeal', name: '에피스키', description: '아군 1 명의 HP를 회복한다.', targetType: 'ally', effectType: 'healHp', baseValue: 25, valuePerLevel: 7, baseMpCost: 7 },
   { id: 'aoeHeal', name: '레나르보', description: '모든 아군의 HP를 회복한다.', targetType: 'allyAll', effectType: 'healHp', baseValue: 12, valuePerLevel: 4, baseMpCost: 15 },
-  { id: 'personalMpHeal', name: '마나 리스토', description: '아군 1명의 MP를 회복한다.', targetType: 'ally', effectType: 'healMp', baseValue: 15, valuePerLevel: 4, baseMpCost: 5 },
+  { id: 'personalMpHeal', name: '마나 리스토', description: '아군 1 명의 MP를 회복한다.', targetType: 'ally', effectType: 'healMp', baseValue: 15, valuePerLevel: 4, baseMpCost: 5 },
   { id: 'aoeMpHeal', name: '마나 리스토 막시마', description: '모든 아군의 MP를 회복한다.', targetType: 'allyAll', effectType: 'healMp', baseValue: 8, valuePerLevel: 2, baseMpCost: 12 },
 ];
 
@@ -30,9 +30,9 @@ export function skillById(id: SkillId): SkillDef {
 }
 
 const TARGET_LABEL: Record<SkillDef['targetType'], string> = {
-  enemy: '지정 1인',
+  enemy: '지정 1 인',
   enemyAll: '전체',
-  ally: '아군 1인',
+  ally: '아군 1 인',
   allyAll: '아군 전체',
 };
 

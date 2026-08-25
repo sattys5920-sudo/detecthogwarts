@@ -53,7 +53,7 @@ export default function StudentsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label="학생 목록" context={SCHOOL_NAME} meta={`가입자 ${students.length}명`} />
+      <Letterhead label="학생 목록" context={SCHOOL_NAME} meta={`가입자 ${students.length} 명`} />
 
       {students.length === 0 ? (
         <Card className="text-center text-sm text-ink-500/60">아직 입학을 완료한 학생이 없습니다.</Card>

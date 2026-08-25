@@ -50,7 +50,7 @@ const BUFF_TITLES: [string, keyof PlayerBuffs, number][] = [
   ['다음 주문의 DC -3', 'nextDcReduction', 3],
   ['다음 치유량 50% 증가', 'nextHealBoost', 0],
   ['다음 공격 전체 적에게 추가 피해', 'nextAttackHitsAll', 0],
-  ['다음 방어막 2배', 'nextShieldDouble', 0],
+  ['다음 방어막 2 배', 'nextShieldDouble', 0],
   ['다음 전투 선공', 'firstStrikeNextCombat', 0],
   ['다음 이벤트 선택지 미리 공개', 'revealNextPaths', 0],
 ];

@@ -22,7 +22,7 @@ export const NPCS: Npc[] = [
   {
     id: 'monia',
     name: '리즈 모니아',
-    role: '교내 신문부 · 후플푸프 12학년',
+    role: '교내 신문부 · 후플푸프 12 학년',
     desc: '학생들의 소문이나 학교 내부 정보를 알고 있다.',
     avatar: moniaAvatar,
   },
@@ -36,7 +36,7 @@ export const NPCS: Npc[] = [
   {
     id: 'tom',
     name: '톰 사이스',
-    role: '그리핀도르 8학년',
+    role: '그리핀도르 8 학년',
     desc: '학교 곳곳을 돌아다니며 다양한 것을 목격했을 가능성이 있다.',
     avatar: tomAvatar,
   },

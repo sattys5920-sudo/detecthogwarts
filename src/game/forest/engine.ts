@@ -238,7 +238,7 @@ export function generatePaths(party: ForestParty): ForestParty {
 
 export function startExpedition(party: ForestParty): ForestParty {
   if (party.status !== 'lobby') return party;
-  if (partySize(party) < 2) throw new Error('최소 2명이 필요합니다.');
+  if (partySize(party) < 2) throw new Error('최소 2 명이 필요합니다.');
   if (!allSeatsReady(party)) throw new Error('모든 인원이 준비를 완료해야 합니다.');
   const seats = party.seats.map((s) =>
     s ? { ...s, hp: s.maxHp, mp: maxMpFor(s.intelligence), statusEffects: [], shield: 0, buffs: emptyBuffs(), downed: false, ready: false } : s,
@@ -325,7 +325,7 @@ export function resolveCurrentPath(party: ForestParty, choiceIndex: number): For
     lastVoteResult: { pathLabel: choice.label, tally, chosenIndex: choiceIndex },
     voteTieOptions: null,
   };
-  next = pushLog(next, `[${party.stage}단계] ${choice.label} → ${event.title}`);
+  next = pushLog(next, `[${party.stage} 단계] ${choice.label} → ${event.title}`);
 
   const eff = event.effect;
 
@@ -347,9 +347,9 @@ export function resolveCurrentPath(party: ForestParty, choiceIndex: number): For
     const res = check(bestAgility, eff.triggersTrap.dc);
     if (!res.success) {
       next = applyHpDelta(next, -eff.triggersTrap.failHp, false);
-      next = pushLog(next, `함정에 걸렸다! 파티 전체 HP -${eff.triggersTrap.failHp} (D20 ${res.roll} + 민첩${bestAgility} / DC ${res.dc})`);
+      next = pushLog(next, `함정에 걸렸다! 파티 전체 HP -${eff.triggersTrap.failHp} (D20 ${res.roll} + 민첩 ${bestAgility} / DC ${res.dc})`);
     } else {
-      next = pushLog(next, `함정을 무사히 피했다! (D20 ${res.roll} + 민첩${bestAgility} / DC ${res.dc})`);
+      next = pushLog(next, `함정을 무사히 피했다! (D20 ${res.roll} + 민첩 ${bestAgility} / DC ${res.dc})`);
     }
     return next;
   }
@@ -574,7 +574,7 @@ function beginBoss(party: ForestParty): ForestParty {
     usedBossIds: unused.length > 0 ? [...party.usedBossIds, template.id] : [template.id],
   };
   next = applyToAllSeats(next, (p) => ({ ...p, buffs: { ...p.buffs, firstStrikeNextCombat: false } }));
-  next = pushLog(next, `10단계를 넘어서자 강력한 기운이 느껴진다... ${template.name}이(가) 나타났다!`);
+  next = pushLog(next, `10 단계를 넘어서자 강력한 기운이 느껴진다... ${template.name}이(가) 나타났다!`);
   return advanceToActionableTurn(next);
 }
 
@@ -825,7 +825,7 @@ function monsterDamageToPlayer(party: ForestParty, playerId: string, rawDmg: num
   const agi = effectiveAgility(player);
   const evasion = check(agi, sourceDC);
   if (evasion.success) {
-    return pushLog(party, `${player.nickname}이(가) 공격을 회피했다! (D20 ${evasion.roll} + 민첩${agi} / DC ${sourceDC})`);
+    return pushLog(party, `${player.nickname}이(가) 공격을 회피했다! (D20 ${evasion.roll} + 민첩 ${agi} / DC ${sourceDC})`);
   }
   const statusMult = dmgModifierFromStatus(player.statusEffects, 'taken');
   const buffMult = 1 - player.buffs.combatDamageReductionPct / 100;
@@ -1111,7 +1111,7 @@ function castSkill(party: ForestParty, playerId: string, skillId: SkillId, actio
     if (!m || m.hp <= 0) return next;
     const res = check(intel, Math.max(5, m.defenseDC - dcReduction), player.buffs.nextAdvantage, critBonus);
     if (!res.success) {
-      next = pushLog(next, `${player.nickname}의 ${skill.name} 빗나감... (D20 ${res.roll} + 지능${intel} / DC ${res.dc}, MP -${mpCost})`);
+      next = pushLog(next, `${player.nickname}의 ${skill.name} 빗나감... (D20 ${res.roll} + 지능 ${intel} / DC ${res.dc}, MP -${mpCost})`);
       return next;
     }
     if (evadeCheck(m)) {

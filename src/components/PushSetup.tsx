@@ -95,7 +95,7 @@ export default function PushSetup() {
         </p>
       )}
 
-      {state === 'denied' && <p className="text-[11px] text-ink-500/70">휴대폰 설정에서 이 앱의 알림을 허용해주세요.</p>}
+      {state === 'denied' && <p className="text-[11px] text-ink-500/70">휴대폰 설정에서 이 앱의 알림을 허용해 주세요.</p>}
 
       {state !== 'unsupported' && state !== 'denied' && (
         <button

@@ -82,7 +82,7 @@ export default function NotebookPage() {
                 onChange={(e) => setMemoDraft(e.target.value)}
                 onBlur={saveMemo}
                 rows={3}
-                placeholder="이 단서에 대한 생각을 적어보세요"
+                placeholder="이 단서에 대한 생각을 적어 보세요"
                 className="w-full rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
               />
             </div>
@@ -119,7 +119,7 @@ export default function NotebookPage() {
           <div className="notebook-page">
             <RibbonBanner size="lg">탐사 수첩</RibbonBanner>
             <p className="mt-1 font-mono text-[11px] text-ink-500/70">
-              단서 {entries.length}건 · 미해결 {unresolved}건
+              단서 {entries.length} 건 · 미해결 {unresolved} 건
             </p>
 
             <div className="mt-4 flex flex-col">

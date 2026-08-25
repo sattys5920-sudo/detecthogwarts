@@ -44,7 +44,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label="알림" context="놓친 소식을 한눈에 확인하세요" meta={`안 읽은 알림 ${unread.length}개`} />
+      <Letterhead label="알림" context="놓친 소식을 한눈에 확인하세요" meta={`안 읽은 알림 ${unread.length} 개`} />
 
       {items.length > 0 && (
         <button

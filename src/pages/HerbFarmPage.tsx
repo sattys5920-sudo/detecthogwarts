@@ -25,9 +25,9 @@ function formatDuration(totalSeconds: number): string {
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
-  if (h > 0) return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
-  if (m > 0) return s > 0 ? `${m}분 ${s}초` : `${m}분`;
-  return `${s}초`;
+  if (h > 0) return m > 0 ? `${h} 시간 ${m} 분` : `${h} 시간`;
+  if (m > 0) return s > 0 ? `${m} 분 ${s} 초` : `${m} 분`;
+  return `${s} 초`;
 }
 
 function SlotCard({
@@ -65,7 +65,6 @@ function SlotCard({
   if (ready) {
     return (
       <Card className="flex flex-col items-center gap-1.5 py-5 text-center">
-        <span className="text-2xl">🌿</span>
         <p className="font-serif-kr text-sm font-bold text-ink-900">{herb.name}</p>
         <p className={`font-mono text-[10px] ${rarityColor(herb.rarity)}`}>{stars(herb.rarity)}</p>
         <p className="text-xs font-bold text-seal-600">수확 가능!</p>
@@ -120,7 +119,6 @@ function DexModal({ farm, onClose }: { farm: HerbFarmState; onClose: () => void 
               ← 목록으로
             </button>
             <div className="flex flex-col items-center gap-1.5 text-center">
-              <span className="text-3xl">🌿</span>
               <p className="font-serif-kr text-lg font-bold text-ink-900">{selected.name}</p>
               <p className={`font-mono text-xs ${rarityColor(selected.rarity)}`}>{stars(selected.rarity)}</p>
               <p className="mt-1 text-sm leading-relaxed text-ink-700/80">{selected.description}</p>
@@ -147,7 +145,7 @@ function DexModal({ farm, onClose }: { farm: HerbFarmState; onClose: () => void 
                   }`}
                   title={discovered ? h.name : '???'}
                 >
-                  {discovered ? '🌿' : '❓'}
+                  {discovered ? '●' : '❓'}
                 </button>
               );
             })}
@@ -171,7 +169,6 @@ function HarvestPopup({ results, onClose }: { results: HarvestResult[]; onClose:
         <div className="mt-3 flex flex-1 flex-col gap-3 overflow-y-auto">
           {results.map((r, i) => (
             <div key={`${r.herb.id}-${i}`} className="flex flex-col items-center gap-1">
-              <span className="text-2xl">🌿</span>
               <p className="font-serif-kr text-base font-bold text-ink-900">
                 {r.herb.name} {r.isNewDiscovery && <span className="ml-1 text-[10px] font-bold text-seal-600">NEW!</span>}
               </p>
@@ -301,7 +298,7 @@ export default function HerbFarmPage() {
 
       {readySlots.length > 0 && (
         <Card className="flex items-center justify-between gap-3 border-seal-500/40">
-          <p className="text-sm font-bold text-ink-900">수확 가능한 약초 {readySlots.length}개가 있어요!</p>
+          <p className="text-sm font-bold text-ink-900">수확 가능한 약초 {readySlots.length} 개가 있어요!</p>
           <button
             type="button"
             onClick={handleHarvestAll}

@@ -52,7 +52,7 @@ export default function OwlIntro({ children }: { children: ReactNode }) {
           <Envelope open={phase === 'opening'} className="w-28 drop-shadow-md" />
           {phase === 'landed' && (
             <p className="animate-pulse font-serif-kr text-xs text-ink-700/60">
-              편지 봉투를 눌러 열어보세요
+              편지 봉투를 눌러 열어 보세요
             </p>
           )}
         </button>

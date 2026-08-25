@@ -255,7 +255,7 @@ export default function DaVinciCodeGame({ onFinished, onExit }: DaVinciCodeGameP
         const correct = target.value === value;
         s = pushLog(
           s,
-          `크리스토 백작: "${index + 1}번째 카드는 ${tileLabel(value)}이지?"`,
+          `크리스토 백작: "${index + 1} 번째 카드는 ${tileLabel(value)}이지?"`,
         );
         await wait(600);
 
@@ -383,7 +383,7 @@ export default function DaVinciCodeGame({ onFinished, onExit }: DaVinciCodeGameP
   return (
     <div className="flex flex-col gap-3">
       <div className="rounded-sm border border-ink-700/15 bg-paper-100/50 p-3">
-        <p className="mb-1.5 text-center text-[11px] font-bold text-ink-700/70">크리스토 백작의 패 (남은 카드: {state.pool.length}장)</p>
+        <p className="mb-1.5 text-center text-[11px] font-bold text-ink-700/70">크리스토 백작의 패 (남은 카드: {state.pool.length} 장)</p>
         <div className="flex w-full justify-center gap-1">
           {state.computer.map((t, i) => (
             <TileFace
@@ -456,7 +456,7 @@ export default function DaVinciCodeGame({ onFinished, onExit }: DaVinciCodeGameP
           <div className="flex flex-wrap justify-center gap-1">
             {Array.from({ length: state.player.length + 1 }).map((_, gap) => (
               <button key={gap} type="button" onClick={() => handlePlaceJoker(gap)} className="tablet-btn rounded-sm px-2.5 py-1 text-xs font-bold">
-                {gap + 1}번째 자리
+                {gap + 1} 번째 자리
               </button>
             ))}
           </div>

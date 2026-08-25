@@ -115,7 +115,7 @@ export default function FinalSurveyAnswerBoard({ playerId, nickname }: { playerI
   return (
     <div className="flex flex-col gap-3 rounded-sm border border-ink-700/15 bg-paper-100 p-3.5">
       <p className="font-serif-kr text-sm font-semibold text-ink-900">최종 설문 답변</p>
-      <p className="text-xs text-ink-700/70">조사관의 마지막 질문에 답해보세요. 관리자가 정답 여부를 확인합니다.</p>
+      <p className="text-xs text-ink-700/70">조사관의 마지막 질문에 답해 보세요. 관리자가 정답 여부를 확인합니다.</p>
 
       <div className="flex flex-col gap-2">
         {FINAL_SURVEY_QUESTIONS.map((q, i) => (

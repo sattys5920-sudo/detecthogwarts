@@ -319,7 +319,7 @@ export function createInitialGame(seatA: SeatInfo, seatB: SeatInfo): QuidditchGa
     scores: { A: 0, B: 0 },
     winner: null,
     winReason: null,
-    log: [mkLog(0, null, '경기가 시작되었습니다. 한 턴에 서로 다른 기물 2개까지 행동할 수 있습니다.')],
+    log: [mkLog(0, null, '경기가 시작되었습니다. 한 턴에 서로 다른 기물 2 개까지 행동할 수 있습니다.')],
     updatedAt: now,
   };
 }
@@ -392,7 +392,7 @@ function advanceTurn(game: QuidditchGame): QuidditchGame {
     status = 'finished';
     winner = decideWinnerByScore(game.pieces, scores);
     winReason = 'turns';
-    log = pushLog(log, mkLog(turnCount, null, `${MAX_TURNS}턴이 모두 끝나 경기가 종료되었습니다.`));
+    log = pushLog(log, mkLog(turnCount, null, `${MAX_TURNS} 턴이 모두 끝나 경기가 종료되었습니다.`));
   }
 
   const now = Date.now();

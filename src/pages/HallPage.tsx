@@ -195,7 +195,7 @@ function PostDetail({ post, avatars, onBack, onEdit, onDelete }: {
       </div>
 
       <div className="flex flex-col gap-3">
-        <p className="text-xs font-bold text-ink-700/70">댓글 {comments.length}개</p>
+        <p className="text-xs font-bold text-ink-700/70">댓글 {comments.length} 개</p>
         <div ref={listRef} className="flex max-h-80 flex-col gap-3 overflow-x-hidden overflow-y-auto">
           {comments.length === 0 && <p className="py-4 text-center text-xs text-ink-500/50">아직 댓글이 없어요.</p>}
           {comments.map((c) => (
@@ -318,7 +318,7 @@ export default function HallPage() {
       <div className="flex flex-col gap-3">
         {posts.length === 0 && !composerOpen && (
           <p className="py-10 text-center text-sm text-ink-500/60">
-            {game.isAdmin ? '아직 게시된 피드가 없어요. + 버튼으로 첫 피드를 남겨보세요.' : '아직 게시된 공지가 없어요.'}
+            {game.isAdmin ? '아직 게시된 피드가 없어요. + 버튼으로 첫 피드를 남겨 보세요.' : '아직 게시된 공지가 없어요.'}
           </p>
         )}
 

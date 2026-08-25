@@ -47,55 +47,55 @@ const ROOMS: Room[] = [
   {
     id: 'forestExpeditionA',
     name: '금지된 숲 탐사 A',
-    desc: '2~4인 협동 TRPG 탐사. 10단계를 넘어 보스를 처치하면 클리어입니다.',
+    desc: '2~4 인 협동 TRPG 탐사. 10 단계를 넘어 보스를 처치하면 클리어입니다.',
     linkTo: '/forest/a',
   },
   {
     id: 'forestExpeditionB',
     name: '금지된 숲 탐사 B',
-    desc: '2~4인 협동 TRPG 탐사. 10단계를 넘어 보스를 처치하면 클리어입니다.',
+    desc: '2~4 인 협동 TRPG 탐사. 10 단계를 넘어 보스를 처치하면 클리어입니다.',
     linkTo: '/forest/b',
   },
   {
     id: 'forestExpeditionC',
     name: '금지된 숲 탐사 C',
-    desc: '2~4인 협동 TRPG 탐사. 10단계를 넘어 보스를 처치하면 클리어입니다.',
+    desc: '2~4 인 협동 TRPG 탐사. 10 단계를 넘어 보스를 처치하면 클리어입니다.',
     linkTo: '/forest/c',
   },
   {
     id: 'quidditchArenaA',
     name: '퀴디치 경기장 A',
-    desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
+    desc: '체스판 위에서 펼쳐지는 실시간 1 대 1 퀴디치 대결. 2 명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch/a',
   },
   {
     id: 'quidditchArenaB',
     name: '퀴디치 경기장 B',
-    desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
+    desc: '체스판 위에서 펼쳐지는 실시간 1 대 1 퀴디치 대결. 2 명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch/b',
   },
   {
     id: 'quidditchArenaC',
     name: '퀴디치 경기장 C',
-    desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
+    desc: '체스판 위에서 펼쳐지는 실시간 1 대 1 퀴디치 대결. 2 명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch/c',
   },
   {
     id: 'quidditchArenaD',
     name: '퀴디치 경기장 D',
-    desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
+    desc: '체스판 위에서 펼쳐지는 실시간 1 대 1 퀴디치 대결. 2 명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch/d',
   },
   {
     id: 'quidditchArenaE',
     name: '퀴디치 경기장 E',
-    desc: '체스판 위에서 펼쳐지는 실시간 1대1 퀴디치 대결. 2명이 입장하면 바로 시작됩니다.',
+    desc: '체스판 위에서 펼쳐지는 실시간 1 대 1 퀴디치 대결. 2 명이 입장하면 바로 시작됩니다.',
     linkTo: '/quidditch/e',
   },
   {
     id: 'herbarium',
     name: '약초 농장',
-    desc: '씨앗을 심고 시간이 지나면 돌아와 수확하세요. 50종의 약초를 도감에 모아보세요.',
+    desc: '씨앗을 심고 시간이 지나면 돌아와 수확하세요. 50 종의 약초를 도감에 모아 보세요.',
     linkTo: '/herbfarm',
   },
   { id: 'dorm', name: '기숙사', desc: '같은 기숙사 친구들과 이야기를 나눕니다.', lockable: true },
@@ -297,7 +297,7 @@ export default function RecessPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label="휴게시간" meta="쉬는 시간 · 10분 남음" />
+      <Letterhead label="휴게시간" meta="쉬는 시간 · 10 분 남음" />
 
       {game.isAdmin && (
         <div className="flex items-center justify-between gap-2 rounded-sm bg-ink-black px-2.5 py-1.5">
@@ -345,7 +345,7 @@ export default function RecessPage() {
                       {live && (
                         <div className="mt-0.5 flex items-center gap-1.5">
                           <span className="font-mono text-[10px] text-ink-500/60">
-                            정원 {live.count}/{maxSeats}명
+                            정원 {live.count}/{maxSeats} 명
                           </span>
                           {live.inProgress && (
                             <span className="rounded-sm border border-seal-500/40 bg-seal-600/10 px-1.5 py-0.5 text-[10px] font-bold text-seal-600">

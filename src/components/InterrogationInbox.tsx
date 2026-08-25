@@ -104,7 +104,7 @@ export default function InterrogationInbox() {
       <div>
         <p className="font-gothic text-3xl text-ink-black">탐문 관리</p>
         <p className="mt-1 text-sm text-ink-700/70">
-          답변 대기 {waiting.length}건 · 답변 완료 {answered.length}건
+          답변 대기 {waiting.length} 건 · 답변 완료 {answered.length} 건
         </p>
       </div>
 

@@ -118,7 +118,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Letterhead label="내 정보" context={SCHOOL_NAME} meta="2026.08.18 · 초승달 · 수업 3교시" />
+      <Letterhead label="내 정보" context={SCHOOL_NAME} meta="2026.08.18 · 초승달 · 수업 3 교시" />
 
       <Card ornate className="text-center">
         <p className="mb-3 font-mono text-[10px] font-bold tracking-[0.2em] text-gold-600">탐구자 기록부</p>
@@ -203,7 +203,7 @@ export default function ProfilePage() {
           </span>
           {game.grade && (
             <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
-              {game.grade}학년
+              {game.grade} 학년
             </span>
           )}
         </div>

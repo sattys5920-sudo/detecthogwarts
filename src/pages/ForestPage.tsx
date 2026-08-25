@@ -85,7 +85,7 @@ function eventEffectLines(effect: EventEffect): string[] {
   if (effect.agility) lines.push(`파티 전원 민첩 ${signed(effect.agility)}`);
   if (effect.intelligence) lines.push(`파티 전원 지능 ${signed(effect.intelligence)} (MP 최대치도 함께 증가)`);
   if (effect.skillPoints) lines.push(`파티 전원 스킬 포인트 ${signed(effect.skillPoints)}`);
-  if (effect.status) lines.push(`${STATUS_LABEL[effect.status.type] ?? effect.status.type} ${effect.status.turns}턴 부여`);
+  if (effect.status) lines.push(`${STATUS_LABEL[effect.status.type] ?? effect.status.type} ${effect.status.turns} 턴 부여`);
   if (effect.hint) lines.push('다음 갈림길의 정보가 미리 공개됨');
   if (effect.triggersMonster) lines.push('몬스터와 마주칠 수 있음');
   if (effect.triggersEliteMonster) lines.push('강력한 몬스터와 마주침');
@@ -456,7 +456,7 @@ export default function ForestPage() {
         <PaperTexture />
         <Card className="w-full max-w-xs">
           <p className="font-gothic text-2xl text-ink-black">🌲 금지된 숲 {roomLabel}</p>
-          <p className="mt-1 text-sm text-ink-700/70">2~4인 협동 탐사. 모두 준비를 마치면 시작할 수 있어요.</p>
+          <p className="mt-1 text-sm text-ink-700/70">2~4 인 협동 탐사. 모두 준비를 마치면 시작할 수 있어요.</p>
           <div className="mt-4 flex flex-col gap-1.5 text-left">
             {Array.from({ length: MAX_SEATS }).map((_, i) => {
               const seat = party.seats[i];
@@ -488,7 +488,7 @@ export default function ForestPage() {
             disabled={!ready || busy}
             onClick={() => guard(() => startExpedition(roomId))}
           >
-            {seatedCount < 2 ? `최소 2명 필요 (${seatedCount}/${MAX_SEATS})` : ready ? '탐사 가기' : '전원 준비 대기 중'}
+            {seatedCount < 2 ? `최소 2 명 필요 (${seatedCount}/${MAX_SEATS})` : ready ? '탐사 가기' : '전원 준비 대기 중'}
           </Button>
           {actionError && <p className="mt-2 text-xs font-bold text-seal-600">{actionError}</p>}
           <Button
@@ -540,7 +540,7 @@ export default function ForestPage() {
             )}
             {cleared && (
               <p className="mt-3 text-xs text-seal-600">
-                파티 전원 지능 +5 · 주문 공격력 +5 · 민첩 +5 · 최대 스태미나 +5 · 최대 체력 +5 · 최대 MP +5, 스킬 포인트 3개 획득 (바로 사용 가능)
+                파티 전원 지능 +5 · 주문 공격력 +5 · 민첩 +5 · 최대 스태미나 +5 · 최대 체력 +5 · 최대 MP +5, 스킬 포인트 3 개 획득 (바로 사용 가능)
               </p>
             )}
           </Card>
@@ -575,7 +575,7 @@ export default function ForestPage() {
                   key={i}
                   className={`rounded-lg border px-3 py-2 text-sm ${i === r.chosenIndex ? 'border-seal-500 bg-seal-600/10 font-bold text-seal-600' : 'border-ink-700/15 text-ink-700/70'}`}
                 >
-                  {['①', '②', '③'][i]} {t.label} · {t.count}표
+                  {['①', '②', '③'][i]} {t.label} · {t.count} 표
                 </div>
               ))}
             </div>
@@ -600,7 +600,7 @@ export default function ForestPage() {
               <p className="text-sm font-bold text-seal-600">⚠️ 투표가 동률입니다</p>
               <p className="text-xs text-ink-700/70">
                 {isHost
-                  ? '파티장으로서 최종 선택을 해주세요.'
+                  ? '파티장으로서 최종 선택을 해 주세요.'
                   : `파티장(${party.seats.find((p) => p?.id === party.hostId)?.nickname ?? ''})이 최종 선택을 기다리는 중...`}
               </p>
               <div className="flex flex-col gap-2">
@@ -616,7 +616,7 @@ export default function ForestPage() {
             <div>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="text-sm font-bold text-ink-700/80">갈림길 투표</p>
-                <p className="font-mono text-[10px] text-ink-500/60">{votedCount}/{seatedIds.length}명 · {fmtSec(secondsLeft ?? 0)}</p>
+                <p className="font-mono text-[10px] text-ink-500/60">{votedCount}/{seatedIds.length} 명 · {fmtSec(secondsLeft ?? 0)}</p>
               </div>
               {secondsLeft !== null && (
                 <div className="mb-2 h-1 w-full overflow-hidden rounded-full bg-paper-200">
@@ -641,7 +641,7 @@ export default function ForestPage() {
                             <p className="font-serif-kr font-semibold text-ink-900">{['①', '②', '③'][i]} {choice.label}</p>
                             {choice.revealedCategory && <p className="mt-0.5 text-[10px] text-ink-500/60">단서: {choice.revealedCategory}</p>}
                           </div>
-                          {voterNames.length > 0 && <span className="flex-none font-mono text-[10px] font-bold text-seal-600">{voterNames.length}표</span>}
+                          {voterNames.length > 0 && <span className="flex-none font-mono text-[10px] font-bold text-seal-600">{voterNames.length} 표</span>}
                         </div>
                         {voterNames.length > 0 && <p className="mt-1 truncate text-[10px] text-ink-500/60">{voterNames.join(', ')}</p>}
                       </Card>
@@ -692,7 +692,7 @@ export default function ForestPage() {
                   key={i}
                   className={`rounded-lg border px-3 py-2 text-sm ${i === r.chosenIndex ? 'border-seal-500 bg-seal-600/10 font-bold text-seal-600' : 'border-ink-700/15 text-ink-700/70'}`}
                 >
-                  {['①', '②', '③'][i]} {t.label} · {t.count}표
+                  {['①', '②', '③'][i]} {t.label} · {t.count} 표
                 </div>
               ))}
             </div>

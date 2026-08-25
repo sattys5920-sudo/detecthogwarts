@@ -128,7 +128,7 @@ function OptionsBubble({ m, playerId, isAdmin, onRegister, onVote, onClose }: Op
                 }`}
               >
                 <span>{opt}</span>
-                <span className="flex-none rounded-full bg-ink-black px-1.5 py-0.5 font-mono text-[10px] text-paper-50">{count}명</span>
+                <span className="flex-none rounded-full bg-ink-black px-1.5 py-0.5 font-mono text-[10px] text-paper-50">{count} 명</span>
               </button>
             );
           })}
@@ -213,7 +213,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
     <div className="flex flex-col gap-3">
       <div ref={listRef} className="flex max-h-72 flex-col gap-2.5 overflow-x-hidden overflow-y-auto rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
         {adlibs.length === 0 && (
-          <p className="py-6 text-center text-xs text-ink-500/50">아직 대화가 없습니다. 첫 메시지를 남겨보세요.</p>
+          <p className="py-6 text-center text-xs text-ink-500/50">아직 대화가 없습니다. 첫 메시지를 남겨 보세요.</p>
         )}
         {adlibs.map((m) => {
           if (m.kind === 'evidence') {

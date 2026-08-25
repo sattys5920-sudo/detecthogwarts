@@ -176,6 +176,19 @@ export async function updateNickname(id: string, nickname: string): Promise<void
   }
 }
 
+export async function updateGrade(id: string, grade: number): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, COLLECTION_NAME, id), { grade });
+    return;
+  }
+  const players = readDemoPlayers();
+  const idx = players.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    players[idx] = { ...players[idx], grade };
+    writeDemoPlayers(players);
+  }
+}
+
 export async function updatePet(id: string, pet: string | null): Promise<void> {
   if (isFirebaseConfigured && db) {
     await updateDoc(doc(db, COLLECTION_NAME, id), { pet });

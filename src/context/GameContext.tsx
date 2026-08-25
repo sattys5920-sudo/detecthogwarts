@@ -10,6 +10,7 @@ import {
   submitProfile,
   submitTestResult,
   updateAvatar,
+  updateGrade,
   updateNickname,
   updatePet,
 } from '../firebase/players';
@@ -124,6 +125,7 @@ interface GameContextValue extends PlayerState {
   adminEnter: () => Promise<void>;
   setNickname: (nickname: string) => void;
   setAvatar: (dataUrl: string | null) => void;
+  setGrade: (grade: number) => void;
   setPet: (pet: string) => void;
   adjustStat: (key: keyof PlayerStats, delta: number) => void;
   growMaxStat: (key: MaxStatKey, delta: number) => void;
@@ -276,6 +278,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (playerId) updatePet(playerId, trimmed || null);
   }, []);
 
+  const setGrade = useCallback((grade: number) => {
+    setState((prev) => ({ ...prev, grade }));
+    const playerId = playerIdRef.current;
+    if (playerId) updateGrade(playerId, grade);
+  }, []);
+
   const adjustStat = useCallback((key: keyof PlayerStats, delta: number) => {
     setState((prev) => ({ ...prev, stats: { ...prev.stats, [key]: clampStat(prev.stats, key, prev.stats[key] + delta) } }));
   }, []);
@@ -350,6 +358,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     adminEnter,
     setNickname,
     setAvatar,
+    setGrade,
     setPet,
     adjustStat,
     growMaxStat,

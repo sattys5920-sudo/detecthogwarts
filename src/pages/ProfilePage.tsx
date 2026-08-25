@@ -62,6 +62,8 @@ export default function ProfilePage() {
   const [nameDraft, setNameDraft] = useState(game.nickname);
   const [editingPet, setEditingPet] = useState(false);
   const [petDraft, setPetDraft] = useState(game.pet ?? '');
+  const [editingGrade, setEditingGrade] = useState(false);
+  const [gradeDraft, setGradeDraft] = useState(game.grade ?? 10);
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
 
   useEffect(() => {
@@ -114,6 +116,11 @@ export default function ProfilePage() {
       game.setPet(trimmed);
     }
     setEditingPet(false);
+  }
+
+  function saveGrade() {
+    game.setGrade(gradeDraft);
+    setEditingGrade(false);
   }
 
   return (
@@ -201,10 +208,35 @@ export default function ProfilePage() {
           <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
             {house ? house.name : '기숙사 미배정'}
           </span>
-          {game.grade && (
-            <span className="rounded-sm border border-ink-700/25 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700">
-              {game.grade} 학년
+          {editingGrade ? (
+            <span className="flex items-center gap-1">
+              <select
+                value={gradeDraft}
+                onChange={(e) => setGradeDraft(Number(e.target.value))}
+                autoFocus
+                className="rounded-sm border border-ink-700/25 bg-paper-100 px-2 py-1 text-[11px] font-bold text-ink-700 outline-none focus:border-seal-500"
+              >
+                {[10, 11, 12].map((g) => (
+                  <option key={g} value={g}>
+                    {g} 학년
+                  </option>
+                ))}
+              </select>
+              <button type="button" onClick={saveGrade} className="text-xs font-bold text-seal-600">
+                저장
+              </button>
             </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setGradeDraft(game.grade ?? 10);
+                setEditingGrade(true);
+              }}
+              className="rounded-sm border border-ink-700/25 bg-paper-100 px-2.5 py-1 text-[11px] font-bold text-ink-700"
+            >
+              {game.grade ? `${game.grade} 학년` : '학년 설정'} <span className="text-[10px] font-normal text-ink-500/40">(수정)</span>
+            </button>
           )}
         </div>
 

@@ -7,6 +7,8 @@ import {
   PUZZLE_MAX_ATTEMPTS,
   PUZZLE_RANK_POINTS,
   type DailyPuzzle,
+  type KakuroAnswer,
+  type KakuroPuzzle,
   type LogicGridAnswer,
   type LogicGridPuzzle,
   type PuzzleAnswerValue,
@@ -166,6 +168,82 @@ function SudokuGrid({
   );
 }
 
+/** Every black cell that sits directly above/left of a run doubles as that run's clue — maps "row_col" to its sums. */
+function buildKakuroClueMap(puzzle: KakuroPuzzle): Record<string, { down?: number; across?: number }> {
+  const map: Record<string, { down?: number; across?: number }> = {};
+  for (const run of puzzle.hruns) {
+    const [r, c] = run.cells[0];
+    const key = `${r}_${c - 1}`;
+    map[key] = { ...map[key], across: run.sum };
+  }
+  for (const run of puzzle.vruns) {
+    const [r, c] = run.cells[0];
+    const key = `${r - 1}_${c}`;
+    map[key] = { ...map[key], down: run.sum };
+  }
+  return map;
+}
+
+function KakuroGrid({
+  puzzle,
+  answer,
+  onChange,
+  disabled,
+}: {
+  puzzle: KakuroPuzzle;
+  answer: KakuroAnswer;
+  onChange: (row: number, col: number, value: number | null) => void;
+  disabled?: boolean;
+}) {
+  const clueMap = buildKakuroClueMap(puzzle);
+  return (
+    <div
+      className="mx-auto grid w-full max-w-[320px] border-2 border-ink-900 bg-ink-black"
+      style={{ gridTemplateColumns: `repeat(${puzzle.cols}, 1fr)`, gap: '1px' }}
+    >
+      {puzzle.grid.map((rowVals, r) =>
+        rowVals.map((isBlack, c) => {
+          if (isBlack) {
+            const clue = clueMap[`${r}_${c}`];
+            const hasClue = clue && (clue.down !== undefined || clue.across !== undefined);
+            return (
+              <div key={`${r}-${c}`} className="relative aspect-square overflow-hidden bg-ink-black">
+                {hasClue && (
+                  <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <line x1="0" y1="0" x2="100" y2="100" stroke="rgba(255,255,255,0.22)" strokeWidth="1.5" />
+                  </svg>
+                )}
+                {clue?.down !== undefined && (
+                  <span className="absolute top-0 right-0.5 text-[7px] leading-tight font-bold text-gold-300">{clue.down}</span>
+                )}
+                {clue?.across !== undefined && (
+                  <span className="absolute bottom-0 left-0.5 text-[7px] leading-tight font-bold text-paper-100/80">{clue.across}</span>
+                )}
+              </div>
+            );
+          }
+          const value = answer[r]?.[c];
+          return (
+            <input
+              key={`${r}-${c}`}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              readOnly={disabled}
+              value={value ?? ''}
+              onChange={(e) => {
+                const digit = e.target.value.replace(/[^1-9]/g, '').slice(-1);
+                onChange(r, c, digit ? Number(digit) : null);
+              }}
+              className="aspect-square w-full border-0 bg-paper-50 text-center text-xs font-bold text-seal-600 outline-none focus:bg-seal-600/10"
+            />
+          );
+        }),
+      )}
+    </div>
+  );
+}
+
 function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: string; state: PuzzleState }) {
   const [remote, setRemote] = useState<PuzzleAnswerDoc | null>(null);
   const [answer, setAnswer] = useState<PuzzleAnswerValue>(() => emptyPuzzleAnswer(puzzle));
@@ -195,8 +273,8 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
     commit({ ...a, [key]: a[key].map((v, idx) => (idx === i ? (value || null) : v)) });
   }
 
-  function setSudokuCell(row: number, col: number, value: number | null) {
-    const a = answer as SudokuAnswer;
+  function setGridCell(row: number, col: number, value: number | null) {
+    const a = answer as SudokuAnswer | KakuroAnswer;
     commit(a.map((rowVals, r) => (r === row ? rowVals.map((v, c) => (c === col ? value : v)) : rowVals)));
   }
 
@@ -221,7 +299,7 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
         </p>
       </div>
 
-      {puzzle.type === 'logicGrid' ? (
+      {puzzle.type === 'logicGrid' && (
         <ol className="flex flex-col gap-1 text-xs leading-relaxed text-ink-900">
           {puzzle.clues.map((c, i) => (
             <li key={i}>
@@ -229,9 +307,16 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
             </li>
           ))}
         </ol>
-      ) : (
+      )}
+      {puzzle.type === 'sudoku' && (
         <p className="text-xs leading-relaxed text-ink-900">
           빈칸에 1~9를 채워 스도쿠를 완성하세요. 가로줄 · 세로줄 · 3×3 칸 모두 1~9가 한 번씩 들어가야 합니다.
+        </p>
+      )}
+      {puzzle.type === 'kakuro' && (
+        <p className="text-xs leading-relaxed text-ink-900">
+          검은 칸의 숫자는 그 줄에 들어갈 흰 칸 숫자들의 합입니다. 오른쪽 위 숫자는 세로줄 합, 왼쪽 아래 숫자는
+          가로줄 합이며, 같은 줄 안에서 숫자(1~9)는 겹칠 수 없습니다.
         </p>
       )}
 
@@ -241,10 +326,14 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
         </p>
       ) : (
         <>
-          {puzzle.type === 'logicGrid' ? (
+          {puzzle.type === 'logicGrid' && (
             <LogicGridTable puzzle={puzzle} answer={answer as LogicGridAnswer} onChange={setLogicCell} disabled={outOfAttempts} />
-          ) : (
-            <SudokuGrid given={puzzle.given} answer={answer as SudokuAnswer} onChange={setSudokuCell} disabled={outOfAttempts} />
+          )}
+          {puzzle.type === 'sudoku' && (
+            <SudokuGrid given={puzzle.given} answer={answer as SudokuAnswer} onChange={setGridCell} disabled={outOfAttempts} />
+          )}
+          {puzzle.type === 'kakuro' && (
+            <KakuroGrid puzzle={puzzle} answer={answer as KakuroAnswer} onChange={setGridCell} disabled={outOfAttempts} />
           )}
           {wrongFlash && !outOfAttempts && (
             <p className="text-center text-xs font-bold text-seal-600">아직 정답이 아니에요. 다시 확인해 보세요.</p>

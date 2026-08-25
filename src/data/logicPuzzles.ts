@@ -27,11 +27,31 @@ export interface SudokuPuzzle {
   given: number[][];
 }
 
-export type DailyPuzzle = LogicGridPuzzle | SudokuPuzzle;
+export interface KakuroRun {
+  /** [row, col] of every fillable cell in this run, in order. */
+  cells: [number, number][];
+  sum: number;
+}
+
+export interface KakuroPuzzle {
+  id: string;
+  day: number;
+  type: 'kakuro';
+  title: string;
+  rows: number;
+  cols: number;
+  /** row-major; true = black/clue cell, false = fillable white cell. */
+  grid: boolean[][];
+  hruns: KakuroRun[];
+  vruns: KakuroRun[];
+}
+
+export type DailyPuzzle = LogicGridPuzzle | SudokuPuzzle | KakuroPuzzle;
 
 export type LogicGridAnswer = Record<PuzzleCategoryKey, (string | null)[]>;
 export type SudokuAnswer = (number | null)[][];
-export type PuzzleAnswerValue = LogicGridAnswer | SudokuAnswer;
+export type KakuroAnswer = (number | null)[][];
+export type PuzzleAnswerValue = LogicGridAnswer | SudokuAnswer | KakuroAnswer;
 
 export const PUZZLE_CATEGORIES: PuzzleCategory[] = [
   { key: 'house', label: '기숙사' },
@@ -97,6 +117,43 @@ export const DAILY_PUZZLES: DailyPuzzle[] = [
       [0, 0, 7, 0, 0, 0, 3, 0, 0],
     ],
   },
+  {
+    id: 'puzzle3',
+    day: 3,
+    type: 'kakuro',
+    title: '하우스컵 가쿠로 퀴즈',
+    rows: 7,
+    cols: 7,
+    grid: [
+      [true, true, true, true, true, true, true],
+      [true, true, false, false, true, true, true],
+      [true, false, false, false, false, true, true],
+      [true, false, false, true, false, false, true],
+      [true, true, false, false, true, false, false],
+      [true, true, true, false, false, false, false],
+      [true, true, true, true, false, false, true],
+    ],
+    hruns: [
+      { cells: [[1, 2], [1, 3]], sum: 8 },
+      { cells: [[2, 1], [2, 2], [2, 3], [2, 4]], sum: 23 },
+      { cells: [[3, 1], [3, 2]], sum: 3 },
+      { cells: [[3, 4], [3, 5]], sum: 7 },
+      { cells: [[4, 2], [4, 3]], sum: 14 },
+      { cells: [[4, 5], [4, 6]], sum: 11 },
+      { cells: [[5, 3], [5, 4], [5, 5], [5, 6]], sum: 16 },
+      { cells: [[6, 4], [6, 5]], sum: 15 },
+    ],
+    vruns: [
+      { cells: [[2, 1], [3, 1]], sum: 5 },
+      { cells: [[1, 2], [2, 2], [3, 2], [4, 2]], sum: 13 },
+      { cells: [[1, 3], [2, 3]], sum: 12 },
+      { cells: [[4, 3], [5, 3]], sum: 10 },
+      { cells: [[2, 4], [3, 4]], sum: 11 },
+      { cells: [[5, 4], [6, 4]], sum: 8 },
+      { cells: [[3, 5], [4, 5], [5, 5], [6, 5]], sum: 22 },
+      { cells: [[4, 6], [5, 6]], sum: 16 },
+    ],
+  },
 ];
 
 export function puzzleById(id: string): DailyPuzzle | undefined {
@@ -109,7 +166,10 @@ export function emptyPuzzleAnswer(puzzle: DailyPuzzle): PuzzleAnswerValue {
     for (const c of puzzle.categories) out[c.key] = puzzle.heights.map(() => null);
     return out;
   }
-  return puzzle.given.map((row) => row.map((v) => (v === 0 ? null : v)));
+  if (puzzle.type === 'sudoku') {
+    return puzzle.given.map((row) => row.map((v) => (v === 0 ? null : v)));
+  }
+  return puzzle.grid.map((row) => row.map(() => null));
 }
 
 export function isPuzzleAnswerFilled(puzzle: DailyPuzzle, answer: PuzzleAnswerValue): boolean {
@@ -120,8 +180,19 @@ export function isPuzzleAnswerFilled(puzzle: DailyPuzzle, answer: PuzzleAnswerVa
       return Boolean(vals) && vals.length === puzzle.heights.length && vals.every((v) => Boolean(v));
     });
   }
-  const a = answer as SudokuAnswer;
-  return a.length === 9 && a.every((row) => row.length === 9 && row.every((v) => v !== null && v >= 1 && v <= 9));
+  if (puzzle.type === 'sudoku') {
+    const a = answer as SudokuAnswer;
+    return a.length === 9 && a.every((row) => row.length === 9 && row.every((v) => v !== null && v >= 1 && v <= 9));
+  }
+  const a = answer as KakuroAnswer;
+  for (let r = 0; r < puzzle.rows; r++) {
+    for (let c = 0; c < puzzle.cols; c++) {
+      if (puzzle.grid[r][c]) continue;
+      const v = a[r]?.[c];
+      if (v === null || v === undefined || v < 1 || v > 9) return false;
+    }
+  }
+  return true;
 }
 
 /** Standard Sudoku validity: every given clue preserved, every row/column/3x3 box holds 1-9 exactly once. */
@@ -146,11 +217,25 @@ function isValidSudokuCompletion(given: number[][], answer: number[][]): boolean
   return true;
 }
 
+/** Kakuro validity: every run's cells hold distinct digits (1-9) that sum to its clue. */
+function isValidKakuroCompletion(hruns: KakuroRun[], vruns: KakuroRun[], answer: KakuroAnswer): boolean {
+  for (const run of [...hruns, ...vruns]) {
+    const vals = run.cells.map(([r, c]) => answer[r]?.[c]);
+    if (vals.some((v) => v === null || v === undefined || v < 1 || v > 9)) return false;
+    if (new Set(vals).size !== vals.length) return false;
+    if (vals.reduce<number>((sum, v) => sum + (v as number), 0) !== run.sum) return false;
+  }
+  return true;
+}
+
 export function isPuzzleAnswerCorrect(puzzle: DailyPuzzle, answer: PuzzleAnswerValue): boolean {
   if (puzzle.type === 'logicGrid') {
     const a = answer as LogicGridAnswer;
     return puzzle.categories.every((c) => puzzle.answer[c.key].every((v, i) => a[c.key]?.[i] === v));
   }
-  const a = (answer as SudokuAnswer).map((row) => row.map((v) => v ?? 0));
-  return isValidSudokuCompletion(puzzle.given, a);
+  if (puzzle.type === 'sudoku') {
+    const a = (answer as SudokuAnswer).map((row) => row.map((v) => v ?? 0));
+    return isValidSudokuCompletion(puzzle.given, a);
+  }
+  return isValidKakuroCompletion(puzzle.hruns, puzzle.vruns, answer as KakuroAnswer);
 }

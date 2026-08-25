@@ -84,13 +84,13 @@ function LogicGridTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[420px] border-collapse text-xs">
+      <table className="w-full border-collapse text-[9px]">
         <thead>
           <tr>
-            <th className="border-b border-ink-700/20 px-1.5 py-1 text-left font-bold text-ink-700/80">키</th>
+            <th className="border-b border-ink-700/20 px-0.5 py-0.5 text-left font-bold text-ink-700/80">키</th>
             {puzzle.heights.map((h) => (
-              <th key={h} className="border-b border-ink-700/20 px-1.5 py-1 text-center font-bold text-ink-700/80">
-                {h} cm
+              <th key={h} className="border-b border-ink-700/20 px-0.5 py-0.5 text-center font-bold text-ink-700/80">
+                {h}
               </th>
             ))}
           </tr>
@@ -98,14 +98,14 @@ function LogicGridTable({
         <tbody>
           {puzzle.categories.map((c) => (
             <tr key={c.key}>
-              <td className="border-b border-ink-700/10 px-1.5 py-1.5 font-bold text-ink-900">{c.label}</td>
+              <td className="border-b border-ink-700/10 px-0.5 py-1 font-bold text-ink-900">{c.label}</td>
               {puzzle.heights.map((_, i) => (
-                <td key={i} className="border-b border-ink-700/10 px-1 py-1">
+                <td key={i} className="border-b border-ink-700/10 px-0.5 py-0.5">
                   <select
                     value={answer[c.key]?.[i] ?? ''}
                     onChange={(e) => onChange(c.key, i, e.target.value)}
                     disabled={disabled}
-                    className="w-full min-w-[92px] rounded border border-ink-700/20 bg-paper-50 px-1 py-1.5 text-[11px] text-ink-900 outline-none focus:border-seal-500 disabled:opacity-60"
+                    className="w-full min-w-0 rounded border border-ink-700/20 bg-paper-50 px-0.5 py-1 text-[9px] leading-tight text-ink-900 outline-none focus:border-seal-500 disabled:opacity-60"
                   >
                     <option value="">— 선택 —</option>
                     {puzzle.answer[c.key].map((v) => (
@@ -136,7 +136,7 @@ function SudokuGrid({
   disabled?: boolean;
 }) {
   return (
-    <div className="mx-auto grid w-full max-w-[380px] grid-cols-9 border-2 border-ink-900 bg-paper-50">
+    <div className="mx-auto grid w-full max-w-[320px] grid-cols-9 border-2 border-ink-900 bg-paper-50">
       {given.map((rowVals, r) =>
         rowVals.map((g, c) => {
           const locked = g !== 0;
@@ -153,7 +153,7 @@ function SudokuGrid({
                 const digit = e.target.value.replace(/[^1-9]/g, '').slice(-1);
                 onChange(r, c, digit ? Number(digit) : null);
               }}
-              className={`aspect-square w-full border border-ink-700/15 text-center text-sm font-bold outline-none ${
+              className={`aspect-square w-full border border-ink-700/15 text-center text-xs font-bold outline-none ${
                 locked ? 'bg-paper-200 text-ink-900' : 'bg-paper-50 text-seal-600 focus:bg-seal-600/10'
               } ${c % 3 === 0 ? 'border-l-2 border-l-ink-900' : ''} ${c === 8 ? 'border-r-2 border-r-ink-900' : ''} ${
                 r % 3 === 0 ? 'border-t-2 border-t-ink-900' : ''

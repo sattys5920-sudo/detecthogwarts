@@ -5,6 +5,7 @@ import Card from '../components/Card';
 import DaVinciCodeGame from '../components/DaVinciCodeGame';
 import DormChat from '../components/DormChat';
 import Letterhead from '../components/Letterhead';
+import LogicPuzzlePanel from '../components/LogicPuzzlePanel';
 import { usePageBack } from '../context/BackContext';
 import { useGame } from '../context/GameContext';
 import { HOUSES } from '../data/school';
@@ -284,11 +285,14 @@ export default function RecessPage() {
             </Card>
           )
         ) : room.id === 'dorm' ? (
-          <div className="rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
-            <p className="mb-2.5 text-center font-mono text-[11px] text-ink-500/70">
-              {house ? `${house.name} 단체 대화` : '기숙사 배정 후 이용 가능합니다'}
-            </p>
-            {house ? <DormChat houseId={house.id} /> : <p className="py-6 text-center text-sm text-ink-500/60">아직 기숙사가 배정되지 않았어요.</p>}
+          <div className="flex flex-col gap-3">
+            <LogicPuzzlePanel houseId={house?.id ?? null} isAdmin={game.isAdmin} />
+            <div className="rounded-sm border border-ink-700/15 bg-paper-50 p-3.5">
+              <p className="mb-2.5 text-center font-mono text-[11px] text-ink-500/70">
+                {house ? `${house.name} 단체 대화` : '기숙사 배정 후 이용 가능합니다'}
+              </p>
+              {house ? <DormChat houseId={house.id} /> : <p className="py-6 text-center text-sm text-ink-500/60">아직 기숙사가 배정되지 않았어요.</p>}
+            </div>
           </div>
         ) : null}
       </div>

@@ -6,6 +6,7 @@ import Card from '../components/Card';
 import Letterhead from '../components/Letterhead';
 import PushSetup from '../components/PushSetup';
 import SectionTitle from '../components/SectionTitle';
+import { useBackgroundAudio } from '../context/BackgroundAudioContext';
 import { useGame } from '../context/GameContext';
 import { PATRONUS_ICONS } from '../data/patronusIcons';
 import { HOUSES, SCHOOL_NAME } from '../data/school';
@@ -55,6 +56,7 @@ function PrefRow({ label, value, onChange }: { label: string; value: boolean; on
 export default function ProfilePage() {
   const game = useGame();
   const navigate = useNavigate();
+  const { playing: musicPlaying, toggle: toggleMusic } = useBackgroundAudio();
   const house = HOUSES.find((h) => h.id === game.houseId);
   const initial = game.nickname ? game.nickname[0] : '?';
   const fileRef = useRef<HTMLInputElement>(null);
@@ -322,6 +324,13 @@ export default function ProfilePage() {
           <Button variant="ghost" className="flex-none px-3 py-1.5 text-xs" onClick={() => navigate('/students')}>
             보기
           </Button>
+        </Card>
+      </div>
+
+      <div>
+        <SectionTitle className="mb-2">배경 음악</SectionTitle>
+        <Card>
+          <PrefRow label="배경 음악 재생" value={musicPlaying} onChange={toggleMusic} />
         </Card>
       </div>
 

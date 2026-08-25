@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Button from './Button';
 import Card from './Card';
 import InterrogationInbox from './InterrogationInbox';
 import { HOUSES } from '../data/school';
 import type { HouseId } from '../data/sortingTest';
+import { deleteAccount } from '../firebase/accounts';
 import { resetContent, resetSignups } from '../firebase/adminReset';
 import { sendAnnouncement } from '../firebase/announcements';
 import { broadcastAssignment } from '../firebase/assignmentBroadcast';
-import { assignHouse, assignPatronus, listenAllPlayers, type PlayerRecord } from '../firebase/players';
+import { assignHouse, assignPatronus, deletePlayerRecord, listenAllPlayers, type PlayerRecord } from '../firebase/players';
 import { PATRONUS_LIST } from '../game/forest/patronus';
 import type { PatronusId } from '../game/forest/types';
 
@@ -29,11 +30,16 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
   const [sending, setSending] = useState(false);
   const [selectedPatronus, setSelectedPatronus] = useState<PatronusId>(player.patronus ?? player.computedPatronus ?? PATRONUS_LIST[0].id);
   const [sendingPatronus, setSendingPatronus] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const computed = houseOf(player.computedHouse);
   const assigned = houseOf(player.assignedHouse);
   const testDone = player.computedHouse !== null;
   const currentPatronus = PATRONUS_LIST.find((p) => p.id === player.patronus) ?? null;
   const computedPatronus = PATRONUS_LIST.find((p) => p.id === player.computedPatronus) ?? null;
+
+  useEffect(() => () => { if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current); }, []);
 
   async function send() {
     setSending(true);
@@ -55,15 +61,38 @@ function PlayerRow({ player }: { player: PlayerRecord }) {
     }
   }
 
+  function handleDeleteClick() {
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      confirmTimerRef.current = setTimeout(() => setConfirmingDelete(false), 4000);
+      return;
+    }
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+    setDeleting(true);
+    Promise.all([deletePlayerRecord(player.id), deleteAccount(player.username)]).finally(() => setDeleting(false));
+  }
+
   return (
     <Card className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <p className="font-gothic text-xl text-ink-black">
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 font-gothic text-xl text-ink-black">
           {player.nickname || '(가입만 완료)'}
           <span className="ml-1.5 font-mono text-[10px] font-normal text-ink-500/50">@{player.username}</span>
           {player.grade && <span className="ml-1.5 font-mono text-[10px] font-normal text-ink-500/50">{player.grade} 학년</span>}
         </p>
-        <p className="font-mono text-[10px] text-ink-500/60">{formatTime(player.createdAt)}</p>
+        <div className="flex flex-none items-center gap-2">
+          <p className="font-mono text-[10px] text-ink-500/60">{formatTime(player.createdAt)}</p>
+          <button
+            type="button"
+            onClick={handleDeleteClick}
+            disabled={deleting}
+            className={`rounded-sm border px-2 py-0.5 font-mono text-[10px] font-bold disabled:opacity-40 ${
+              confirmingDelete ? 'border-seal-600 bg-seal-600 text-paper-50' : 'border-ink-700/20 text-ink-500/60 hover:border-seal-500/50 hover:text-seal-600'
+            }`}
+          >
+            {deleting ? '삭제 중…' : confirmingDelete ? '한 번 더 누르면 삭제' : '삭제'}
+          </button>
+        </div>
       </div>
 
       {testDone ? (

@@ -1,4 +1,4 @@
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './config';
 
 const COLLECTION_NAME = 'accounts';
@@ -65,6 +65,18 @@ export async function createAccount(username: string, password: string, playerId
   accounts[key] = { username: username.trim(), passwordHash, playerId, createdAt: Date.now() };
   writeDemoAccounts(accounts);
   return { ok: true, playerId };
+}
+
+/** Deletes a single login account (used by the admin panel's per-player delete, alongside deletePlayerRecord in players.ts). */
+export async function deleteAccount(username: string): Promise<void> {
+  const key = normalize(username);
+  if (isFirebaseConfigured && db) {
+    await deleteDoc(doc(db, COLLECTION_NAME, key));
+    return;
+  }
+  const accounts = readDemoAccounts();
+  delete accounts[key];
+  writeDemoAccounts(accounts);
 }
 
 export type LogInResult = { ok: true; playerId: string } | { ok: false; reason: 'not-found' | 'wrong-password' };

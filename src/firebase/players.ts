@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import type { HouseId } from '../data/sortingTest';
 import type { PatronusId } from '../game/forest/types';
 import { db, isFirebaseConfigured } from './config';
@@ -228,6 +228,15 @@ export async function assignPatronus(id: string, patronus: PatronusId): Promise<
     players[idx] = { ...players[idx], patronus };
     writeDemoPlayers(players);
   }
+}
+
+/** Deletes a single signup's player record (used by the admin panel's per-player delete — does not touch their login account, see accounts.ts's deleteAccount). */
+export async function deletePlayerRecord(id: string): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await deleteDoc(doc(db, COLLECTION_NAME, id));
+    return;
+  }
+  writeDemoPlayers(readDemoPlayers().filter((p) => p.id !== id));
 }
 
 /** One-shot fetch, for hydrating local state right after a login. */

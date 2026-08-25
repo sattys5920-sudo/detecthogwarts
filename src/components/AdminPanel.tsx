@@ -289,6 +289,8 @@ function DangerZone() {
 export default function AdminPanel() {
   const [players, setPlayers] = useState<PlayerRecord[]>([]);
   const members = players.filter((p) => p.nickname !== ADMIN_NICKNAME);
+  const pending = members.filter((p) => !(p.assignedHouse !== null && p.patronus !== null));
+  const doneCount = members.length - pending.length;
 
   useEffect(() => listenAllPlayers(setPlayers), []);
 
@@ -300,13 +302,19 @@ export default function AdminPanel() {
 
       <div>
         <p className="font-gothic text-3xl text-ink-black">가입자 목록 · 기숙사 배정</p>
-        <p className="mt-1 text-sm text-ink-700/70">응시자 {members.length} 명 · 추천 기숙사를 확인하고 배정을 발송하세요.</p>
+        <p className="mt-1 text-sm text-ink-700/70">
+          응시자 {members.length} 명 · 추천 기숙사를 확인하고 배정을 발송하세요.
+          {doneCount > 0 && ` (기숙사·패트로누스 모두 배정된 ${doneCount} 명은 목록에서 제외됨)`}
+        </p>
       </div>
 
       {members.length === 0 && <Card className="text-center text-sm text-ink-500/60">아직 응시한 사람이 없습니다.</Card>}
+      {members.length > 0 && pending.length === 0 && (
+        <Card className="text-center text-sm text-ink-500/60">모든 응시자의 기숙사 · 패트로누스 배정이 끝났습니다.</Card>
+      )}
 
       <div className="flex flex-col gap-3">
-        {members.map((p) => (
+        {pending.map((p) => (
           <PlayerRow key={p.id} player={p} />
         ))}
       </div>

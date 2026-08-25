@@ -55,6 +55,8 @@ export interface QuidditchGame {
 
 export const BOARD_SIZE = 8;
 export const TURN_MS = 30_000;
+/** Once the snitch is in play, each turn gets more time to think through the chase. */
+export const SNITCH_TURN_MS = 120_000;
 export const MAX_TURNS = 10;
 export const SNITCH_SPAWN_TURN = 5;
 export const ACTIONS_PER_TURN = 2;
@@ -409,7 +411,7 @@ function advanceTurn(game: QuidditchGame): QuidditchGame {
     actedPieceIds: [],
     currentTeam: status === 'finished' ? game.currentTeam : otherTeam(game.currentTeam),
     turnStartedAt: now,
-    turnDeadline: now + TURN_MS,
+    turnDeadline: now + (snitch ? SNITCH_TURN_MS : TURN_MS),
     updatedAt: now,
   };
 }

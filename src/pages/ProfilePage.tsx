@@ -10,6 +10,7 @@ import { useBackgroundAudio } from '../context/BackgroundAudioContext';
 import { useGame } from '../context/GameContext';
 import { PATRONUS_ICONS } from '../data/patronusIcons';
 import { HOUSES, SCHOOL_NAME } from '../data/school';
+import { listenHouseCupScores, type HouseCupScores } from '../firebase/houseCup';
 import { DEFAULT_PREFS, setPref, subscribePrefs, type NotificationPrefs } from '../firebase/notificationPrefs';
 import { patronusById } from '../game/forest/patronus';
 import gryffindorCrest from '../assets/crests/gryffindor.png';
@@ -67,11 +68,14 @@ export default function ProfilePage() {
   const [editingGrade, setEditingGrade] = useState(false);
   const [gradeDraft, setGradeDraft] = useState(game.grade ?? 10);
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
+  const [houseCupScores, setHouseCupScores] = useState<HouseCupScores>({ flame: 0, moonlight: 0, earth: 0, wind: 0 });
 
   useEffect(() => {
     if (!game.playerId) return;
     return subscribePrefs(game.playerId, setPrefs);
   }, [game.playerId]);
+
+  useEffect(() => listenHouseCupScores(setHouseCupScores), []);
 
   function updatePref(key: keyof NotificationPrefs, value: boolean) {
     if (!game.playerId) return;
@@ -272,6 +276,24 @@ export default function ProfilePage() {
           })}
         </div>
       </Card>
+
+      <div>
+        <SectionTitle className="mb-2">하우스컵 점수</SectionTitle>
+        <Card className="flex flex-col gap-2">
+          {[...HOUSES]
+            .sort((a, b) => houseCupScores[b.id as keyof HouseCupScores] - houseCupScores[a.id as keyof HouseCupScores])
+            .map((h, i) => (
+              <div key={h.id} className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2">
+                  <span className="w-4 flex-none text-center font-mono text-[11px] font-bold text-ink-500/50">{i + 1}</span>
+                  <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ backgroundColor: h.color }} />
+                  <span className="text-sm font-bold text-ink-900">{h.name}</span>
+                </span>
+                <span className="font-mono text-sm font-bold text-seal-600">{houseCupScores[h.id as keyof HouseCupScores]} 점</span>
+              </div>
+            ))}
+        </Card>
+      </div>
 
       {game.assignedHouse ? (
         <div>

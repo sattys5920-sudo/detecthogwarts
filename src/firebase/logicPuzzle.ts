@@ -1,5 +1,7 @@
 import { doc, onSnapshot, runTransaction, setDoc } from 'firebase/firestore';
-import { isPuzzleAnswerCorrect, puzzleById, type PuzzleAnswerValue } from '../data/logicPuzzles';
+import { isPuzzleAnswerCorrect, PUZZLE_RANK_POINTS, puzzleById, type PuzzleAnswerValue } from '../data/logicPuzzles';
+import type { HouseId } from '../data/sortingTest';
+import { awardHouseCupPoints } from './houseCup';
 import { db, isFirebaseConfigured } from './config';
 
 export interface PuzzleState {
@@ -150,15 +152,16 @@ export async function submitPuzzleAnswer(
       return nextAttempts;
     });
     if (!correct) return { correct: false, rank: null, attempts };
-    const rank = await runTransaction(db, async (tx) => {
+    const { rank, isNew } = await runTransaction(db, async (tx) => {
       const snap = await tx.get(stateRef());
       const state = snap.exists() ? (snap.data() as PuzzleState) : EMPTY_STATE;
       const solvedOrder = state.solvedOrder ?? [];
-      if (solvedOrder.includes(houseId)) return solvedOrder.indexOf(houseId) + 1;
+      if (solvedOrder.includes(houseId)) return { rank: solvedOrder.indexOf(houseId) + 1, isNew: false };
       const nextOrder = [...solvedOrder, houseId];
       tx.set(stateRef(), { ...state, solvedOrder: nextOrder });
-      return nextOrder.length;
+      return { rank: nextOrder.length, isNew: true };
     });
+    if (isNew) await awardRankPoints(puzzleId, houseId, rank);
     return { correct: true, rank, attempts };
   }
 
@@ -171,5 +174,14 @@ export async function submitPuzzleAnswer(
   if (solvedOrder.includes(houseId)) return { correct: true, rank: solvedOrder.indexOf(houseId) + 1, attempts };
   const nextOrder = [...solvedOrder, houseId];
   writeDemoState({ ...state, solvedOrder: nextOrder });
+  await awardRankPoints(puzzleId, houseId, nextOrder.length);
   return { correct: true, rank: nextOrder.length, attempts };
+}
+
+/** Looks up the puzzle's own rank-point scale (falling back to the shared default) and credits the house's house-cup total for the rank it just earned. */
+async function awardRankPoints(puzzleId: string, houseId: string, rank: number): Promise<void> {
+  const puzzle = puzzleById(puzzleId);
+  const rankPoints = puzzle?.rankPoints ?? PUZZLE_RANK_POINTS;
+  const points = rankPoints[rank - 1] ?? 0;
+  await awardHouseCupPoints(houseId as HouseId, points);
 }

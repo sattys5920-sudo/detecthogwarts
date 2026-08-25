@@ -6,12 +6,15 @@ import DaVinciCodeGame from '../components/DaVinciCodeGame';
 import DormChat from '../components/DormChat';
 import Letterhead from '../components/Letterhead';
 import LogicPuzzlePanel from '../components/LogicPuzzlePanel';
+import SurpriseMissionAdmin from '../components/SurpriseMissionAdmin';
+import SurpriseMissionCard from '../components/SurpriseMissionCard';
 import { usePageBack } from '../context/BackContext';
 import { useGame } from '../context/GameContext';
 import { HOUSES } from '../data/school';
 import { subscribeParty } from '../firebase/forest';
 import { listenRecessLock, listenRoomLock, setRecessLock, setRoomLock } from '../firebase/locks';
 import { subscribeRoom } from '../firebase/quidditch';
+import { listenSurpriseMission, type SurpriseMissionState } from '../firebase/surpriseMission';
 import { MAX_SEATS as FOREST_MAX_SEATS } from '../game/forest/engine';
 import dormIcon from '../assets/rooms/dorm.png';
 import forestAIcon from '../assets/rooms/forestA.png';
@@ -150,6 +153,7 @@ export default function RecessPage() {
   const [quidditchStatus, setQuidditchStatus] = useState<Record<string, { count: number; inProgress: boolean; mine: boolean }>>({});
   const [busyModal, setBusyModal] = useState(false);
   const [staminaModal, setStaminaModal] = useState(false);
+  const [surpriseMission, setSurpriseMission] = useState<SurpriseMissionState | null>(null);
   const [adminDormHouseId, setAdminDormHouseId] = useState<string | null>(null);
   const room = ROOMS.find((r) => r.id === activeRoom);
   const house = HOUSES.find((h) => h.id === game.houseId);
@@ -192,6 +196,7 @@ export default function RecessPage() {
   }, [game.playerId]);
 
   useEffect(() => listenRecessLock(setRecessLocked), []);
+  useEffect(() => listenSurpriseMission(setSurpriseMission), []);
 
   // Rolls the daily play count over at local midnight even if the tab is left open across the boundary.
   useEffect(() => {
@@ -321,6 +326,10 @@ export default function RecessPage() {
         ) : room.id === 'dorm' ? (
           <div className="flex flex-col gap-3">
             <LogicPuzzlePanel houseId={house?.id ?? null} isAdmin={game.isAdmin} />
+            {game.isAdmin && <SurpriseMissionAdmin />}
+            {!game.isAdmin && surpriseMission?.id && house && (
+              <SurpriseMissionCard mission={surpriseMission} houseId={house.id} />
+            )}
             {game.isAdmin && (
               <div className="flex flex-col gap-2 rounded-sm border border-ink-700/15 bg-paper-50 p-3">
                 <p className="text-center font-mono text-[11px] text-ink-500/70">관전할 기숙사를 선택하세요</p>

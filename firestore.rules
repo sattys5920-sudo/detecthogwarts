@@ -446,5 +446,32 @@ service cloud.firestore {
         allow update: if false;
       }
     }
+
+    // 하우스컵 일일 퀴즈 상태: 관리자가 그날의 문제를 출제하면(activePuzzleId) 모든
+    // 기숙사에 동시 노출되고, 정답을 먼저 맞힌 순서(solvedOrder)를 기록합니다.
+    // 다른 관리자 전용 기능과 마찬가지로 실제 신원 검증은 없어 형식만 검증합니다.
+    match /logicPuzzleState/{docId} {
+      allow read: if true;
+      allow delete: if true;
+
+      allow create, update: if request.resource.data.keys().hasOnly(['activePuzzleId', 'activatedAt', 'solvedOrder'])
+        && (request.resource.data.activePuzzleId == null || request.resource.data.activePuzzleId is string)
+        && (request.resource.data.activatedAt == null || request.resource.data.activatedAt is number)
+        && request.resource.data.solvedOrder is list;
+    }
+
+    // 하우스컵 퀴즈의 기숙사별 제출 답안입니다. answer 필드는 퍼즐 종류마다 모양이
+    // 달라(로직그리드/스도쿠/가쿠로/켄켄/후토시키) 구조를 검증하지 않고, attempts는
+    // 첫 임시저장(draft)에는 아직 없을 수 있어 있을 때만 형식을 검증합니다.
+    match /logicPuzzleAnswers/{docId} {
+      allow read: if true;
+      allow delete: if true;
+
+      allow create, update: if request.resource.data.puzzleId is string
+        && request.resource.data.houseId is string
+        && request.resource.data.correct is bool
+        && request.resource.data.updatedAt is number
+        && (!('attempts' in request.resource.data) || request.resource.data.attempts is number);
+    }
   }
 }

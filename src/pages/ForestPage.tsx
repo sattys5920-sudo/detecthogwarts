@@ -324,11 +324,11 @@ export default function ForestPage() {
   }, [roomId]);
 
   useEffect(() => {
-    if (!game.playerId || !VALID_ROOMS.includes(roomId)) return;
+    if (!game.playerId || !VALID_ROOMS.includes(roomId) || game.isAdmin) return;
     joinParty(roomId, game.playerId, game.nickname, game.patronus).catch((e) => {
       setJoinError(e instanceof ForestFullError ? e.message : '입장에 실패했습니다. 다시 시도해 주세요.');
     });
-  }, [roomId, game.playerId, game.nickname, game.patronus]);
+  }, [roomId, game.playerId, game.nickname, game.patronus, game.isAdmin]);
 
   useEffect(() => {
     if (!party || party.status !== 'cleared' || !party.seats.some((p) => p?.id === game.playerId)) return;
@@ -444,10 +444,40 @@ export default function ForestPage() {
   // ---------- lobby ----------
   if (party.status === 'lobby') {
     if (!me) {
+      if (!game.isAdmin) {
+        return (
+          <div className="relative flex min-h-svh flex-col items-center justify-center gap-3 px-6 text-center">
+            <PaperTexture />
+            <p className="text-sm text-ink-700/70">입장하는 중...</p>
+          </div>
+        );
+      }
       return (
-        <div className="relative flex min-h-svh flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
           <PaperTexture />
-          <p className="text-sm text-ink-700/70">입장하는 중...</p>
+          <Card className="w-full max-w-xs">
+            <p className="font-gothic text-2xl text-ink-black">🌲 금지된 숲 {roomLabel}</p>
+            <p className="mt-1 font-mono text-[10px] font-bold text-seal-600">관리자 관전 중</p>
+            <div className="mt-4 flex flex-col gap-1.5 text-left">
+              {Array.from({ length: MAX_SEATS }).map((_, i) => {
+                const seat = party.seats[i];
+                return (
+                  <div
+                    key={i}
+                    className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${seat ? 'border-seal-500/40 bg-paper-100 font-bold text-ink-900' : 'border-dashed border-ink-700/20 text-ink-500/50'}`}
+                  >
+                    <span>{seat ? seat.nickname : '빈 자리'}</span>
+                    {seat && (
+                      <span className={`font-mono text-[10px] font-bold ${seat.ready ? 'text-seal-600' : 'text-ink-500/40'}`}>
+                        {seat.ready ? '준비 완료' : '대기 중'}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <Button variant="ghost" className="mt-4 w-full" onClick={() => navigate('/recess')}>휴게시간으로 돌아가기</Button>
+          </Card>
         </div>
       );
     }
@@ -505,7 +535,7 @@ export default function ForestPage() {
     );
   }
 
-  if (!me) {
+  if (!me && !game.isAdmin) {
     return (
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         <PaperTexture />
@@ -547,9 +577,13 @@ export default function ForestPage() {
             )}
           </Card>
           {me && <SkillPanel player={me} onUpgrade={(skillId) => guard(() => upgradeSkill(roomId, game.playerId!, skillId))} />}
-          <Button onClick={() => guard(async () => { await leaveExpedition(roomId); navigate('/recess'); })}>
-            {cleared ? '계속 탐사' : '탐사 종료'}
-          </Button>
+          {me ? (
+            <Button onClick={() => guard(async () => { await leaveExpedition(roomId); navigate('/recess'); })}>
+              {cleared ? '계속 탐사' : '탐사 종료'}
+            </Button>
+          ) : (
+            <Button variant="ghost" onClick={() => navigate('/recess')}>휴게시간으로 돌아가기</Button>
+          )}
         </div>
       </div>
     );
@@ -636,7 +670,7 @@ export default function ForestPage() {
                     .filter((n): n is string => !!n);
                   const isMine = myVote === i;
                   return (
-                    <button key={i} type="button" disabled={busy} onClick={() => guard(() => castVote(roomId, game.playerId!, i))} className="text-left">
+                    <button key={i} type="button" disabled={busy || !me} onClick={() => guard(() => castVote(roomId, game.playerId!, i))} className="text-left">
                       <Card className={isMine ? 'border-seal-500' : 'hover:border-seal-500/40'}>
                         <div className="flex items-center justify-between gap-2">
                           <div className="min-w-0">
@@ -737,7 +771,11 @@ export default function ForestPage() {
                 <p key={i} className="text-xs text-ink-700/70">{l.text}</p>
               ))}
             </div>
-            <Button className="mt-4 w-full" disabled={busy} onClick={() => guard(() => confirmEvent(roomId))}>확인</Button>
+            {me ? (
+              <Button className="mt-4 w-full" disabled={busy} onClick={() => guard(() => confirmEvent(roomId))}>확인</Button>
+            ) : (
+              <p className="mt-4 font-mono text-[10px] font-bold text-ink-500/50">관전 중 — 파티원이 확인하면 넘어갑니다</p>
+            )}
           </Card>
           <SidePanel
             tab={sidebarTab}
@@ -772,7 +810,7 @@ export default function ForestPage() {
       .filter((p): p is Player => !!p)
       .map((p) => <PlayerCard key={p.id} player={p} isActing={p.id === actingId} targetable={false} />);
     const targetKind = targetMode?.kind === 'skill' ? targetMode.skill.targetType : targetMode?.kind === 'patronus' ? targetMode.patronus.targetType : null;
-    const myPatronus = me.patronus ? patronusById(me.patronus) : null;
+    const myPatronus = me?.patronus ? patronusById(me.patronus) : null;
 
     function cancelTargeting() {
       setTargetMode(null);
@@ -862,7 +900,7 @@ export default function ForestPage() {
             ))}
           </div>
 
-          {isMyTurn ? (
+          {isMyTurn && me ? (
             pendingAction ? (
               <Card className="flex flex-col gap-2 border-seal-500">
                 <p className="text-sm font-bold text-ink-900">
@@ -959,7 +997,7 @@ export default function ForestPage() {
             roomId={roomId}
             log={party.log.slice(-15)}
             myId={game.playerId ?? ''}
-            myNickname={me.nickname}
+            myNickname={me?.nickname ?? game.nickname}
             statusContent={statusContent}
           />
         </div>

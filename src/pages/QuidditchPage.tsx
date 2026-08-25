@@ -218,11 +218,11 @@ export default function QuidditchPage() {
   }, [roomId]);
 
   useEffect(() => {
-    if (!game.playerId || !VALID_ROOMS.includes(roomId)) return;
+    if (!game.playerId || !VALID_ROOMS.includes(roomId) || game.isAdmin) return;
     joinRoom(roomId, game.playerId, game.nickname).catch((e) => {
       setJoinError(e instanceof RoomFullError ? e.message : '입장에 실패했습니다. 다시 시도해 주세요.');
     });
-  }, [roomId, game.playerId, game.nickname]);
+  }, [roomId, game.playerId, game.nickname, game.isAdmin]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 500);
@@ -257,9 +257,25 @@ export default function QuidditchPage() {
   if (!room) return <LoadingScreen text="경기장을 확인하는 중..." />;
 
   const mySeat = game.playerId ? seatedTeamOf(room, game.playerId) : null;
+  const spectating = game.isAdmin && !mySeat;
 
   if (room.status === 'waiting') {
-    if (!mySeat) return <LoadingScreen text="입장하는 중..." />;
+    if (!mySeat) {
+      if (!spectating) return <LoadingScreen text="입장하는 중..." />;
+      return (
+        <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
+          <PaperTexture />
+          <Card className="w-full max-w-xs">
+            <p className="font-gothic text-2xl text-ink-black">퀴디치 경기장 {roomLabel}</p>
+            <p className="mt-1 font-mono text-[10px] font-bold text-seal-600">관리자 관전 중</p>
+            <p className="mt-2 text-sm text-ink-700/70">
+              {room.seats.A?.nickname ?? '빈 자리'} vs {room.seats.B?.nickname ?? '빈 자리'} — 상대 선수를 기다리는 중입니다…
+            </p>
+            <Button variant="ghost" className="mt-5 w-full" onClick={() => navigate('/recess')}>휴게시간으로 돌아가기</Button>
+          </Card>
+        </div>
+      );
+    }
     return (
       <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         <PaperTexture />
@@ -296,7 +312,33 @@ export default function QuidditchPage() {
   }
 
   if (room.status === 'finished') {
-    if (!mySeat) return <LoadingScreen text="결과를 확인하는 중..." />;
+    if (!mySeat) {
+      if (!spectating) return <LoadingScreen text="결과를 확인하는 중..." />;
+      return (
+        <div className="relative flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
+          <PaperTexture />
+          <Card className="w-full max-w-xs">
+            <p className="font-gothic text-2xl text-ink-black">경기 종료</p>
+            <p className="mt-1 font-mono text-[10px] font-bold text-seal-600">관리자 관전 중</p>
+            <p className={`mt-2 font-gothic text-3xl ${room.winner === 'draw' ? 'text-ink-700' : 'text-seal-600'}`}>
+              {room.winner === 'draw' ? '무승부' : `${TEAM_LABEL[room.winner as Team]} 승리!`}
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-3">
+              <div className="text-center">
+                <p className="font-mono text-2xl font-bold text-ink-900">{room.scores.A}</p>
+                <p className="text-[10px] text-ink-500/60">{room.seats.A?.nickname ?? 'A팀'}</p>
+              </div>
+              <p className="text-ink-500/40">:</p>
+              <div className="text-center">
+                <p className="font-mono text-2xl font-bold text-ink-900">{room.scores.B}</p>
+                <p className="text-[10px] text-ink-500/60">{room.seats.B?.nickname ?? 'B팀'}</p>
+              </div>
+            </div>
+            <Button variant="ghost" className="mt-5 w-full" onClick={() => navigate('/recess')}>휴게시간으로 돌아가기</Button>
+          </Card>
+        </div>
+      );
+    }
     const iWon = room.winner === mySeat;
     const isDraw = room.winner === 'draw';
     return (
@@ -305,7 +347,8 @@ export default function QuidditchPage() {
   }
 
   // status === 'playing'
-  if (!mySeat) return <LoadingScreen text="입장을 확인하는 중..." />;
+  if (!mySeat && !spectating) return <LoadingScreen text="입장을 확인하는 중..." />;
+  const boardSeat: Team = mySeat ?? 'A';
 
   async function handleMove(pieceId: string, dest: { row: number; col: number }) {
     if (!game.playerId) return;
@@ -365,6 +408,8 @@ export default function QuidditchPage() {
           <p className="font-mono text-[10px] tracking-wide">{room.snitch ? '스니치 등장' : `스니치 등장까지 ${Math.max(0, 5 - room.turnCount)} 턴`}</p>
         </div>
 
+        {spectating && <p className="text-center font-mono text-[10px] font-bold text-seal-600">관리자 관전 중</p>}
+
         <div className={`flex items-center justify-between rounded-lg border-2 px-3 py-2 ${myTurn ? 'border-seal-600 bg-seal-600/10' : 'border-ink-700/15 bg-paper-100/60'}`}>
           <div>
             <p className="text-sm font-bold text-ink-900">{myTurn ? '내 턴입니다 — 기물을 선택하세요' : `${room.seats[room.currentTeam]?.nickname ?? TEAM_LABEL[room.currentTeam]}님의 턴`}</p>
@@ -384,7 +429,7 @@ export default function QuidditchPage() {
           </button>
         )}
 
-        <QuidditchBoard game={room} mySeat={mySeat} onMove={handleMove} onPass={handlePass} />
+        <QuidditchBoard game={room} mySeat={boardSeat} onMove={handleMove} onPass={handlePass} readOnly={spectating} />
 
         <p className="flex items-center justify-center gap-1.5 text-[10px] text-ink-700/60">
           <span className="inline-block h-2.5 w-2.5 rounded-full border-2 border-dashed border-gold-400" aria-hidden="true" />

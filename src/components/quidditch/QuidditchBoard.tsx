@@ -17,11 +17,13 @@ interface Props {
   mySeat: Team;
   onMove: (pieceId: string, dest: { row: number; col: number }) => void;
   onPass: (pieceId: string, targetId: string) => void;
+  /** Spectator view (e.g. an admin watching without a seat) — pieces render but never respond to taps. */
+  readOnly?: boolean;
 }
 
-export default function QuidditchBoard({ game, mySeat, onMove, onPass }: Props) {
+export default function QuidditchBoard({ game, mySeat, onMove, onPass, readOnly }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const canAct = game.status === 'playing' && game.currentTeam === mySeat;
+  const canAct = !readOnly && game.status === 'playing' && game.currentTeam === mySeat;
   const dests = selectedId && canAct ? legalMoves(game, selectedId) : [];
   const passTargets = selectedId && canAct ? legalPassTargets(game, selectedId) : [];
 

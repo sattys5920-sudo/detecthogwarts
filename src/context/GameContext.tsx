@@ -61,6 +61,10 @@ const SEEN_PATRONUS_PREFIX = 'arcanum-patronus-seen-';
 const ADMIN_KEY = 'arcanum-admin-unlocked';
 const ADMIN_USERNAME = 'admin';
 const ADMIN_NICKNAME = '호그와트';
+/** Fixed, well-known id so every admin-mode entry (any device/browser) resolves to the same
+ * player record instead of spawning a fresh orphaned one each time — nickname/grade/pet edits
+ * made as admin persist and show consistently across sessions instead of reverting to defaults. */
+const ADMIN_PLAYER_ID = 'admin-canonical';
 const ADMIN_ZERO_SCORES: Record<HouseId, number> = { flame: 0, moonlight: 0, earth: 0, wind: 0 };
 
 const defaultStats: PlayerStats = {
@@ -242,14 +246,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const adminEnter = useCallback(async () => {
-    const playerId = crypto.randomUUID();
-    await createPlayerRecord(playerId, ADMIN_USERNAME);
-    await submitTestResult(playerId, ADMIN_ZERO_SCORES, 'moonlight');
-    await submitProfile(playerId, ADMIN_NICKNAME, 12);
+    const existing = await getPlayerOnce(ADMIN_PLAYER_ID);
+    if (existing) {
+      setState((prev) => ({
+        ...prev,
+        username: ADMIN_USERNAME,
+        playerId: ADMIN_PLAYER_ID,
+        nickname: existing.nickname || ADMIN_NICKNAME,
+        grade: existing.grade ?? 12,
+        pet: existing.pet,
+        avatarDataUrl: existing.avatarDataUrl,
+        testScores: existing.testScores ?? ADMIN_ZERO_SCORES,
+        computedHouse: existing.computedHouse ?? 'moonlight',
+        computedPatronus: existing.computedPatronus ?? 'snake',
+        patronus: existing.patronus,
+        joinedAt: prev.joinedAt ?? Date.now(),
+      }));
+      return;
+    }
+    await createPlayerRecord(ADMIN_PLAYER_ID, ADMIN_USERNAME);
+    await submitTestResult(ADMIN_PLAYER_ID, ADMIN_ZERO_SCORES, 'moonlight');
+    await submitProfile(ADMIN_PLAYER_ID, ADMIN_NICKNAME, 12);
     setState((prev) => ({
       ...prev,
       username: ADMIN_USERNAME,
-      playerId,
+      playerId: ADMIN_PLAYER_ID,
       nickname: ADMIN_NICKNAME,
       testScores: ADMIN_ZERO_SCORES,
       computedHouse: 'moonlight',

@@ -10,6 +10,8 @@ interface ComposerProps {
 
 const EVERYONE_TAG = '전체';
 const ADMIN_USERNAME = 'admin';
+/** 16px (the iOS zoom-guard floor) scaled down to ~14px of visible text — see the input's own comment below. */
+const COMPOSER_INPUT_SCALE = 0.875;
 
 /** Finds the "@fragment" the caret is currently inside of, if any — null when the caret isn't mid-mention. */
 function activeMentionQuery(text: string, caret: number): { start: number; query: string } | null {
@@ -141,15 +143,31 @@ export default function Composer({ onSubmit, placeholder, submitLabel }: Compose
           </div>
         )}
         <div className="flex items-center gap-2">
-          <input
-            ref={inputRef}
-            value={text}
-            onChange={handleChange}
-            onKeyDown={(e) => e.key === 'Enter' && submit()}
-            onFocus={handleFocus}
-            placeholder={placeholder}
-            className="min-w-0 flex-1 rounded-sm border border-ink-700/30 bg-paper-50 px-3.5 py-2 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
-          />
+          {/*
+            The <input> itself must keep computed font-size >= 16px, or iOS Safari auto-zooms the
+            whole page on focus (see the global `input, textarea, select { font-size: 16px }` rule
+            in index.css). To still show smaller-looking text, the input is laid out oversized
+            (1 / COMPOSER_INPUT_SCALE of the wrapper) and then visually scaled down — iOS only reads
+            the computed font-size (unaffected by transform), so the zoom guard still holds, while
+            the rendered glyphs end up the target visual size.
+          */}
+          <div className="relative h-9 min-w-0 flex-1 overflow-hidden rounded-sm border border-ink-700/30 bg-paper-50 focus-within:border-seal-500">
+            <input
+              ref={inputRef}
+              value={text}
+              onChange={handleChange}
+              onKeyDown={(e) => e.key === 'Enter' && submit()}
+              onFocus={handleFocus}
+              placeholder={placeholder}
+              style={{
+                width: `${100 / COMPOSER_INPUT_SCALE}%`,
+                height: `${100 / COMPOSER_INPUT_SCALE}%`,
+                transform: `scale(${COMPOSER_INPUT_SCALE})`,
+                transformOrigin: 'top left',
+              }}
+              className="absolute top-0 left-0 bg-transparent px-3.5 py-2 text-ink-900 outline-none placeholder:text-ink-500/40"
+            />
+          </div>
           <button
             type="button"
             onClick={submit}

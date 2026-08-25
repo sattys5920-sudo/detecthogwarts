@@ -14,6 +14,8 @@ export interface PuzzleAnswerDoc {
   houseId: string;
   answer: PuzzleAnswerValue;
   correct: boolean;
+  /** Number of times this house has submitted (not just saved a draft) — capped at PUZZLE_MAX_ATTEMPTS. */
+  attempts: number;
   updatedAt: number;
 }
 
@@ -117,29 +119,37 @@ export function listenHouseAnswer(puzzleId: string, houseId: string, callback: (
   };
 }
 
-/** Persists a house's in-progress draft without checking or scoring it. */
+/** Persists a house's in-progress draft without checking, scoring, or counting it as an attempt. */
 export async function saveDraftAnswer(puzzleId: string, houseId: string, answer: PuzzleAnswerValue): Promise<void> {
-  const payload: PuzzleAnswerDoc = { puzzleId, houseId, answer, correct: false, updatedAt: Date.now() };
   if (isFirebaseConfigured && db) {
-    await setDoc(answerRef(puzzleId, houseId), payload);
+    await setDoc(answerRef(puzzleId, houseId), { puzzleId, houseId, answer, correct: false, updatedAt: Date.now() }, { merge: true });
     return;
   }
-  writeDemoAnswer(payload);
+  const prev = readDemoAnswer(puzzleId, houseId);
+  writeDemoAnswer({ puzzleId, houseId, answer, correct: false, attempts: prev?.attempts ?? 0, updatedAt: Date.now() });
 }
 
-/** Grades a house's submission; if correct and this house hasn't already solved it, records their rank in the shared leaderboard. */
+/**
+ * Grades a house's submission and counts it as one of their PUZZLE_MAX_ATTEMPTS tries.
+ * If correct and this house hasn't already solved it, records their rank in the shared leaderboard.
+ */
 export async function submitPuzzleAnswer(
   puzzleId: string,
   houseId: string,
   answer: PuzzleAnswerValue,
-): Promise<{ correct: boolean; rank: number | null }> {
+): Promise<{ correct: boolean; rank: number | null; attempts: number }> {
   const puzzle = puzzleById(puzzleId);
   const correct = puzzle ? isPuzzleAnswerCorrect(puzzle, answer) : false;
-  const payload: PuzzleAnswerDoc = { puzzleId, houseId, answer, correct, updatedAt: Date.now() };
 
   if (isFirebaseConfigured && db) {
-    await setDoc(answerRef(puzzleId, houseId), payload);
-    if (!correct) return { correct: false, rank: null };
+    const attempts = await runTransaction(db, async (tx) => {
+      const snap = await tx.get(answerRef(puzzleId, houseId));
+      const prevAttempts = snap.exists() ? ((snap.data() as PuzzleAnswerDoc).attempts ?? 0) : 0;
+      const nextAttempts = prevAttempts + 1;
+      tx.set(answerRef(puzzleId, houseId), { puzzleId, houseId, answer, correct, attempts: nextAttempts, updatedAt: Date.now() });
+      return nextAttempts;
+    });
+    if (!correct) return { correct: false, rank: null, attempts };
     const rank = await runTransaction(db, async (tx) => {
       const snap = await tx.get(stateRef());
       const state = snap.exists() ? (snap.data() as PuzzleState) : EMPTY_STATE;
@@ -149,15 +159,17 @@ export async function submitPuzzleAnswer(
       tx.set(stateRef(), { ...state, solvedOrder: nextOrder });
       return nextOrder.length;
     });
-    return { correct: true, rank };
+    return { correct: true, rank, attempts };
   }
 
-  writeDemoAnswer(payload);
-  if (!correct) return { correct: false, rank: null };
+  const prev = readDemoAnswer(puzzleId, houseId);
+  const attempts = (prev?.attempts ?? 0) + 1;
+  writeDemoAnswer({ puzzleId, houseId, answer, correct, attempts, updatedAt: Date.now() });
+  if (!correct) return { correct: false, rank: null, attempts };
   const state = readDemoState();
   const solvedOrder = state.solvedOrder ?? [];
-  if (solvedOrder.includes(houseId)) return { correct: true, rank: solvedOrder.indexOf(houseId) + 1 };
+  if (solvedOrder.includes(houseId)) return { correct: true, rank: solvedOrder.indexOf(houseId) + 1, attempts };
   const nextOrder = [...solvedOrder, houseId];
   writeDemoState({ ...state, solvedOrder: nextOrder });
-  return { correct: true, rank: nextOrder.length };
+  return { correct: true, rank: nextOrder.length, attempts };
 }

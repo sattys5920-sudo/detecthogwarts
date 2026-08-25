@@ -4,6 +4,7 @@ import {
   emptyPuzzleAnswer,
   isPuzzleAnswerFilled,
   puzzleById,
+  PUZZLE_MAX_ATTEMPTS,
   PUZZLE_RANK_POINTS,
   type DailyPuzzle,
   type LogicGridAnswer,
@@ -12,7 +13,6 @@ import {
   type PuzzleCategoryKey,
   type SudokuAnswer,
 } from '../data/logicPuzzles';
-import { HOUSES } from '../data/school';
 import {
   activatePuzzle,
   listenHouseAnswer,
@@ -22,7 +22,6 @@ import {
   type PuzzleAnswerDoc,
   type PuzzleState,
 } from '../firebase/logicPuzzle';
-import type { House } from '../types/game';
 import Card from './Card';
 
 function AdminPuzzleControl({ state }: { state: PuzzleState | null }) {
@@ -72,44 +71,16 @@ function AdminPuzzleControl({ state }: { state: PuzzleState | null }) {
   );
 }
 
-function HouseBadge({ house }: { house: House }) {
-  return (
-    <span
-      className="inline-flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[10px] font-bold text-paper-50"
-      style={{ backgroundColor: house.color, borderColor: house.accent }}
-    >
-      {house.name}
-    </span>
-  );
-}
-
-function PuzzleLeaderboard({ solvedOrder }: { solvedOrder: string[] }) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {HOUSES.map((h) => {
-        const rank = solvedOrder.indexOf(h.id);
-        return (
-          <div
-            key={h.id}
-            className="flex items-center gap-1.5 rounded-full border border-ink-700/15 bg-paper-50 px-2 py-1 text-[10px] font-bold text-ink-700/80"
-          >
-            <HouseBadge house={h} />
-            {rank >= 0 ? `${rank + 1} 등 · +${PUZZLE_RANK_POINTS[rank] ?? 0} 점` : '도전 중'}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function LogicGridTable({
   puzzle,
   answer,
   onChange,
+  disabled,
 }: {
   puzzle: LogicGridPuzzle;
   answer: LogicGridAnswer;
   onChange: (key: PuzzleCategoryKey, index: number, value: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="overflow-x-auto">
@@ -133,7 +104,8 @@ function LogicGridTable({
                   <select
                     value={answer[c.key]?.[i] ?? ''}
                     onChange={(e) => onChange(c.key, i, e.target.value)}
-                    className="w-full min-w-[92px] rounded border border-ink-700/20 bg-paper-50 px-1 py-1.5 text-[11px] text-ink-900 outline-none focus:border-seal-500"
+                    disabled={disabled}
+                    className="w-full min-w-[92px] rounded border border-ink-700/20 bg-paper-50 px-1 py-1.5 text-[11px] text-ink-900 outline-none focus:border-seal-500 disabled:opacity-60"
                   >
                     <option value="">— 선택 —</option>
                     {puzzle.answer[c.key].map((v) => (
@@ -156,10 +128,12 @@ function SudokuGrid({
   given,
   answer,
   onChange,
+  disabled,
 }: {
   given: number[][];
   answer: SudokuAnswer;
   onChange: (row: number, col: number, value: number | null) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="mx-auto grid w-full max-w-[380px] grid-cols-9 border-2 border-ink-900 bg-paper-50">
@@ -173,7 +147,7 @@ function SudokuGrid({
               type="text"
               inputMode="numeric"
               maxLength={1}
-              readOnly={locked}
+              readOnly={locked || disabled}
               value={value ?? ''}
               onChange={(e) => {
                 const digit = e.target.value.replace(/[^1-9]/g, '').slice(-1);
@@ -207,6 +181,8 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
   const rank = state.solvedOrder.indexOf(houseId);
   const locked = rank >= 0;
   const filled = isPuzzleAnswerFilled(puzzle, answer);
+  const attempts = remote?.puzzleId === puzzle.id ? (remote.attempts ?? 0) : 0;
+  const outOfAttempts = !locked && attempts >= PUZZLE_MAX_ATTEMPTS;
 
   function commit(next: PuzzleAnswerValue) {
     setAnswer(next);
@@ -225,7 +201,7 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
   }
 
   async function handleSubmit() {
-    if (submitting || locked || !filled) return;
+    if (submitting || locked || !filled || outOfAttempts) return;
     setSubmitting(true);
     try {
       const result = await submitPuzzleAnswer(puzzle.id, houseId, answer);
@@ -240,11 +216,10 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
       <div>
         <p className="font-gothic text-lg text-ink-black">{puzzle.title}</p>
         <p className="text-[11px] text-ink-500/60">
-          Day {puzzle.day} · 가장 먼저 정답을 맞힌 기숙사부터 100 · 80 · 60 · 40 점을 얻습니다.
+          Day {puzzle.day} · 가장 먼저 정답을 맞힌 기숙사부터 100 · 80 · 60 · 40 점을 얻습니다. 제출 기회는 기숙사당{' '}
+          {PUZZLE_MAX_ATTEMPTS} 번입니다.
         </p>
       </div>
-
-      <PuzzleLeaderboard solvedOrder={state.solvedOrder} />
 
       {puzzle.type === 'logicGrid' ? (
         <ol className="flex flex-col gap-1 text-xs leading-relaxed text-ink-900">
@@ -267,19 +242,32 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
       ) : (
         <>
           {puzzle.type === 'logicGrid' ? (
-            <LogicGridTable puzzle={puzzle} answer={answer as LogicGridAnswer} onChange={setLogicCell} />
+            <LogicGridTable puzzle={puzzle} answer={answer as LogicGridAnswer} onChange={setLogicCell} disabled={outOfAttempts} />
           ) : (
-            <SudokuGrid given={puzzle.given} answer={answer as SudokuAnswer} onChange={setSudokuCell} />
+            <SudokuGrid given={puzzle.given} answer={answer as SudokuAnswer} onChange={setSudokuCell} disabled={outOfAttempts} />
           )}
-          {wrongFlash && <p className="text-center text-xs font-bold text-seal-600">아직 정답이 아니에요. 다시 확인해 보세요.</p>}
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting || !filled}
-            className="tablet-btn tablet-btn-dark self-center px-5 py-2 text-sm font-bold disabled:opacity-40"
-          >
-            {submitting ? '채점 중…' : '정답 제출'}
-          </button>
+          {wrongFlash && !outOfAttempts && (
+            <p className="text-center text-xs font-bold text-seal-600">아직 정답이 아니에요. 다시 확인해 보세요.</p>
+          )}
+          {outOfAttempts ? (
+            <p className="rounded-lg border border-ink-700/20 bg-ink-700/5 px-3 py-2 text-center text-sm font-bold text-ink-700/70">
+              제출 기회를 모두 사용했습니다. ({PUZZLE_MAX_ATTEMPTS} / {PUZZLE_MAX_ATTEMPTS})
+            </p>
+          ) : (
+            <>
+              <p className="text-center text-[11px] text-ink-500/60">
+                제출 기회 {attempts} / {PUZZLE_MAX_ATTEMPTS}
+              </p>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting || !filled}
+                className="tablet-btn tablet-btn-dark self-center px-5 py-2 text-sm font-bold disabled:opacity-40"
+              >
+                {submitting ? '채점 중…' : '정답 제출'}
+              </button>
+            </>
+          )}
         </>
       )}
     </Card>

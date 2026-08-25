@@ -44,6 +44,9 @@ export const PUZZLE_CATEGORIES: PuzzleCategory[] = [
 /** Points awarded to the 1st/2nd/3rd/4th house to submit a fully correct answer. */
 export const PUZZLE_RANK_POINTS = [100, 80, 60, 40];
 
+/** Each house gets this many submit attempts per puzzle before being locked out. */
+export const PUZZLE_MAX_ATTEMPTS = 5;
+
 export const DAILY_PUZZLES: DailyPuzzle[] = [
   {
     id: 'puzzle1',

@@ -65,13 +65,42 @@ export interface KenKenPuzzle {
   cages: KenKenCage[];
 }
 
-export type DailyPuzzle = LogicGridPuzzle | SudokuPuzzle | KakuroPuzzle | KenKenPuzzle;
+export type FutoshikiOp = '<' | '>';
+
+export interface FutoshikiHConstraint {
+  row: number;
+  /** Relation between (row, col) and (row, col+1). */
+  col: number;
+  op: FutoshikiOp;
+}
+
+export interface FutoshikiVConstraint {
+  /** Relation between (row, col) and (row+1, col). */
+  row: number;
+  col: number;
+  op: FutoshikiOp;
+}
+
+export interface FutoshikiPuzzle {
+  id: string;
+  day: number;
+  type: 'futoshiki';
+  title: string;
+  size: number;
+  /** row-major; null marks a blank cell the player must fill in. */
+  given: (number | null)[][];
+  hConstraints: FutoshikiHConstraint[];
+  vConstraints: FutoshikiVConstraint[];
+}
+
+export type DailyPuzzle = LogicGridPuzzle | SudokuPuzzle | KakuroPuzzle | KenKenPuzzle | FutoshikiPuzzle;
 
 export type LogicGridAnswer = Record<PuzzleCategoryKey, (string | null)[]>;
 export type SudokuAnswer = (number | null)[][];
 export type KakuroAnswer = (number | null)[][];
 export type KenKenAnswer = (number | null)[][];
-export type PuzzleAnswerValue = LogicGridAnswer | SudokuAnswer | KakuroAnswer | KenKenAnswer;
+export type FutoshikiAnswer = (number | null)[][];
+export type PuzzleAnswerValue = LogicGridAnswer | SudokuAnswer | KakuroAnswer | KenKenAnswer | FutoshikiAnswer;
 
 export const PUZZLE_CATEGORIES: PuzzleCategory[] = [
   { key: 'house', label: '기숙사' },
@@ -200,6 +229,58 @@ export const DAILY_PUZZLES: DailyPuzzle[] = [
       { cells: [[5, 5]], op: null, target: 6 },
     ],
   },
+  {
+    id: 'puzzle5',
+    day: 5,
+    type: 'futoshiki',
+    title: '하우스컵 후토시키 퀴즈',
+    size: 9,
+    given: [
+      [null, null, null, null, null, 5, null, null, null],
+      [null, null, null, 4, null, null, null, null, 7],
+      [5, null, null, null, 2, null, null, null, null],
+      [null, null, null, null, null, 8, null, null, null],
+      [null, 7, 4, null, null, 1, null, null, null],
+      [null, null, null, 7, null, null, null, 6, null],
+      [null, 2, null, null, 4, null, 8, null, null],
+      [1, null, 3, null, null, null, null, null, null],
+      [null, 4, null, null, 8, null, null, null, 9],
+    ],
+    hConstraints: [
+      { row: 0, col: 0, op: '<' },
+      { row: 0, col: 3, op: '<' },
+      { row: 0, col: 4, op: '>' },
+      { row: 1, col: 6, op: '<' },
+      { row: 2, col: 6, op: '>' },
+      { row: 2, col: 7, op: '<' },
+      { row: 3, col: 3, op: '<' },
+      { row: 3, col: 6, op: '<' },
+      { row: 4, col: 0, op: '<' },
+      { row: 4, col: 7, op: '>' },
+      { row: 5, col: 2, op: '>' },
+      { row: 5, col: 3, op: '<' },
+      { row: 6, col: 2, op: '<' },
+      { row: 6, col: 5, op: '>' },
+      { row: 6, col: 7, op: '>' },
+      { row: 7, col: 4, op: '>' },
+      { row: 8, col: 3, op: '<' },
+    ],
+    vConstraints: [
+      { row: 0, col: 2, op: '<' },
+      { row: 0, col: 6, op: '<' },
+      { row: 1, col: 0, op: '<' },
+      { row: 1, col: 1, op: '<' },
+      { row: 1, col: 7, op: '>' },
+      { row: 4, col: 3, op: '<' },
+      { row: 4, col: 5, op: '<' },
+      { row: 5, col: 0, op: '<' },
+      { row: 6, col: 4, op: '<' },
+      { row: 6, col: 6, op: '>' },
+      { row: 7, col: 1, op: '>' },
+      { row: 7, col: 2, op: '<' },
+      { row: 7, col: 8, op: '<' },
+    ],
+  },
 ];
 
 export function puzzleById(id: string): DailyPuzzle | undefined {
@@ -217,6 +298,9 @@ export function emptyPuzzleAnswer(puzzle: DailyPuzzle): PuzzleAnswerValue {
   }
   if (puzzle.type === 'kakuro') {
     return puzzle.grid.map((row) => row.map(() => null));
+  }
+  if (puzzle.type === 'futoshiki') {
+    return puzzle.given.map((row) => [...row]);
   }
   return Array.from({ length: puzzle.size }, () => Array<number | null>(puzzle.size).fill(null));
 }
@@ -244,7 +328,14 @@ export function isPuzzleAnswerFilled(puzzle: DailyPuzzle, answer: PuzzleAnswerVa
     }
     return true;
   }
-  const a = answer as KenKenAnswer;
+  if (puzzle.type === 'kenken') {
+    const a = answer as KenKenAnswer;
+    return (
+      a.length === puzzle.size &&
+      a.every((row) => row.length === puzzle.size && row.every((v) => v !== null && v >= 1 && v <= puzzle.size))
+    );
+  }
+  const a = answer as FutoshikiAnswer;
   return (
     a.length === puzzle.size &&
     a.every((row) => row.length === puzzle.size && row.every((v) => v !== null && v >= 1 && v <= puzzle.size))
@@ -308,6 +399,36 @@ function isValidKenKenCompletion(puzzle: KenKenPuzzle, answer: KenKenAnswer): bo
   return true;
 }
 
+/** Futoshiki validity: every row/column holds 1..size exactly once, every given cell preserved, every inequality mark holds. */
+function isValidFutoshikiCompletion(puzzle: FutoshikiPuzzle, answer: FutoshikiAnswer): boolean {
+  const n = puzzle.size;
+  const isFullSet = (vals: (number | null | undefined)[]) =>
+    new Set(vals).size === n && vals.every((v) => typeof v === 'number' && v >= 1 && v <= n);
+  for (let i = 0; i < n; i++) {
+    if (!isFullSet(answer[i])) return false;
+    if (!isFullSet(answer.map((row) => row[i]))) return false;
+  }
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const given = puzzle.given[r][c];
+      if (given !== null && answer[r][c] !== given) return false;
+    }
+  }
+  for (const { row, col, op } of puzzle.hConstraints) {
+    const left = answer[row][col];
+    const right = answer[row][col + 1];
+    if (left === null || right === null) return false;
+    if (op === '<' ? !(left < right) : !(left > right)) return false;
+  }
+  for (const { row, col, op } of puzzle.vConstraints) {
+    const top = answer[row][col];
+    const bottom = answer[row + 1][col];
+    if (top === null || bottom === null) return false;
+    if (op === '<' ? !(top < bottom) : !(top > bottom)) return false;
+  }
+  return true;
+}
+
 export function isPuzzleAnswerCorrect(puzzle: DailyPuzzle, answer: PuzzleAnswerValue): boolean {
   if (puzzle.type === 'logicGrid') {
     const a = answer as LogicGridAnswer;
@@ -320,5 +441,8 @@ export function isPuzzleAnswerCorrect(puzzle: DailyPuzzle, answer: PuzzleAnswerV
   if (puzzle.type === 'kakuro') {
     return isValidKakuroCompletion(puzzle.hruns, puzzle.vruns, answer as KakuroAnswer);
   }
-  return isValidKenKenCompletion(puzzle, answer as KenKenAnswer);
+  if (puzzle.type === 'kenken') {
+    return isValidKenKenCompletion(puzzle, answer as KenKenAnswer);
+  }
+  return isValidFutoshikiCompletion(puzzle, answer as FutoshikiAnswer);
 }

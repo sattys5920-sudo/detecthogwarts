@@ -7,6 +7,9 @@ import {
   PUZZLE_MAX_ATTEMPTS,
   PUZZLE_RANK_POINTS,
   type DailyPuzzle,
+  type FutoshikiAnswer,
+  type FutoshikiOp,
+  type FutoshikiPuzzle,
   type KakuroAnswer,
   type KakuroPuzzle,
   type KenKenAnswer,
@@ -316,6 +319,99 @@ function KenKenGrid({
   );
 }
 
+function futoshikiTemplate(n: number, gapPx: number): string {
+  const parts: string[] = [];
+  for (let i = 0; i < n; i++) {
+    parts.push('1fr');
+    if (i < n - 1) parts.push(`${gapPx}px`);
+  }
+  return parts.join(' ');
+}
+
+function FutoshikiGrid({
+  puzzle,
+  answer,
+  onChange,
+  disabled,
+}: {
+  puzzle: FutoshikiPuzzle;
+  answer: FutoshikiAnswer;
+  onChange: (row: number, col: number, value: number | null) => void;
+  disabled?: boolean;
+}) {
+  const n = puzzle.size;
+  const hMap: Record<string, FutoshikiOp> = {};
+  puzzle.hConstraints.forEach((c) => {
+    hMap[`${c.row}_${c.col}`] = c.op;
+  });
+  const vMap: Record<string, FutoshikiOp> = {};
+  puzzle.vConstraints.forEach((c) => {
+    vMap[`${c.row}_${c.col}`] = c.op;
+  });
+  const template = futoshikiTemplate(n, 11);
+
+  const cells = [];
+  for (let gr = 0; gr < 2 * n - 1; gr++) {
+    for (let gc = 0; gc < 2 * n - 1; gc++) {
+      const isRowCell = gr % 2 === 0;
+      const isColCell = gc % 2 === 0;
+      if (isRowCell && isColCell) {
+        const r = gr / 2;
+        const c = gc / 2;
+        const given = puzzle.given[r][c];
+        const locked = given !== null;
+        const value = locked ? given : answer[r]?.[c];
+        cells.push(
+          <input
+            key={`n-${gr}-${gc}`}
+            type="text"
+            inputMode="numeric"
+            maxLength={1}
+            readOnly={locked || disabled}
+            value={value ?? ''}
+            onChange={(e) => {
+              const digit = e.target.value.replace(new RegExp(`[^1-${n}]`, 'g'), '').slice(-1);
+              onChange(r, c, digit ? Number(digit) : null);
+            }}
+            className={`aspect-square w-full border border-ink-700/20 text-center text-[11px] font-bold outline-none ${
+              locked ? 'bg-paper-200 text-ink-900' : 'bg-paper-50 text-seal-600 focus:bg-seal-600/10'
+            }`}
+          />,
+        );
+      } else if (!isRowCell && isColCell) {
+        const r = (gr - 1) / 2;
+        const c = gc / 2;
+        const op = vMap[`${r}_${c}`];
+        cells.push(
+          <div key={`v-${gr}-${gc}`} className="flex items-center justify-center text-[10px] leading-none font-bold text-seal-600">
+            {op ? (op === '<' ? '^' : 'v') : ''}
+          </div>,
+        );
+      } else if (isRowCell && !isColCell) {
+        const r = gr / 2;
+        const c = (gc - 1) / 2;
+        const op = hMap[`${r}_${c}`];
+        cells.push(
+          <div key={`h-${gr}-${gc}`} className="flex items-center justify-center text-[10px] leading-none font-bold text-seal-600">
+            {op ?? ''}
+          </div>,
+        );
+      } else {
+        cells.push(<div key={`s-${gr}-${gc}`} />);
+      }
+    }
+  }
+
+  return (
+    <div
+      className="mx-auto grid w-full max-w-[320px] border-2 border-ink-900 bg-paper-50 p-1"
+      style={{ gridTemplateColumns: template, gridTemplateRows: template }}
+    >
+      {cells}
+    </div>
+  );
+}
+
 function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: string; state: PuzzleState }) {
   const [remote, setRemote] = useState<PuzzleAnswerDoc | null>(null);
   const [answer, setAnswer] = useState<PuzzleAnswerValue>(() => emptyPuzzleAnswer(puzzle));
@@ -346,7 +442,7 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
   }
 
   function setGridCell(row: number, col: number, value: number | null) {
-    const a = answer as SudokuAnswer | KakuroAnswer | KenKenAnswer;
+    const a = answer as SudokuAnswer | KakuroAnswer | KenKenAnswer | FutoshikiAnswer;
     commit(a.map((rowVals, r) => (r === row ? rowVals.map((v, c) => (c === col ? value : v)) : rowVals)));
   }
 
@@ -397,6 +493,12 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
           위에 적힌 숫자·기호대로 계산한 값이 나와야 해요 (× = 곱, + = 합, 기호 없음 = 그 칸 하나의 값).
         </p>
       )}
+      {puzzle.type === 'futoshiki' && (
+        <p className="text-xs leading-relaxed text-ink-900">
+          가로줄 · 세로줄마다 1~{puzzle.size}이 한 번씩 들어가야 합니다. 칸 사이의 부등호(&lt;, &gt;, ^, v)는
+          꺾인 쪽(뾰족한 쪽)이 항상 더 작은 숫자를 가리키도록 지켜야 하고, 미리 채워진 숫자는 바꿀 수 없어요.
+        </p>
+      )}
 
       {locked ? (
         <p className="rounded-lg border border-seal-500/40 bg-seal-600/10 px-3 py-2 text-center text-sm font-bold text-seal-600">
@@ -415,6 +517,9 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
           )}
           {puzzle.type === 'kenken' && (
             <KenKenGrid puzzle={puzzle} answer={answer as KenKenAnswer} onChange={setGridCell} disabled={outOfAttempts} />
+          )}
+          {puzzle.type === 'futoshiki' && (
+            <FutoshikiGrid puzzle={puzzle} answer={answer as FutoshikiAnswer} onChange={setGridCell} disabled={outOfAttempts} />
           )}
           {wrongFlash && !outOfAttempts && (
             <p className="text-center text-xs font-bold text-seal-600">아직 정답이 아니에요. 다시 확인해 보세요.</p>

@@ -349,6 +349,15 @@ export default function ForestPage() {
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, 'true');
     game.adjustStat('stamina', -10);
+
+    const mySeat = party.seats.find((p) => p?.id === game.playerId);
+    if (mySeat) {
+      const hpRatio = mySeat.maxHp > 0 ? mySeat.hp / mySeat.maxHp : 0;
+      const seatMaxMp = maxMpFor(mySeat.intelligence);
+      const mpRatio = seatMaxMp > 0 ? mySeat.mp / seatMaxMp : 0;
+      game.setStatRatio('hp', hpRatio);
+      game.setStatRatio('mp', mpRatio);
+    }
   }, [party, roomId, game]);
 
   // Ticks once a second while a vote is open so the countdown display stays live.

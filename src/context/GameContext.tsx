@@ -133,6 +133,7 @@ interface GameContextValue extends PlayerState {
   setPet: (pet: string) => void;
   adjustStat: (key: keyof PlayerStats, delta: number) => void;
   growMaxStat: (key: MaxStatKey, delta: number) => void;
+  setStatRatio: (key: ResourceStatKey, ratio: number) => void;
   advanceDay: () => void;
   setDeductionSolved: (solved: boolean) => void;
   resetPlayer: () => void;
@@ -309,6 +310,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, stats: { ...prev.stats, [key]: clampStat(prev.stats, key, prev.stats[key] + delta) } }));
   }, []);
 
+  /** Sets a resource stat to a fraction of its (possibly just-grown) ceiling — reads prev.stats functionally so it stays correct even when queued alongside other stat updates in the same batch. */
+  const setStatRatio = useCallback((key: ResourceStatKey, ratio: number) => {
+    setState((prev) => {
+      const maxKey = RESOURCE_MAX_KEY[key];
+      const value = Math.round(Math.max(0, Math.min(1, ratio)) * prev.stats[maxKey]);
+      return { ...prev, stats: { ...prev.stats, [key]: clampStat(prev.stats, key, value) } };
+    });
+  }, []);
+
   /** Raises a resource's ceiling (e.g. maxHp) and grants the same amount to its current value, like the forest's own maxHp events. */
   const growMaxStat = useCallback((key: MaxStatKey, delta: number) => {
     const currentKey = (Object.keys(RESOURCE_MAX_KEY) as ResourceStatKey[]).find((k) => RESOURCE_MAX_KEY[k] === key)!;
@@ -382,6 +392,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setGrade,
     setPet,
     adjustStat,
+    setStatRatio,
     growMaxStat,
     advanceDay,
     setDeductionSolved,

@@ -154,6 +154,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
+  // Keeps this tab's in-memory state in sync with another tab's writes to the same player, so a
+  // stale tab doesn't later clobber a fresher stat change by writing its own outdated snapshot back.
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key !== STORAGE_KEY || !e.newValue) return;
+      setState(loadState());
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   useEffect(() => {
     if (!state.playerId) return;
     const unsubscribe = listenPlayer(state.playerId, (record) => {

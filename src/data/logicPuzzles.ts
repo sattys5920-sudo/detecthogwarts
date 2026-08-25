@@ -93,14 +93,27 @@ export interface FutoshikiPuzzle {
   vConstraints: FutoshikiVConstraint[];
 }
 
-export type DailyPuzzle = LogicGridPuzzle | SudokuPuzzle | KakuroPuzzle | KenKenPuzzle | FutoshikiPuzzle;
+export interface WordProblemPuzzle {
+  id: string;
+  day: number;
+  type: 'wordProblem';
+  title: string;
+  /** The full story-problem text, shown as-is (line breaks preserved). */
+  prompt: string;
+  /** Unit label shown next to the answer input, e.g. '갈레온'. */
+  unit: string;
+  answer: number;
+}
+
+export type DailyPuzzle = LogicGridPuzzle | SudokuPuzzle | KakuroPuzzle | KenKenPuzzle | FutoshikiPuzzle | WordProblemPuzzle;
 
 export type LogicGridAnswer = Record<PuzzleCategoryKey, (string | null)[]>;
 export type SudokuAnswer = (number | null)[][];
 export type KakuroAnswer = (number | null)[][];
 export type KenKenAnswer = (number | null)[][];
 export type FutoshikiAnswer = (number | null)[][];
-export type PuzzleAnswerValue = LogicGridAnswer | SudokuAnswer | KakuroAnswer | KenKenAnswer | FutoshikiAnswer;
+export type WordProblemAnswer = number | null;
+export type PuzzleAnswerValue = LogicGridAnswer | SudokuAnswer | KakuroAnswer | KenKenAnswer | FutoshikiAnswer | WordProblemAnswer;
 
 export const PUZZLE_CATEGORIES: PuzzleCategory[] = [
   { key: 'house', label: '기숙사' },
@@ -281,6 +294,16 @@ export const DAILY_PUZZLES: DailyPuzzle[] = [
       { row: 7, col: 8, op: '<' },
     ],
   },
+  {
+    id: 'puzzle6',
+    day: 6,
+    type: 'wordProblem',
+    title: '하우스컵 튜토리얼 퀴즈',
+    prompt:
+      '청년 크리스와 제롬이 위대한 주방장 샤를로트의 농장에 고용되었다. 하루 동안 씨를 뿌리기로 했으며, 600평의 밭을 정확히 반씩 나누어 일하기로 했다. 크리스는 서쪽부터 일을 하고, 제롬은 동쪽부터 일을 했다.\n\n땅을 갈 때 크리스는 30평에 20분, 제롬은 40분이 걸렸으나, 씨를 뿌리는 속도는 제롬이 크리스보다 3배 빨랐다고 한다. 2명이 일한 값으로 총 100갈레온을 받고, 일한 만큼 나누어 가지기로 했다.\n\n제롬은 얼마를 가져가야 할까?',
+    unit: '갈레온',
+    answer: 50,
+  },
 ];
 
 export function puzzleById(id: string): DailyPuzzle | undefined {
@@ -301,6 +324,9 @@ export function emptyPuzzleAnswer(puzzle: DailyPuzzle): PuzzleAnswerValue {
   }
   if (puzzle.type === 'futoshiki') {
     return puzzle.given.map((row) => [...row]);
+  }
+  if (puzzle.type === 'wordProblem') {
+    return null;
   }
   return Array.from({ length: puzzle.size }, () => Array<number | null>(puzzle.size).fill(null));
 }
@@ -335,11 +361,14 @@ export function isPuzzleAnswerFilled(puzzle: DailyPuzzle, answer: PuzzleAnswerVa
       a.every((row) => row.length === puzzle.size && row.every((v) => v !== null && v >= 1 && v <= puzzle.size))
     );
   }
-  const a = answer as FutoshikiAnswer;
-  return (
-    a.length === puzzle.size &&
-    a.every((row) => row.length === puzzle.size && row.every((v) => v !== null && v >= 1 && v <= puzzle.size))
-  );
+  if (puzzle.type === 'futoshiki') {
+    const a = answer as FutoshikiAnswer;
+    return (
+      a.length === puzzle.size &&
+      a.every((row) => row.length === puzzle.size && row.every((v) => v !== null && v >= 1 && v <= puzzle.size))
+    );
+  }
+  return typeof (answer as WordProblemAnswer) === 'number';
 }
 
 /** Standard Sudoku validity: every given clue preserved, every row/column/3x3 box holds 1-9 exactly once. */
@@ -444,5 +473,8 @@ export function isPuzzleAnswerCorrect(puzzle: DailyPuzzle, answer: PuzzleAnswerV
   if (puzzle.type === 'kenken') {
     return isValidKenKenCompletion(puzzle, answer as KenKenAnswer);
   }
-  return isValidFutoshikiCompletion(puzzle, answer as FutoshikiAnswer);
+  if (puzzle.type === 'futoshiki') {
+    return isValidFutoshikiCompletion(puzzle, answer as FutoshikiAnswer);
+  }
+  return (answer as WordProblemAnswer) === puzzle.answer;
 }

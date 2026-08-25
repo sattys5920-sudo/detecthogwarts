@@ -19,6 +19,8 @@ import {
   type PuzzleAnswerValue,
   type PuzzleCategoryKey,
   type SudokuAnswer,
+  type WordProblemAnswer,
+  type WordProblemPuzzle,
 } from '../data/logicPuzzles';
 import {
   activatePuzzle,
@@ -412,6 +414,41 @@ function FutoshikiGrid({
   );
 }
 
+function WordProblemInput({
+  puzzle,
+  answer,
+  onChange,
+  disabled,
+}: {
+  puzzle: WordProblemPuzzle;
+  answer: WordProblemAnswer;
+  onChange: (value: number | null) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="whitespace-pre-wrap rounded-lg border border-ink-700/15 bg-paper-100/60 px-3 py-2.5 text-xs leading-relaxed text-ink-900">
+        {puzzle.prompt}
+      </p>
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          inputMode="numeric"
+          readOnly={disabled}
+          value={answer ?? ''}
+          onChange={(e) => {
+            const digits = e.target.value.replace(/[^0-9]/g, '');
+            onChange(digits ? Number(digits) : null);
+          }}
+          placeholder="숫자만 입력"
+          className="w-full min-w-0 flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-3 py-2 text-sm font-bold text-seal-600 outline-none focus:border-seal-500 disabled:opacity-60"
+        />
+        <span className="flex-none text-sm font-bold text-ink-700/70">{puzzle.unit}</span>
+      </div>
+    </div>
+  );
+}
+
 function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: string; state: PuzzleState }) {
   const [remote, setRemote] = useState<PuzzleAnswerDoc | null>(null);
   const [answer, setAnswer] = useState<PuzzleAnswerValue>(() => emptyPuzzleAnswer(puzzle));
@@ -444,6 +481,10 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
   function setGridCell(row: number, col: number, value: number | null) {
     const a = answer as SudokuAnswer | KakuroAnswer | KenKenAnswer | FutoshikiAnswer;
     commit(a.map((rowVals, r) => (r === row ? rowVals.map((v, c) => (c === col ? value : v)) : rowVals)));
+  }
+
+  function setWordProblemAnswer(value: number | null) {
+    commit(value);
   }
 
   async function handleSubmit() {
@@ -520,6 +561,9 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
           )}
           {puzzle.type === 'futoshiki' && (
             <FutoshikiGrid puzzle={puzzle} answer={answer as FutoshikiAnswer} onChange={setGridCell} disabled={outOfAttempts} />
+          )}
+          {puzzle.type === 'wordProblem' && (
+            <WordProblemInput puzzle={puzzle} answer={answer as WordProblemAnswer} onChange={setWordProblemAnswer} disabled={outOfAttempts} />
           )}
           {wrongFlash && !outOfAttempts && (
             <p className="text-center text-xs font-bold text-seal-600">아직 정답이 아니에요. 다시 확인해 보세요.</p>

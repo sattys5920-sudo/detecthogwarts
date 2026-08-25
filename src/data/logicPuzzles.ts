@@ -10,6 +10,8 @@ export interface LogicGridPuzzle {
   day: number;
   type: 'logicGrid';
   title: string;
+  /** Overrides PUZZLE_RANK_POINTS for this puzzle alone (e.g. an equal-score tutorial round). Omit to use the default. */
+  rankPoints?: number[];
   /** Column headers for the answer table — a height in cm, left (shortest) to right (tallest). */
   heights: number[];
   categories: PuzzleCategory[];
@@ -23,6 +25,8 @@ export interface SudokuPuzzle {
   day: number;
   type: 'sudoku';
   title: string;
+  /** Overrides PUZZLE_RANK_POINTS for this puzzle alone (e.g. an equal-score tutorial round). Omit to use the default. */
+  rankPoints?: number[];
   /** 9x9 grid, row-major; 0 marks a blank cell the player must fill in. */
   given: number[][];
 }
@@ -38,6 +42,8 @@ export interface KakuroPuzzle {
   day: number;
   type: 'kakuro';
   title: string;
+  /** Overrides PUZZLE_RANK_POINTS for this puzzle alone (e.g. an equal-score tutorial round). Omit to use the default. */
+  rankPoints?: number[];
   rows: number;
   cols: number;
   /** row-major; true = black/clue cell, false = fillable white cell. */
@@ -61,6 +67,8 @@ export interface KenKenPuzzle {
   day: number;
   type: 'kenken';
   title: string;
+  /** Overrides PUZZLE_RANK_POINTS for this puzzle alone (e.g. an equal-score tutorial round). Omit to use the default. */
+  rankPoints?: number[];
   size: number;
   cages: KenKenCage[];
 }
@@ -86,6 +94,8 @@ export interface FutoshikiPuzzle {
   day: number;
   type: 'futoshiki';
   title: string;
+  /** Overrides PUZZLE_RANK_POINTS for this puzzle alone (e.g. an equal-score tutorial round). Omit to use the default. */
+  rankPoints?: number[];
   size: number;
   /** row-major; null marks a blank cell the player must fill in. */
   given: (number | null)[][];
@@ -98,6 +108,8 @@ export interface WordProblemPuzzle {
   day: number;
   type: 'wordProblem';
   title: string;
+  /** Overrides PUZZLE_RANK_POINTS for this puzzle alone (e.g. an equal-score tutorial round). Omit to use the default. */
+  rankPoints?: number[];
   /** The full story-problem text, shown as-is (line breaks preserved). */
   prompt: string;
   /** Unit label shown next to the answer input, e.g. '갈레온'. */
@@ -299,6 +311,7 @@ export const DAILY_PUZZLES: DailyPuzzle[] = [
     day: 6,
     type: 'wordProblem',
     title: '하우스컵 튜토리얼 퀴즈',
+    rankPoints: [10, 10, 10, 10],
     prompt:
       '청년 크리스와 제롬이 위대한 주방장 샤를로트의 농장에 고용되었다. 하루 동안 씨를 뿌리기로 했으며, 600평의 밭을 정확히 반씩 나누어 일하기로 했다. 크리스는 서쪽부터 일을 하고, 제롬은 동쪽부터 일을 했다.\n\n땅을 갈 때 크리스는 30평에 20분, 제롬은 40분이 걸렸으나, 씨를 뿌리는 속도는 제롬이 크리스보다 3배 빨랐다고 한다. 2명이 일한 값으로 총 100갈레온을 받고, 일한 만큼 나누어 가지기로 했다.\n\n제롬은 얼마를 가져가야 할까?',
     unit: '갈레온',

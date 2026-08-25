@@ -461,6 +461,7 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
     if (remote && remote.puzzleId === puzzle.id) setAnswer(remote.answer);
   }, [remote, puzzle.id]);
 
+  const rankPoints = puzzle.rankPoints ?? PUZZLE_RANK_POINTS;
   const rank = state.solvedOrder.indexOf(houseId);
   const locked = rank >= 0;
   const filled = isPuzzleAnswerFilled(puzzle, answer);
@@ -503,7 +504,7 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
       <div>
         <p className="font-gothic text-lg text-ink-black">{puzzle.title}</p>
         <p className="text-[11px] text-ink-500/60">
-          Day {puzzle.day} · 가장 먼저 정답을 맞힌 기숙사부터 100 · 80 · 60 · 40 점을 얻습니다. 제출 기회는 기숙사당{' '}
+          Day {puzzle.day} · 가장 먼저 정답을 맞힌 기숙사부터 {rankPoints.join(' · ')} 점을 얻습니다. 제출 기회는 기숙사당{' '}
           {PUZZLE_MAX_ATTEMPTS} 번입니다.
         </p>
       </div>
@@ -543,7 +544,7 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
 
       {locked ? (
         <p className="rounded-lg border border-seal-500/40 bg-seal-600/10 px-3 py-2 text-center text-sm font-bold text-seal-600">
-          정답입니다! {rank + 1} 등 · +{PUZZLE_RANK_POINTS[rank] ?? 0} 점
+          정답입니다! {rank + 1} 등 · +{rankPoints[rank] ?? 0} 점
         </p>
       ) : (
         <>

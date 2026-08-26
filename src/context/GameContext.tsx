@@ -67,6 +67,9 @@ const ADMIN_NICKNAME = '호그와트';
 const ADMIN_PLAYER_ID = 'admin-canonical';
 const ADMIN_ZERO_SCORES: Record<HouseId, number> = { flame: 0, moonlight: 0, earth: 0, wind: 0 };
 
+/** Hard ceiling every stat (and every resource's growable max) is clamped to. */
+export const MAX_STAT_VALUE = 500;
+
 const defaultStats: PlayerStats = {
   hp: 100, maxHp: 100,
   mp: 100, maxMp: 100,
@@ -106,7 +109,7 @@ function loadState(): PlayerState {
 function clampStat(stats: PlayerStats, key: keyof PlayerStats, value: number): number {
   const maxKey = (RESOURCE_MAX_KEY as Partial<Record<keyof PlayerStats, MaxStatKey>>)[key];
   if (maxKey) return Math.max(0, Math.min(stats[maxKey], value));
-  return Math.max(0, value);
+  return Math.max(0, Math.min(MAX_STAT_VALUE, value));
 }
 
 export type OnboardingStage = 'account' | 'test' | 'patronusTest' | 'profile' | 'done';
@@ -330,17 +333,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  /** Raises a resource's ceiling (e.g. maxHp) and grants the same amount to its current value, like the forest's own maxHp events. */
+  /** Raises a resource's ceiling (e.g. maxHp) and grants the same amount to its current value, like the forest's own maxHp events. Ceiling never exceeds MAX_STAT_VALUE. */
   const growMaxStat = useCallback((key: MaxStatKey, delta: number) => {
     const currentKey = (Object.keys(RESOURCE_MAX_KEY) as ResourceStatKey[]).find((k) => RESOURCE_MAX_KEY[k] === key)!;
-    setState((prev) => ({
-      ...prev,
-      stats: {
-        ...prev.stats,
-        [key]: Math.max(1, prev.stats[key] + delta),
-        [currentKey]: Math.max(0, prev.stats[currentKey] + delta),
-      },
-    }));
+    setState((prev) => {
+      const nextMax = Math.min(MAX_STAT_VALUE, Math.max(1, prev.stats[key] + delta));
+      return {
+        ...prev,
+        stats: {
+          ...prev.stats,
+          [key]: nextMax,
+          [currentKey]: Math.min(nextMax, Math.max(0, prev.stats[currentKey] + delta)),
+        },
+      };
+    });
   }, []);
 
   const advanceDay = useCallback(() => {

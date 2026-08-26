@@ -76,8 +76,14 @@ export function subscribeParty(roomId: string, callback: (party: ForestParty) =>
   };
 }
 
-export async function joinParty(roomId: string, playerId: string, nickname: string, patronus: PatronusId | null = null): Promise<void> {
-  await transact(roomId, (current) => joinSeat(current, playerId, nickname || '이름 없음', patronus));
+export async function joinParty(
+  roomId: string,
+  playerId: string,
+  nickname: string,
+  patronus: PatronusId | null = null,
+  profileSpellPower = 0,
+): Promise<void> {
+  await transact(roomId, (current) => joinSeat(current, playerId, nickname || '이름 없음', patronus, profileSpellPower));
 }
 
 export async function leaveParty(roomId: string, playerId: string): Promise<void> {

@@ -137,6 +137,8 @@ export interface Player {
   spellPower: number;
   /** Drives evasion against enemy attacks and the effectiveness of defense skills. */
   agility: number;
+  /** The player's real (non-forest) profile spell power at the moment they joined — later stages scale monster strength up when the seated party's average is high. Not used for anything in-combat. */
+  profileSpellPower: number;
   skillPoints: number;
   skillLevels: Record<SkillId, number>;
   /** Admin-assigned Patronus species; null until an admin sets one. */
@@ -148,7 +150,7 @@ export interface Player {
   ready: boolean;
 }
 
-export function createPlayer(id: string, nickname: string, patronus: PatronusId | null = null): Player {
+export function createPlayer(id: string, nickname: string, patronus: PatronusId | null = null, profileSpellPower = 0): Player {
   return {
     id,
     nickname,
@@ -158,6 +160,7 @@ export function createPlayer(id: string, nickname: string, patronus: PatronusId 
     intelligence: 5,
     spellPower: 5,
     agility: 5,
+    profileSpellPower,
     skillPoints: 0,
     skillLevels: emptySkillLevels(),
     patronus,

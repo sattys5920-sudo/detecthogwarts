@@ -113,16 +113,18 @@ const SCALE_BY_SIZE: Record<number, { hp: number; dc: number; atkMin: number; at
   4: { hp: 900, dc: 20, atkMin: 45, atkMax: 60 },
 };
 
-export function spawnBoss(template: BossTemplate, partySize: number): Monster {
+/** `powerScale` boosts hp/attack beyond the party-size baseline — used for the "strong party attracts a stronger boss" late-stage scaling; defenseDC is left as-is since it's a small fixed roll target, not a ratio. */
+export function spawnBoss(template: BossTemplate, partySize: number, powerScale = 1): Monster {
   const scale = SCALE_BY_SIZE[Math.min(4, Math.max(2, partySize))];
+  const hp = Math.round(scale.hp * powerScale);
   return {
     templateId: template.id,
     name: template.name,
-    hp: scale.hp,
-    maxHp: scale.hp,
+    hp,
+    maxHp: hp,
     defenseDC: scale.dc,
-    attackMin: scale.atkMin,
-    attackMax: scale.atkMax,
+    attackMin: Math.round(scale.atkMin * powerScale),
+    attackMax: Math.round(scale.atkMax * powerScale),
     abilities: template.phases[0].abilities,
     statusEffects: [],
     shield: 0,

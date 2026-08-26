@@ -7,7 +7,7 @@ import Letterhead from '../components/Letterhead';
 import PushSetup from '../components/PushSetup';
 import SectionTitle from '../components/SectionTitle';
 import { useBackgroundAudio } from '../context/BackgroundAudioContext';
-import { useGame } from '../context/GameContext';
+import { MAX_STAT_VALUE, useGame } from '../context/GameContext';
 import { PATRONUS_ICONS } from '../data/patronusIcons';
 import { HOUSES, SCHOOL_NAME } from '../data/school';
 import { listenHouseCupScores, type HouseCupScores } from '../firebase/houseCup';
@@ -268,9 +268,9 @@ export default function ProfilePage() {
               <div key={s.key} className="flex items-center gap-2 text-xs">
                 <span className="w-16 flex-none text-ink-500/70">{s.label}</span>
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full border border-ink-700/15 bg-paper-200">
-                  <div className="h-full bg-ink-black transition-all duration-300" style={{ width: `${Math.min(100, value)}%` }} />
+                  <div className="h-full bg-ink-black transition-all duration-300" style={{ width: `${Math.min(100, (value / MAX_STAT_VALUE) * 100)}%` }} />
                 </div>
-                <span className="w-14 flex-none text-right font-mono text-ink-red">{value}</span>
+                <span className="w-14 flex-none text-right font-mono text-ink-red">{value}/{MAX_STAT_VALUE}</span>
               </div>
             );
           })}

@@ -325,18 +325,18 @@ export default function ForestPage() {
 
   useEffect(() => {
     if (!game.playerId || !VALID_ROOMS.includes(roomId) || game.isAdmin) return;
-    joinParty(roomId, game.playerId, game.nickname, game.patronus).catch((e) => {
+    joinParty(roomId, game.playerId, game.nickname, game.patronus, game.stats.spellPower).catch((e) => {
       setJoinError(e instanceof ForestFullError ? e.message : '입장에 실패했습니다. 다시 시도해 주세요.');
     });
-  }, [roomId, game.playerId, game.nickname, game.patronus, game.isAdmin]);
+  }, [roomId, game.playerId, game.nickname, game.patronus, game.isAdmin, game.stats.spellPower]);
 
   useEffect(() => {
     if (!party || party.status !== 'cleared' || !party.seats.some((p) => p?.id === game.playerId)) return;
     const key = `arcanum-forest-reward-${roomId}-${party.updatedAt}`;
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, 'true');
-    game.adjustStat('intelligence', 5);
-    game.adjustStat('spellPower', 5);
+    game.adjustStat('intelligence', 25);
+    game.adjustStat('spellPower', 25);
     game.adjustStat('agility', 5);
     game.growMaxStat('maxStamina', 5);
     game.growMaxStat('maxHp', 5);
@@ -581,7 +581,7 @@ export default function ForestPage() {
             )}
             {cleared && (
               <p className="mt-3 text-xs text-seal-600">
-                파티 전원 지능 +5 · 주문 공격력 +5 · 민첩 +5 · 최대 스태미나 +5 · 최대 체력 +5 · 최대 MP +5, 스킬 포인트 3 개 획득 (바로 사용 가능)
+                파티 전원 지능 +25 · 주문 공격력 +25 · 민첩 +5 · 최대 스태미나 +5 · 최대 체력 +5 · 최대 MP +5, 스킬 포인트 3 개 획득 (바로 사용 가능)
               </p>
             )}
           </Card>

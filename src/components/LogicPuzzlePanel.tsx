@@ -26,24 +26,26 @@ import { HOUSES } from '../data/school';
 import type { House } from '../types/game';
 import {
   activatePuzzle,
-  listenHouseAnswer,
+  listenHouseAttempts,
+  listenPlayerDraft,
   listenPuzzleState,
   saveDraftAnswer,
   submitPuzzleAnswer,
-  type PuzzleAnswerDoc,
+  type PuzzleAttemptDoc,
+  type PuzzleDraftDoc,
   type PuzzleState,
 } from '../firebase/logicPuzzle';
 import Card from './Card';
 
 function HouseStatusRow({ puzzle, house, state }: { puzzle: DailyPuzzle; house: House; state: PuzzleState }) {
-  const [answer, setAnswer] = useState<PuzzleAnswerDoc | null>(null);
+  const [attemptDoc, setAttemptDoc] = useState<PuzzleAttemptDoc | null>(null);
 
-  useEffect(() => listenHouseAnswer(puzzle.id, house.id, setAnswer), [puzzle.id, house.id]);
+  useEffect(() => listenHouseAttempts(puzzle.id, house.id, setAttemptDoc), [puzzle.id, house.id]);
 
   const rankPoints = puzzle.rankPoints ?? PUZZLE_RANK_POINTS;
   const rank = state.solvedOrder.indexOf(house.id);
   const solved = rank >= 0;
-  const attempts = answer?.puzzleId === puzzle.id ? (answer.attempts ?? 0) : 0;
+  const attempts = attemptDoc?.puzzleId === puzzle.id ? (attemptDoc.attempts ?? 0) : 0;
   const outOfAttempts = !solved && attempts >= PUZZLE_MAX_ATTEMPTS;
 
   let statusLabel: string;
@@ -501,42 +503,41 @@ function WordProblemInput({
   );
 }
 
-function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: string; state: PuzzleState }) {
-  const [remote, setRemote] = useState<PuzzleAnswerDoc | null>(null);
+function PuzzleCard({ puzzle, houseId, playerId, state }: { puzzle: DailyPuzzle; houseId: string; playerId: string; state: PuzzleState }) {
+  const [myDraft, setMyDraft] = useState<PuzzleDraftDoc | null>(null);
+  const [attemptDoc, setAttemptDoc] = useState<PuzzleAttemptDoc | null>(null);
   const [answer, setAnswer] = useState<PuzzleAnswerValue>(() => emptyPuzzleAnswer(puzzle));
   const [wrongFlash, setWrongFlash] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
-  // The draft is shared per-house, so multiple housemates can be filling in the same grid at once.
-  // Without this, an older remote snapshot arriving after a newer local keystroke (a normal race when
-  // several people type around the same time) would silently revert cells the player just filled in —
-  // looking like "the grid is full but submit does nothing." Only adopt a remote update that's at
-  // least as new as our own last local edit.
+  // The draft is personal (keyed by this player, not the house), so no housemate's typing can ever
+  // race with it. We still guard against our own late-arriving echo reverting a newer local keystroke.
   const localEditAtRef = useRef(0);
 
   useEffect(() => {
     setAnswer(emptyPuzzleAnswer(puzzle));
     localEditAtRef.current = 0;
   }, [puzzle.id]);
-  useEffect(() => listenHouseAnswer(puzzle.id, houseId, setRemote), [puzzle.id, houseId]);
+  useEffect(() => listenPlayerDraft(puzzle.id, playerId, setMyDraft), [puzzle.id, playerId]);
+  useEffect(() => listenHouseAttempts(puzzle.id, houseId, setAttemptDoc), [puzzle.id, houseId]);
   useEffect(() => {
-    if (remote && remote.puzzleId === puzzle.id && (remote.updatedAt ?? 0) >= localEditAtRef.current) {
-      setAnswer(remote.answer);
+    if (myDraft && myDraft.puzzleId === puzzle.id && (myDraft.updatedAt ?? 0) >= localEditAtRef.current) {
+      setAnswer(myDraft.answer);
     }
-  }, [remote, puzzle.id]);
+  }, [myDraft, puzzle.id]);
 
   const rankPoints = puzzle.rankPoints ?? PUZZLE_RANK_POINTS;
   const rank = state.solvedOrder.indexOf(houseId);
   const locked = rank >= 0;
   const filled = isPuzzleAnswerFilled(puzzle, answer);
-  const attempts = remote?.puzzleId === puzzle.id ? (remote.attempts ?? 0) : 0;
+  const attempts = attemptDoc?.puzzleId === puzzle.id ? (attemptDoc.attempts ?? 0) : 0;
   const outOfAttempts = !locked && attempts >= PUZZLE_MAX_ATTEMPTS;
 
   function commit(next: PuzzleAnswerValue) {
     setAnswer(next);
     setWrongFlash(false);
     localEditAtRef.current = Date.now();
-    saveDraftAnswer(puzzle.id, houseId, next);
+    saveDraftAnswer(puzzle.id, playerId, houseId, next);
   }
 
   function setLogicCell(key: PuzzleCategoryKey, i: number, value: string) {
@@ -675,7 +676,15 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
   );
 }
 
-export default function LogicPuzzlePanel({ houseId, isAdmin }: { houseId: string | null; isAdmin: boolean }) {
+export default function LogicPuzzlePanel({
+  houseId,
+  playerId,
+  isAdmin,
+}: {
+  houseId: string | null;
+  playerId: string | null;
+  isAdmin: boolean;
+}) {
   const [state, setState] = useState<PuzzleState | null>(null);
 
   useEffect(() => listenPuzzleState(setState), []);
@@ -687,7 +696,7 @@ export default function LogicPuzzlePanel({ houseId, isAdmin }: { houseId: string
   return (
     <div className="flex flex-col gap-3">
       {isAdmin && <AdminPuzzleControl state={state} />}
-      {puzzle && houseId && <PuzzleCard puzzle={puzzle} houseId={houseId} state={state!} />}
+      {puzzle && houseId && playerId && <PuzzleCard puzzle={puzzle} houseId={houseId} playerId={playerId} state={state!} />}
     </div>
   );
 }

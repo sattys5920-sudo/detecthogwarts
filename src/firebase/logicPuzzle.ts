@@ -11,36 +11,55 @@ export interface PuzzleState {
   solvedOrder: string[];
 }
 
-export interface PuzzleAnswerDoc {
+/** A house's shared submission count/result — the "제출 기회" pool every housemate draws from. */
+export interface PuzzleAttemptDoc {
   puzzleId: string;
   houseId: string;
-  answer: PuzzleAnswerValue;
   correct: boolean;
   /** Number of times this house has submitted (not just saved a draft) — capped at PUZZLE_MAX_ATTEMPTS. */
   attempts: number;
   updatedAt: number;
 }
 
+/** One player's personal in-progress grid — never shared with housemates, so no two people can stomp on it. */
+export interface PuzzleDraftDoc {
+  puzzleId: string;
+  playerId: string;
+  houseId: string;
+  answer: PuzzleAnswerValue;
+  updatedAt: number;
+}
+
 const STATE_DOC = 'current';
 const STATE_COLLECTION = 'logicPuzzleState';
-const ANSWERS_COLLECTION = 'logicPuzzleAnswers';
+const ATTEMPTS_COLLECTION = 'logicPuzzleAnswers';
+const DRAFTS_COLLECTION = 'logicPuzzleDrafts';
 
 const DEMO_STATE_KEY = 'arcanum-logicpuzzle-state-demo';
-const DEMO_ANSWER_PREFIX = 'arcanum-logicpuzzle-answer-demo-';
+const DEMO_ATTEMPT_PREFIX = 'arcanum-logicpuzzle-answer-demo-';
+const DEMO_DRAFT_PREFIX = 'arcanum-logicpuzzle-draft-demo-';
 const DEMO_EVENT = 'arcanum-logicpuzzle-demo-changed';
 
 const EMPTY_STATE: PuzzleState = { activePuzzleId: null, activatedAt: null, solvedOrder: [] };
 
-function answerKey(puzzleId: string, houseId: string) {
+function attemptKey(puzzleId: string, houseId: string) {
   return `${puzzleId}__${houseId}`;
+}
+
+function draftKey(puzzleId: string, playerId: string) {
+  return `${puzzleId}__${playerId}`;
 }
 
 function stateRef() {
   return doc(db!, STATE_COLLECTION, STATE_DOC);
 }
 
-function answerRef(puzzleId: string, houseId: string) {
-  return doc(db!, ANSWERS_COLLECTION, answerKey(puzzleId, houseId));
+function attemptRef(puzzleId: string, houseId: string) {
+  return doc(db!, ATTEMPTS_COLLECTION, attemptKey(puzzleId, houseId));
+}
+
+function draftRef(puzzleId: string, playerId: string) {
+  return doc(db!, DRAFTS_COLLECTION, draftKey(puzzleId, playerId));
 }
 
 function readDemoState(): PuzzleState {
@@ -61,18 +80,36 @@ function writeDemoState(state: PuzzleState) {
   }
 }
 
-function readDemoAnswer(puzzleId: string, houseId: string): PuzzleAnswerDoc | null {
+function readDemoAttempt(puzzleId: string, houseId: string): PuzzleAttemptDoc | null {
   try {
-    const raw = localStorage.getItem(`${DEMO_ANSWER_PREFIX}${answerKey(puzzleId, houseId)}`);
-    return raw ? (JSON.parse(raw) as PuzzleAnswerDoc) : null;
+    const raw = localStorage.getItem(`${DEMO_ATTEMPT_PREFIX}${attemptKey(puzzleId, houseId)}`);
+    return raw ? (JSON.parse(raw) as PuzzleAttemptDoc) : null;
   } catch {
     return null;
   }
 }
 
-function writeDemoAnswer(answerDoc: PuzzleAnswerDoc) {
+function writeDemoAttempt(attemptDoc: PuzzleAttemptDoc) {
   try {
-    localStorage.setItem(`${DEMO_ANSWER_PREFIX}${answerKey(answerDoc.puzzleId, answerDoc.houseId)}`, JSON.stringify(answerDoc));
+    localStorage.setItem(`${DEMO_ATTEMPT_PREFIX}${attemptKey(attemptDoc.puzzleId, attemptDoc.houseId)}`, JSON.stringify(attemptDoc));
+    window.dispatchEvent(new Event(DEMO_EVENT));
+  } catch {
+    // localStorage unavailable — silently skip persistence.
+  }
+}
+
+function readDemoDraft(puzzleId: string, playerId: string): PuzzleDraftDoc | null {
+  try {
+    const raw = localStorage.getItem(`${DEMO_DRAFT_PREFIX}${draftKey(puzzleId, playerId)}`);
+    return raw ? (JSON.parse(raw) as PuzzleDraftDoc) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDemoDraft(draftDoc: PuzzleDraftDoc) {
+  try {
+    localStorage.setItem(`${DEMO_DRAFT_PREFIX}${draftKey(draftDoc.puzzleId, draftDoc.playerId)}`, JSON.stringify(draftDoc));
     window.dispatchEvent(new Event(DEMO_EVENT));
   } catch {
     // localStorage unavailable — silently skip persistence.
@@ -105,13 +142,14 @@ export async function activatePuzzle(puzzleId: string): Promise<void> {
   writeDemoState(next);
 }
 
-export function listenHouseAnswer(puzzleId: string, houseId: string, callback: (doc: PuzzleAnswerDoc | null) => void): () => void {
+/** Shared per-house submission count/result — used for the "제출 기회" pool and the house-status board. */
+export function listenHouseAttempts(puzzleId: string, houseId: string, callback: (doc: PuzzleAttemptDoc | null) => void): () => void {
   if (isFirebaseConfigured && db) {
-    return onSnapshot(answerRef(puzzleId, houseId), (snap) => {
-      callback(snap.exists() ? (snap.data() as PuzzleAnswerDoc) : null);
+    return onSnapshot(attemptRef(puzzleId, houseId), (snap) => {
+      callback(snap.exists() ? (snap.data() as PuzzleAttemptDoc) : null);
     });
   }
-  const read = () => callback(readDemoAnswer(puzzleId, houseId));
+  const read = () => callback(readDemoAttempt(puzzleId, houseId));
   read();
   window.addEventListener(DEMO_EVENT, read);
   window.addEventListener('storage', read);
@@ -121,18 +159,34 @@ export function listenHouseAnswer(puzzleId: string, houseId: string, callback: (
   };
 }
 
-/** Persists a house's in-progress draft without checking, scoring, or counting it as an attempt. */
-export async function saveDraftAnswer(puzzleId: string, houseId: string, answer: PuzzleAnswerValue): Promise<void> {
+/** A single player's own draft grid — private to them, so no housemate's typing can overwrite it. */
+export function listenPlayerDraft(puzzleId: string, playerId: string, callback: (doc: PuzzleDraftDoc | null) => void): () => void {
   if (isFirebaseConfigured && db) {
-    await setDoc(answerRef(puzzleId, houseId), { puzzleId, houseId, answer, correct: false, updatedAt: Date.now() }, { merge: true });
+    return onSnapshot(draftRef(puzzleId, playerId), (snap) => {
+      callback(snap.exists() ? (snap.data() as PuzzleDraftDoc) : null);
+    });
+  }
+  const read = () => callback(readDemoDraft(puzzleId, playerId));
+  read();
+  window.addEventListener(DEMO_EVENT, read);
+  window.addEventListener('storage', read);
+  return () => {
+    window.removeEventListener(DEMO_EVENT, read);
+    window.removeEventListener('storage', read);
+  };
+}
+
+/** Persists a player's own in-progress draft. Personal, so concurrent housemates never race on it. */
+export async function saveDraftAnswer(puzzleId: string, playerId: string, houseId: string, answer: PuzzleAnswerValue): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await setDoc(draftRef(puzzleId, playerId), { puzzleId, playerId, houseId, answer, updatedAt: Date.now() }, { merge: true });
     return;
   }
-  const prev = readDemoAnswer(puzzleId, houseId);
-  writeDemoAnswer({ puzzleId, houseId, answer, correct: false, attempts: prev?.attempts ?? 0, updatedAt: Date.now() });
+  writeDemoDraft({ puzzleId, playerId, houseId, answer, updatedAt: Date.now() });
 }
 
 /**
- * Grades a house's submission and counts it as one of their PUZZLE_MAX_ATTEMPTS tries.
+ * Grades a submission and counts it against the house's shared PUZZLE_MAX_ATTEMPTS pool.
  * If correct and this house hasn't already solved it, records their rank in the shared leaderboard.
  */
 export async function submitPuzzleAnswer(
@@ -144,13 +198,13 @@ export async function submitPuzzleAnswer(
   const correct = puzzle ? isPuzzleAnswerCorrect(puzzle, answer) : false;
 
   if (isFirebaseConfigured && db) {
-    // A plain increment (no read-modify-write transaction) — the answer doc is shared per-house and
-    // gets a draft write on every keystroke from anyone in the house, so a transaction here can end up
-    // repeatedly aborted by that traffic and, on a flaky connection, exhaust its retries and throw.
-    // increment() needs no prior read and can't conflict the same way.
-    await setDoc(answerRef(puzzleId, houseId), { puzzleId, houseId, answer, correct, attempts: increment(1), updatedAt: Date.now() }, { merge: true });
-    const attemptsSnap = await getDoc(answerRef(puzzleId, houseId));
-    const attempts = attemptsSnap.exists() ? ((attemptsSnap.data() as PuzzleAnswerDoc).attempts ?? 1) : 1;
+    // A plain increment (no read-modify-write transaction) — several housemates can submit around the
+    // same moment, so a transaction here can end up repeatedly aborted by that contention and, on a
+    // flaky connection, exhaust its retries and throw. increment() needs no prior read and can't
+    // conflict the same way.
+    await setDoc(attemptRef(puzzleId, houseId), { puzzleId, houseId, correct, attempts: increment(1), updatedAt: Date.now() }, { merge: true });
+    const attemptsSnap = await getDoc(attemptRef(puzzleId, houseId));
+    const attempts = attemptsSnap.exists() ? ((attemptsSnap.data() as PuzzleAttemptDoc).attempts ?? 1) : 1;
     if (!correct) return { correct: false, rank: null, attempts };
     const { rank, isNew } = await runTransaction(db, async (tx) => {
       const snap = await tx.get(stateRef());
@@ -165,9 +219,9 @@ export async function submitPuzzleAnswer(
     return { correct: true, rank, attempts };
   }
 
-  const prev = readDemoAnswer(puzzleId, houseId);
+  const prev = readDemoAttempt(puzzleId, houseId);
   const attempts = (prev?.attempts ?? 0) + 1;
-  writeDemoAnswer({ puzzleId, houseId, answer, correct, attempts, updatedAt: Date.now() });
+  writeDemoAttempt({ puzzleId, houseId, correct, attempts, updatedAt: Date.now() });
   if (!correct) return { correct: false, rank: null, attempts };
   const state = readDemoState();
   const solvedOrder = state.solvedOrder ?? [];

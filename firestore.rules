@@ -478,9 +478,9 @@ service cloud.firestore {
         && request.resource.data.solvedOrder is list;
     }
 
-    // 하우스컵 퀴즈의 기숙사별 제출 답안입니다. answer 필드는 퍼즐 종류마다 모양이
-    // 달라(로직그리드/스도쿠/가쿠로/켄켄/후토시키) 구조를 검증하지 않고, attempts는
-    // 첫 임시저장(draft)에는 아직 없을 수 있어 있을 때만 형식을 검증합니다.
+    // 하우스컵 퀴즈의 기숙사별 제출 기회(제출 횟수/정답 여부)입니다. 제출 기회는
+    // 기숙사 전체가 공유하므로 이 문서는 하우스당 하나이며, attempts는 첫 임시저장에는
+    // 아직 없을 수 있어 있을 때만 형식을 검증합니다.
     match /logicPuzzleAnswers/{docId} {
       allow read: if true;
       allow delete: if true;
@@ -490,6 +490,19 @@ service cloud.firestore {
         && request.resource.data.correct is bool
         && request.resource.data.updatedAt is number
         && (!('attempts' in request.resource.data) || request.resource.data.attempts is number);
+    }
+
+    // 하우스컵 퀴즈의 학생 개인별 임시 답안(그리드 초안)입니다. 같은 기숙사 학생끼리도
+    // 서로의 입력을 덮어쓰지 않도록 학생마다 별도 문서를 씁니다. answer 필드는 퍼즐
+    // 종류마다 모양이 달라(로직그리드/스도쿠/가쿠로/켄켄/후토시키) 구조를 검증하지 않습니다.
+    match /logicPuzzleDrafts/{docId} {
+      allow read: if true;
+      allow delete: if true;
+
+      allow create, update: if request.resource.data.puzzleId is string
+        && request.resource.data.playerId is string
+        && request.resource.data.houseId is string
+        && request.resource.data.updatedAt is number;
     }
 
     // 하우스컵 누적 점수(기숙사별 총점)입니다. 하우스컵 퀴즈와 돌발 미션 모두 정답을

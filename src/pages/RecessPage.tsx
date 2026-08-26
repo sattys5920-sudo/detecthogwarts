@@ -325,7 +325,7 @@ export default function RecessPage() {
           )
         ) : room.id === 'dorm' ? (
           <div className="flex flex-col gap-3">
-            <LogicPuzzlePanel houseId={house?.id ?? null} isAdmin={game.isAdmin} />
+            <LogicPuzzlePanel houseId={house?.id ?? null} playerId={game.playerId} isAdmin={game.isAdmin} />
             {game.isAdmin && <SurpriseMissionAdmin />}
             {!game.isAdmin && surpriseMission?.id && house && (
               <SurpriseMissionCard mission={surpriseMission} houseId={house.id} />

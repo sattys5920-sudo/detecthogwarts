@@ -2,12 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Card from '../components/Card';
 import ChatLog, { type ChatMessage } from '../components/ChatLog';
+import ClueRegisterModal from '../components/ClueRegisterModal';
 import Composer from '../components/Composer';
 import Letterhead from '../components/Letterhead';
 import { usePageBack } from '../context/BackContext';
 import { useGame } from '../context/GameContext';
 import { markThreadRead, sendQuestion, subscribeThreadMessages, type InterrogationMessage } from '../firebase/interrogation';
 import { npcById } from '../game/interrogation/npcs';
+import { useNotebook } from '../hooks/useNotebook';
 
 export default function InterrogationChatPage() {
   const { npcId } = useParams<{ npcId: string }>();
@@ -16,6 +18,8 @@ export default function InterrogationChatPage() {
   const npc = npcId ? npcById(npcId) : null;
   const [messages, setMessages] = useState<InterrogationMessage[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
+  const { entries: notebookEntries, register } = useNotebook();
+  const [registerTarget, setRegisterTarget] = useState<ChatMessage | null>(null);
 
   usePageBack(useCallback(() => navigate('/interrogation'), [navigate]));
 
@@ -47,6 +51,14 @@ export default function InterrogationChatPage() {
     sendQuestion(game.playerId, game.nickname, npcId, text);
   }
 
+  const registeredIds = new Set(notebookEntries.map((e) => e.sourceId).filter((id): id is string => Boolean(id)));
+
+  function confirmRegister(title: string) {
+    if (!registerTarget) return;
+    register({ title, desc: registerTarget.text, ink: 'black', status: '확인됨', sourceId: registerTarget.id });
+    setRegisterTarget(null);
+  }
+
   const chatMessages: ChatMessage[] = messages.map((m) => ({
     id: m.id,
     name: m.sender === 'player' ? game.nickname || '나' : npc.name,
@@ -71,10 +83,19 @@ export default function InterrogationChatPage() {
         {chatMessages.length === 0 && (
           <p className="py-8 text-center text-xs text-ink-500/50">아직 대화가 없습니다. 궁금한 것을 물어보세요.</p>
         )}
-        <ChatLog messages={chatMessages} />
+        <ChatLog messages={chatMessages} onRegister={setRegisterTarget} registeredIds={registeredIds} />
       </div>
 
       <Composer onSubmit={handleSend} placeholder="질문을 입력하세요..." submitLabel="전송" />
+
+      {registerTarget && (
+        <ClueRegisterModal
+          sourceText={registerTarget.text}
+          alreadyRegistered={registeredIds.has(registerTarget.id)}
+          onConfirm={confirmRegister}
+          onClose={() => setRegisterTarget(null)}
+        />
+      )}
     </div>
   );
 }

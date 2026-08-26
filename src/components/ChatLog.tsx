@@ -32,7 +32,18 @@ const WHO_BORDER_R: Record<ChatMessage['who'], string> = {
   indigo: 'border-r-ink-indigo',
 };
 
-export default function ChatLog({ sysline, messages }: { sysline?: string; messages: ChatMessage[] }) {
+export default function ChatLog({
+  sysline,
+  messages,
+  onRegister,
+  registeredIds,
+}: {
+  sysline?: string;
+  messages: ChatMessage[];
+  /** When provided, non-me messages get a ⋯ button to save that line to the 조사 수첩 (clue notebook). */
+  onRegister?: (m: ChatMessage) => void;
+  registeredIds?: Set<string>;
+}) {
   return (
     <div className="flex flex-col gap-2.5">
       {sysline && (
@@ -60,6 +71,18 @@ export default function ChatLog({ sysline, messages }: { sysline?: string; messa
             >
               {m.text}
             </p>
+            {!m.me && onRegister && (
+              <button
+                type="button"
+                onClick={() => onRegister(m)}
+                aria-label="단서로 등록"
+                className={`mt-0.5 rounded-full px-1.5 py-0.5 text-xs font-bold leading-none hover:bg-paper-200 hover:text-seal-600 ${
+                  registeredIds?.has(m.id) ? 'text-seal-600/60' : 'text-ink-500/40'
+                }`}
+              >
+                ⋯
+              </button>
+            )}
           </div>
         </div>
       ))}

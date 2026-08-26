@@ -558,7 +558,16 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
     setSubmitting(true);
     setSubmitError(false);
     try {
-      const result = await submitPuzzleAnswer(puzzle.id, houseId, answer);
+      let result;
+      try {
+        result = await submitPuzzleAnswer(puzzle.id, houseId, answer);
+      } catch {
+        // Submitting uses a Firestore transaction, which (unlike a plain save) doesn't queue itself
+        // for automatic retry when offline — a half-second WiFi drop is enough to throw here on a
+        // busy classroom network. One quick retry absorbs that without making the player notice.
+        await new Promise((r) => setTimeout(r, 800));
+        result = await submitPuzzleAnswer(puzzle.id, houseId, answer);
+      }
       setWrongFlash(!result.correct);
     } catch {
       // Otherwise a failed submit (e.g. a network hiccup) looks identical to "nothing happened."

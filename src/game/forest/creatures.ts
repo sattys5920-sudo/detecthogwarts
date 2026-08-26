@@ -87,17 +87,26 @@ function randRange(seed: number, min: number, max: number): number {
   return min + Math.floor(rand01(seed) * (max - min + 1));
 }
 
-export function spawnMonster(template: MonsterTemplate, sizeScale: number, instanceSalt = 0): Monster {
+/**
+ * hpScale and atkScale are separate (unlike the old single sizeScale, which silently applied to both
+ * and then got multiplied again by the caller's own atk scale) — see engine.ts's beginCombat for why.
+ * avgCheckStat replaces the template's small fixed defenseDC range (originally tuned for a 5-point
+ * baseline intelligence/agility) with that same margin applied on top of the party's actual average —
+ * otherwise a real stat value in the hundreds always beats a DC of 9-21 outright, making every attack
+ * (and every evasion roll) an automatic success regardless of the d20.
+ */
+export function spawnMonster(template: MonsterTemplate, hpScale: number, atkScale: number, instanceSalt = 0, avgCheckStat = 5): Monster {
   const seed = seedFor(`${template.id}:${instanceSalt}:${Date.now() % 100000}:${Math.random()}`);
-  const hp = Math.round(randRange(seed, template.hpMin, template.hpMax) * sizeScale);
+  const hp = Math.round(randRange(seed, template.hpMin, template.hpMax) * hpScale);
+  const dcMargin = randRange(seed + 1, template.defenseDcMin - 5, template.defenseDcMax - 5);
   return {
     templateId: template.id,
     name: template.name,
     hp,
     maxHp: hp,
-    defenseDC: randRange(seed + 1, template.defenseDcMin, template.defenseDcMax),
-    attackMin: Math.round(template.attackMin * sizeScale),
-    attackMax: Math.round(template.attackMax * sizeScale),
+    defenseDC: Math.round(avgCheckStat) + dcMargin,
+    attackMin: Math.round(template.attackMin * atkScale),
+    attackMax: Math.round(template.attackMax * atkScale),
     abilities: template.abilities,
     statusEffects: [],
     shield: 0,

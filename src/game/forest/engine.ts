@@ -542,22 +542,34 @@ function pickEnemyCount(size: number): number {
 }
 
 /**
- * From stage 6 onward, monsters scale up further based on the seated party's average real
- * (non-forest) profile power — a strong party attracts tougher opposition later in the expedition.
- * All three combat stats count (intelligence, spellPower, agility), not spellPower alone, since all
- * three now directly seed the party's actual in-combat power (see createPlayer). 50 per stat (the
- * default starting value) is the neutral baseline; every point above it adds up to +50% at the 500
- * stat ceiling. Earlier stages are unaffected so a fresh party never feels punished for having strong
- * players.
+ * Monsters scale from stage 1 onward based on the seated party's average real combat power
+ * (intelligence + spellPower + agility, averaged — see createPlayer, which now seeds these directly
+ * from the profile). This isn't optional cosmetic scaling: skill damage adds spellPower to the base
+ * skill value directly (see castSkill), so a party well above the old hardcoded baseline (5) one-shots
+ * everything unless monster HP grows to match. 40 is that old baseline's typical hit (skill base
+ * ~20-50 + spellPower 5); scale grows linearly from there so "hits needed to kill" stays roughly
+ * constant as real stats climb toward the 500 cap, instead of collapsing to 1.
  */
-function profilePowerScale(party: ForestParty): number {
-  if (party.stage < 6) return 1;
+function combatPowerScale(party: ForestParty): number {
   const seated = party.seats.filter((p): p is Player => !!p);
   if (seated.length === 0) return 1;
-  const avgPerPlayer = seated.map((p) => ((p.profileIntelligence ?? 0) + (p.profileSpellPower ?? 0) + (p.profileAgility ?? 0)) / 3);
+  const avgPerPlayer = seated.map((p) => (p.intelligence + p.spellPower + p.agility) / 3);
   const avg = avgPerPlayer.reduce((sum, v) => sum + v, 0) / seated.length;
-  const boost = Math.max(0, Math.min(1, (avg - 50) / 450)) * 0.5;
-  return 1 + boost;
+  return Math.max(1, (35 + avg) / 40);
+}
+
+/**
+ * The party's average intelligence/agility, used as the new baseline for monster defenseDC (see
+ * spawnMonster/spawnBoss) — that field gates both whether a player's attack lands (checked against
+ * intelligence) and whether a player evades a monster's attack (checked against agility), so a
+ * meaningful DC has to track whichever of those a real party actually has, not a small fixed number
+ * tuned for the old 5-point baseline.
+ */
+function avgCombatCheckStat(party: ForestParty): number {
+  const seated = party.seats.filter((p): p is Player => !!p);
+  if (seated.length === 0) return 50;
+  const avgPerPlayer = seated.map((p) => (p.intelligence + p.agility) / 2);
+  return avgPerPlayer.reduce((sum, v) => sum + v, 0) / seated.length;
 }
 
 function beginCombat(party: ForestParty, templates: MonsterTemplate[], isBoss: boolean, bossId?: string): ForestParty {
@@ -565,13 +577,14 @@ function beginCombat(party: ForestParty, templates: MonsterTemplate[], isBoss: b
   const partyHpScale = size === 2 ? 1 : size === 3 ? 1.35 : 1.7;
   const partyAtkScale = size === 2 ? 1 : size === 3 ? 1.15 : 1.3;
   const countShare = ENEMY_COUNT_POWER_SHARE[Math.min(4, Math.max(1, templates.length))] ?? 1;
-  const spScale = profilePowerScale(party);
-  const hpScale = partyHpScale * countShare * spScale;
-  const atkScale = partyAtkScale * countShare * spScale;
-  const monsters = templates.map((t, i) => {
-    const m = spawnMonster(t, hpScale, i);
-    return { ...m, attackMin: Math.round(m.attackMin * atkScale), attackMax: Math.round(m.attackMax * atkScale) };
-  });
+  const powerScale = combatPowerScale(party);
+  // Attack is dampened (sqrt) relative to hp — full linear scaling on both would let a strong party's
+  // own stat growth wipe itself out via one-shot monster hits, instead of the long, genuinely risky
+  // fight the balance pass is meant to produce.
+  const hpScale = partyHpScale * countShare * powerScale;
+  const atkScale = partyAtkScale * countShare * Math.sqrt(powerScale);
+  const checkStat = avgCombatCheckStat(party);
+  const monsters = templates.map((t, i) => spawnMonster(t, hpScale, atkScale, i, checkStat));
 
   const alivePlayers = party.seats.filter((p): p is Player => !!p && !p.downed);
   const order: { key: string; init: number }[] = [];
@@ -604,7 +617,8 @@ function beginBoss(party: ForestParty): ForestParty {
   const pool = unused.length > 0 ? unused : BOSS_TEMPLATES;
   const template = pool[Math.floor(Math.random() * pool.length)];
   const size = partySize(party);
-  const boss = spawnBoss(template, size, profilePowerScale(party));
+  const powerScale = combatPowerScale(party);
+  const boss = spawnBoss(template, size, powerScale, Math.sqrt(powerScale), avgCombatCheckStat(party));
 
   const alivePlayers = party.seats.filter((p): p is Player => !!p && !p.downed);
   const order: { key: string; init: number }[] = [];
@@ -1033,7 +1047,14 @@ function applyMonsterAbility(party: ForestParty, index: number, ability: Monster
     }
     case 'summon': {
       const template = randomTemplateForStage(1, false);
-      const spawn = spawnMonster(template, 0.5, next.combat!.monsters.length);
+      const summonPowerScale = combatPowerScale(next);
+      const spawn = spawnMonster(
+        template,
+        0.5 * summonPowerScale,
+        0.5 * Math.sqrt(summonPowerScale),
+        next.combat!.monsters.length,
+        avgCombatCheckStat(next),
+      );
       const monsters = [...next.combat!.monsters, spawn];
       const turnOrder = [...next.combat!.turnOrder, combatantKey('monster', monsters.length - 1)];
       next = { ...next, combat: { ...next.combat!, monsters, turnOrder } };

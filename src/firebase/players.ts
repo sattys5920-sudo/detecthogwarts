@@ -259,15 +259,15 @@ export async function assignPatronus(id: string, patronus: PatronusId): Promise<
 }
 
 /** Called by the player's own device whenever its local stats change, so the admin panel can see a roughly-current snapshot. Never read back by anything except the admin UI and the device's own admin-override check. */
-export async function syncOwnStats(id: string, stats: PlayerStats): Promise<void> {
+export async function syncOwnStats(id: string, stats: PlayerStats, statsUpdatedAt: number = Date.now()): Promise<void> {
   if (isFirebaseConfigured && db) {
-    await updateDoc(doc(db, COLLECTION_NAME, id), { stats, statsUpdatedAt: Date.now(), statsSetBy: 'device' });
+    await updateDoc(doc(db, COLLECTION_NAME, id), { stats, statsUpdatedAt, statsSetBy: 'device' });
     return;
   }
   const players = readDemoPlayers();
   const idx = players.findIndex((p) => p.id === id);
   if (idx >= 0) {
-    players[idx] = { ...players[idx], stats, statsUpdatedAt: Date.now(), statsSetBy: 'device' };
+    players[idx] = { ...players[idx], stats, statsUpdatedAt, statsSetBy: 'device' };
     writeDemoPlayers(players);
   }
 }

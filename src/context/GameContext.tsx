@@ -198,10 +198,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setJustAssigned(true);
       }
 
-      // Admin can override this player's stats from the student list — adopt it once, the first
-      // time we see this particular override (tracked by its timestamp so we don't reprocess it on
-      // every snapshot, and so our own routine upload right after adopting doesn't loop back).
-      if (record.statsSetBy === 'admin' && record.stats && record.statsUpdatedAt) {
+      // Stats are the one field that's otherwise device-local — the same account opened on a second
+      // device (or an admin override) would never see the other's progress. Firestore's statsUpdatedAt
+      // is the merge point: adopt any snapshot newer than the last one we've already applied ourselves,
+      // whether it came from an admin override or another device's own upload (see syncOwnStats below,
+      // which pre-marks its own timestamp as "seen" so a device never re-adopts its own echoed write).
+      if (record.stats && record.statsUpdatedAt) {
         const statsSeenKey = SEEN_STATS_OVERRIDE_PREFIX + record.id;
         if (localStorage.getItem(statsSeenKey) !== String(record.statsUpdatedAt)) {
           localStorage.setItem(statsSeenKey, String(record.statsUpdatedAt));
@@ -214,18 +216,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, [state.playerId]);
 
-  // Mirrors this device's own stats up to Firestore so the admin panel can view (and override) them
-  // — stats are otherwise entirely device-local. Fire-and-forget; harmless if it fails offline.
-  // Declared after the listener above and gated by pendingStatsAdoptionRef so it never re-uploads a
-  // stale pre-adoption snapshot in the same commit as an incoming admin override (see the ref's own
-  // comment for why).
+  // Mirrors this device's own stats up to Firestore so the admin panel — and this same account on any
+  // other device — can see them. Fire-and-forget; harmless if it fails offline. Declared after the
+  // listener above and gated by pendingStatsAdoptionRef so it never re-uploads a stale pre-adoption
+  // snapshot in the same commit as an incoming override/other-device change (see the ref's own comment
+  // for why). Pre-marks its own timestamp as "seen" before writing so this device's own echoed write
+  // coming back through the listener above is recognized as already-applied and skipped, not re-adopted.
   useEffect(() => {
     if (!state.playerId) return;
     if (pendingStatsAdoptionRef.current) {
       pendingStatsAdoptionRef.current = false;
       return;
     }
-    syncOwnStats(state.playerId, state.stats).catch(() => {});
+    const playerId = state.playerId;
+    const statsUpdatedAt = Date.now();
+    localStorage.setItem(SEEN_STATS_OVERRIDE_PREFIX + playerId, String(statsUpdatedAt));
+    syncOwnStats(playerId, state.stats, statsUpdatedAt).catch(() => {});
   }, [state.playerId, state.stats]);
 
   const stage: OnboardingStage = !state.playerId

@@ -12,6 +12,7 @@ import {
   resolveTie as engineResolveTie,
   setReady as engineSetReady,
   startExpedition as engineStartExpedition,
+  surrenderCombat as engineSurrenderCombat,
   upgradeSkill as engineUpgradeSkill,
   type CombatAction,
 } from '../game/forest/engine';
@@ -134,6 +135,11 @@ export async function confirmEvent(roomId: string): Promise<void> {
 
 export async function submitCombatAction(roomId: string, playerId: string, action: CombatAction): Promise<void> {
   await transact(roomId, (current) => engineCombatAction(current, playerId, action));
+}
+
+/** Ends a hopeless fight on the spot (e.g. a solo survivor with no way back to the result screen). */
+export async function surrenderCombat(roomId: string, playerId: string): Promise<void> {
+  await transact(roomId, (current) => engineSurrenderCombat(current, playerId));
 }
 
 export async function upgradeSkill(roomId: string, playerId: string, skillId: SkillId): Promise<void> {

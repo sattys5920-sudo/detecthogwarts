@@ -482,10 +482,15 @@ function applyPlainEffect(party: ForestParty, eff: ForestEvent['effect']): Fores
   if (eff.maxHp) {
     next = applyToAllSeats(next, (p) => ({ ...p, maxHp: p.maxHp + eff.maxHp!, hp: p.hp + eff.maxHp! }));
   }
-  if (eff.spellPower) next = applyToAllSeats(next, (p) => ({ ...p, spellPower: Math.max(1, p.spellPower + eff.spellPower!) }));
-  if (eff.agility) next = applyToAllSeats(next, (p) => ({ ...p, agility: Math.max(0, p.agility + eff.agility!) }));
+  // Capped at 500 to match the profile's own stat ceiling (see GameContext's MAX_STAT_VALUE) — without
+  // this, a long expedition full of "stat up" events has no upper bound, and since these same fields
+  // directly drive damage/hit-chance math (see castSkill), an uncapped value can spiral into fights
+  // that never resolve (e.g. permanent 100% evasion vs. a monster whose DC was set from a much lower
+  // party average earlier in the fight).
+  if (eff.spellPower) next = applyToAllSeats(next, (p) => ({ ...p, spellPower: Math.max(1, Math.min(500, p.spellPower + eff.spellPower!)) }));
+  if (eff.agility) next = applyToAllSeats(next, (p) => ({ ...p, agility: Math.max(0, Math.min(500, p.agility + eff.agility!)) }));
   if (eff.intelligence) {
-    next = applyToAllSeats(next, (p) => ({ ...p, intelligence: Math.max(1, p.intelligence + eff.intelligence!) }));
+    next = applyToAllSeats(next, (p) => ({ ...p, intelligence: Math.max(1, Math.min(500, p.intelligence + eff.intelligence!)) }));
   }
   if (eff.skillPoints) {
     next = applyToAllSeats(next, (p) => ({ ...p, skillPoints: p.skillPoints + eff.skillPoints! }));
@@ -880,6 +885,16 @@ function onCombatLost(party: ForestParty): ForestParty {
   return next;
 }
 
+/**
+ * Lets any seated player end a hopeless fight on the spot instead of being stuck indefinitely — e.g. a
+ * solo survivor against a monster scaled for the full party, with no way to reach the result screen
+ * otherwise (leaving is only possible from 'cleared'/'failed'/'lobby', never mid-combat).
+ */
+export function surrenderCombat(party: ForestParty, playerId: string): ForestParty {
+  if (party.status !== 'combat' || !seatedPlayer(party, playerId)) return party;
+  return onCombatLost(party);
+}
+
 // ---------- player combat actions ----------
 
 export type ActionTargetType = 'monster' | 'self' | 'ally' | 'party' | 'allMonsters';
@@ -892,7 +907,13 @@ export interface CombatAction {
 }
 
 /** Rolls the target's evasion (agility vs. the attacker's DC) before applying damage — a miss deals nothing. */
-function monsterDamageToPlayer(party: ForestParty, playerId: string, rawDmg: number, sourceDC: number): ForestParty {
+/**
+ * hitLabel is the "attacker did N damage" line, logged only if the attack actually connects — a
+ * previous version had every caller append that line unconditionally right after calling this
+ * function, so a successfully evaded attack still showed a misleading "hit for N damage" line
+ * immediately below its own "evaded!" line.
+ */
+function monsterDamageToPlayer(party: ForestParty, playerId: string, rawDmg: number, sourceDC: number, hitLabel = ''): ForestParty {
   const player = party.seats.find((p) => p?.id === playerId);
   if (!player) return party;
   const agi = effectiveAgility(player);
@@ -906,6 +927,7 @@ function monsterDamageToPlayer(party: ForestParty, playerId: string, rawDmg: num
   const { shield, dmg: afterShield } = absorbShield(player.shield, dmg);
   let next = updatePlayer(party, playerId, (p) => clampHp({ ...p, hp: p.hp - afterShield, shield }));
   next = { ...next, stats: { ...next.stats, damageTaken: next.stats.damageTaken + afterShield } };
+  if (hitLabel) next = pushLog(next, hitLabel);
   const updated = next.seats.find((p) => p?.id === playerId)!;
   if (updated.hp <= 0 && !updated.downed) {
     next = updatePlayer(next, playerId, (p) => ({ ...p, downed: true }));
@@ -974,8 +996,7 @@ function resolveMonsterTurn(party: ForestParty, index: number): ForestParty {
     return next;
   }
   const target = pickMonsterTarget(alivePlayers);
-  next = monsterDamageToPlayer(next, target.id, dmg, liveMonster.defenseDC);
-  next = pushLog(next, `${monster.name}이(가) ${target.nickname}을(를) 공격했다! (${dmg} 피해)`);
+  next = monsterDamageToPlayer(next, target.id, dmg, liveMonster.defenseDC, `${monster.name}이(가) ${target.nickname}을(를) 공격했다! (${dmg} 피해)`);
   return next;
 }
 
@@ -993,8 +1014,7 @@ function applyMonsterAbility(party: ForestParty, index: number, ability: Monster
     case 'extraDamage': {
       const target = pickMonsterTarget(alivePlayers);
       const dmg = monster.attackMin + ability.value;
-      next = monsterDamageToPlayer(next, target.id, dmg, monster.defenseDC);
-      next = pushLog(next, `${monster.name}의 ${ability.label}! ${target.nickname}에게 ${dmg} 피해.`);
+      next = monsterDamageToPlayer(next, target.id, dmg, monster.defenseDC, `${monster.name}의 ${ability.label}! ${target.nickname}에게 ${dmg} 피해.`);
       break;
     }
     case 'poison': {
@@ -1021,15 +1041,20 @@ function applyMonsterAbility(party: ForestParty, index: number, ability: Monster
       break;
     }
     case 'aoeDamage': {
+      // Each target's own evasion/hit result gets its own log line from monsterDamageToPlayer — this
+      // just announces the attempt, without claiming every target actually took the damage.
+      next = pushLog(next, `${monster.name}의 ${ability.label}! 파티 전체를 노렸다. (최대 ${ability.value} 피해)`);
       for (const p of alivePlayers) next = monsterDamageToPlayer(next, p.id, ability.value, monster.defenseDC);
-      next = pushLog(next, `${monster.name}의 ${ability.label}! 파티 전체가 ${ability.value} 피해를 입었다.`);
       break;
     }
     case 'drainHp': {
       const target = pickMonsterTarget(alivePlayers);
-      next = monsterDamageToPlayer(next, target.id, ability.value, monster.defenseDC);
-      next = updateMonster(next, index, (m) => ({ ...m, hp: Math.min(m.maxHp, m.hp + ability.value) }));
-      next = pushLog(next, `${monster.name}의 ${ability.label}! ${target.nickname}의 생명력을 흡수했다.`);
+      next = monsterDamageToPlayer(next, target.id, ability.value, monster.defenseDC, `${monster.name}의 ${ability.label}! ${target.nickname}의 생명력을 흡수했다.`);
+      const targetAfter = next.seats.find((p) => p?.id === target.id)!;
+      if (targetAfter.hp < target.hp) {
+        // Only heal the monster if the drain actually connected (evaded attacks steal nothing).
+        next = updateMonster(next, index, (m) => ({ ...m, hp: Math.min(m.maxHp, m.hp + ability.value) }));
+      }
       break;
     }
     case 'healSelf': {

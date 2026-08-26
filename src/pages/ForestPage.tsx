@@ -18,6 +18,7 @@ import {
   startExpedition,
   submitCombatAction,
   subscribeParty,
+  surrenderCombat,
   upgradeSkill,
 } from '../firebase/forest';
 import { getPlayerOnce, syncForestSkills } from '../firebase/players';
@@ -315,6 +316,7 @@ export default function ForestPage() {
   const [voteReveal, setVoteReveal] = useState(false);
   const [combatIntro, setCombatIntro] = useState(false);
   const [combatTab, setCombatTab] = useState<CombatTab>('attack');
+  const [confirmSurrender, setConfirmSurrender] = useState(false);
   const lastSeenVoteResultRef = useRef<string | null>(null);
   const combatBannerShownRef = useRef(false);
   const roomLabel = ROOM_LABEL[roomId] ?? '';
@@ -1043,6 +1045,35 @@ export default function ForestPage() {
               {actingId ? `${party.seats.find((p) => p?.id === actingId)?.nickname ?? ''}님의 턴을 기다리는 중...` : '전투가 진행되는 중...'}
             </Card>
           )}
+
+          {me &&
+            (confirmSurrender ? (
+              <Card className="flex flex-col gap-2">
+                <p className="text-center text-xs font-bold text-seal-600">정말 포기하시겠습니까? 탐사가 실패로 종료됩니다.</p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    className="flex-1"
+                    disabled={busy}
+                    onClick={() => {
+                      setConfirmSurrender(false);
+                      guard(() => surrenderCombat(roomId, game.playerId!));
+                    }}
+                  >
+                    포기하고 나가기
+                  </Button>
+                  <Button variant="ghost" className="flex-1" onClick={() => setConfirmSurrender(false)}>취소</Button>
+                </div>
+              </Card>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmSurrender(true)}
+                className="self-center text-xs text-ink-500/40 underline-offset-2 hover:text-seal-600 hover:underline"
+              >
+                승산이 없다면… 포기하기
+              </button>
+            ))}
 
           <SidePanel
             tab={sidebarTab}

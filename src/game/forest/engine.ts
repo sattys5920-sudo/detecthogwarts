@@ -83,6 +83,7 @@ export function createParty(): ForestParty {
     result: null,
     stats: { monstersDefeated: 0, spellsCast: 0, healingDone: 0, damageTaken: 0, bonusesGained: 0 },
     updatedAt: now(),
+    resultAt: null,
   };
 }
 
@@ -294,6 +295,7 @@ export function startExpedition(party: ForestParty): ForestParty {
     log: [],
     stats: { monstersDefeated: 0, spellsCast: 0, healingDone: 0, damageTaken: 0, bonusesGained: 0 },
     updatedAt: now(),
+    resultAt: null,
   };
   next = pushLog(next, '금지된 숲에 발을 들였다...');
   next = generatePaths(next);
@@ -833,6 +835,7 @@ function onCombatWon(party: ForestParty): ForestParty {
     next = {
       ...next,
       status: 'cleared',
+      resultAt: now(),
       result: {
         outcome: 'clear',
         bossName,
@@ -860,6 +863,7 @@ function onCombatLost(party: ForestParty): ForestParty {
   let next: ForestParty = {
     ...party,
     status: 'failed',
+    resultAt: now(),
     combat: null,
     result: {
       outcome: 'failed',

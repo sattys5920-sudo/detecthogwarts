@@ -376,7 +376,7 @@ export default function ForestPage() {
 
   useEffect(() => {
     if (!party || party.status !== 'cleared' || !party.seats.some((p) => p?.id === game.playerId)) return;
-    const key = `arcanum-forest-reward-${roomId}-${party.updatedAt}`;
+    const key = `arcanum-forest-reward-${roomId}-${party.resultAt}`;
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, 'true');
     game.adjustStat('intelligence', 25);
@@ -389,7 +389,7 @@ export default function ForestPage() {
 
   useEffect(() => {
     if (!party || (party.status !== 'cleared' && party.status !== 'failed') || !party.seats.some((p) => p?.id === game.playerId)) return;
-    const key = `arcanum-forest-stamina-${roomId}-${party.updatedAt}`;
+    const key = `arcanum-forest-stamina-${roomId}-${party.resultAt}`;
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, 'true');
     game.adjustStat('stamina', -10);

@@ -346,4 +346,9 @@ export interface ForestParty {
   result: ExpeditionResult | null;
   stats: { monstersDefeated: number; spellsCast: number; healingDone: number; damageTaken: number; bonusesGained: number };
   updatedAt: number;
+  /** Set once, exactly when status first becomes 'cleared'/'failed' — unlike updatedAt (which changes
+   * every time any one seated player leaves the result screen while others linger on it), this stays
+   * fixed for the whole terminal state, so the one-time clear reward/stamina-cost effects in
+   * ForestPage.tsx can key off it without re-firing on every teammate's departure. */
+  resultAt: number | null;
 }

@@ -24,7 +24,7 @@ import { getPlayerOnce, syncForestSkills } from '../firebase/players';
 import { allSeatsReady, CATEGORY_LABEL, currentActingPlayerId, EVENT_TONE, MAX_SEATS, TOTAL_STAGES, VOTE_DURATION_MS } from '../game/forest/engine';
 import { eventById } from '../game/forest/events';
 import { patronusById } from '../game/forest/patronus';
-import { maxMpFor, skillMpCostAtLevel, skillTag, skillValueAtLevel, SKILLS } from '../game/forest/skills';
+import { skillMpCostAtLevel, skillTag, skillValueAtLevel, SKILLS } from '../game/forest/skills';
 import type { EventEffect, ForestParty, LogEntry, PatronusDef, Player, SkillDef } from '../game/forest/types';
 
 const VALID_ROOMS = ['a', 'b', 'c'];
@@ -118,7 +118,7 @@ function HpBar({ hp, maxHp, colorClass = 'bg-seal-600' }: { hp: number; maxHp: n
 }
 
 function PlayerCard({ player, isActing, targetable, onTarget }: { player: Player; isActing: boolean; targetable: boolean; onTarget?: () => void }) {
-  const maxMp = maxMpFor(player.intelligence);
+  const maxMp = player.maxMp;
   const content = (
     <Card className={`flex flex-col gap-1.5 p-3 ${isActing ? 'border-seal-600' : ''} ${player.downed ? 'opacity-50' : ''}`}>
       <div className="flex items-center justify-between">
@@ -344,6 +344,7 @@ export default function ForestPage() {
         game.stats.agility,
         record?.forestSkillLevels ?? null,
         record?.forestSkillPoints ?? 0,
+        game.stats.maxMp,
       );
     })().catch((e) => {
       if (!cancelled) setJoinError(e instanceof ForestFullError ? e.message : '입장에 실패했습니다. 다시 시도해 주세요.');
@@ -351,7 +352,17 @@ export default function ForestPage() {
     return () => {
       cancelled = true;
     };
-  }, [roomId, game.playerId, game.nickname, game.patronus, game.isAdmin, game.stats.spellPower, game.stats.intelligence, game.stats.agility]);
+  }, [
+    roomId,
+    game.playerId,
+    game.nickname,
+    game.patronus,
+    game.isAdmin,
+    game.stats.spellPower,
+    game.stats.intelligence,
+    game.stats.agility,
+    game.stats.maxMp,
+  ]);
 
   // Mirrors this device's current skill investment up to the player's profile on every party update
   // while seated, so it survives once the party doc resets (see the join effect above for the read
@@ -386,7 +397,7 @@ export default function ForestPage() {
     const mySeat = party.seats.find((p) => p?.id === game.playerId);
     if (mySeat) {
       const hpRatio = mySeat.maxHp > 0 ? mySeat.hp / mySeat.maxHp : 0;
-      const seatMaxMp = maxMpFor(mySeat.intelligence);
+      const seatMaxMp = mySeat.maxMp;
       const mpRatio = seatMaxMp > 0 ? mySeat.mp / seatMaxMp : 0;
       game.setStatRatio('hp', hpRatio);
       game.setStatRatio('mp', mpRatio);

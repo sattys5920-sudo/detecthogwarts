@@ -1,13 +1,9 @@
 import type { SkillDef, SkillId } from './types';
 
-// ---------- MP ----------
-// Intelligence drives max MP; spellPower never affects MP. Kept as named constants for later balance tuning.
-export const BASE_MP = 20;
-export const MP_PER_INTELLIGENCE = 2;
-
-export function maxMpFor(intelligence: number): number {
-  return BASE_MP + intelligence * MP_PER_INTELLIGENCE;
-}
+// MP is its own resource, decoupled from intelligence — it starts at the profile's real maxMp (base
+// 100, grown only by forest-clear rewards, same as maxHp/maxStamina) and never scales with a stat.
+// Intelligence instead drives magic accuracy (see castSkill's check() call in engine.ts), spellPower
+// drives damage, and agility drives evasion.
 
 // ---------- skill leveling ----------
 export const SKILL_MAX_LEVEL = 5;

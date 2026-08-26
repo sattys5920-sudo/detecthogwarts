@@ -1,5 +1,3 @@
-import { maxMpFor } from './skills';
-
 export type StatusType =
   | 'burn'
   | 'bleed'
@@ -133,7 +131,9 @@ export interface Player {
   maxHp: number;
   /** Current MP pool; persists across the whole expedition like HP, spent per skill cast. */
   mp: number;
-  /** Drives skill accuracy (vs. the target's evasion/defense DC) and max MP — see skills.ts. */
+  /** Its own resource, decoupled from any stat — starts at the profile's real maxMp (base 100) and only grows from forest-clear rewards, same as maxHp/maxStamina. */
+  maxMp: number;
+  /** Drives skill accuracy (vs. the target's evasion/defense DC) — see skills.ts. */
   intelligence: number;
   /** Drives skill damage/heal/support magnitude. */
   spellPower: number;
@@ -165,6 +165,7 @@ export function createPlayer(
   profileAgility = 0,
   savedSkillLevels: Record<SkillId, number> | null = null,
   savedSkillPoints = 0,
+  profileMaxMp = 100,
 ): Player {
   // In-combat intelligence/spellPower/agility mirror the player's real profile stats at join time —
   // a player who built up 지능 300 on their profile fights the forest with 지능 300, not a fresh
@@ -173,12 +174,14 @@ export function createPlayer(
   const intelligence = Math.max(5, profileIntelligence);
   const spellPower = Math.max(5, profileSpellPower);
   const agility = Math.max(5, profileAgility);
+  const maxMp = Math.max(1, profileMaxMp);
   return {
     id,
     nickname,
     hp: 100,
     maxHp: 100,
-    mp: maxMpFor(intelligence),
+    mp: maxMp,
+    maxMp,
     intelligence,
     spellPower,
     agility,

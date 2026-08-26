@@ -86,6 +86,7 @@ export async function joinParty(
   profileAgility = 0,
   savedSkillLevels: Record<SkillId, number> | null = null,
   savedSkillPoints = 0,
+  profileMaxMp = 100,
 ): Promise<void> {
   await transact(roomId, (current) =>
     joinSeat(
@@ -98,6 +99,7 @@ export async function joinParty(
       profileAgility,
       savedSkillLevels,
       savedSkillPoints,
+      profileMaxMp,
     ),
   );
 }

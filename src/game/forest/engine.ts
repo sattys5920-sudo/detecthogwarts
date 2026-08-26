@@ -2,7 +2,7 @@ import { BOSS_TEMPLATES, bossPhaseIndex, spawnBoss, templateByBossId } from './b
 import { MONSTER_TEMPLATES, randomTemplateForStage, spawnMonster, templateById } from './creatures';
 import { eventById, FOREST_EVENTS } from './events';
 import { patronusById } from './patronus';
-import { maxMpFor, MP_PER_INTELLIGENCE, skillById, skillMpCostAtLevel, skillValueAtLevel, SKILLS } from './skills';
+import { skillById, skillMpCostAtLevel, skillValueAtLevel, SKILLS } from './skills';
 import {
   createPlayer,
   emptyBuffs,
@@ -110,6 +110,7 @@ export function joinSeat(
   profileAgility = 0,
   savedSkillLevels: Record<SkillId, number> | null = null,
   savedSkillPoints = 0,
+  profileMaxMp = 100,
 ): ForestParty {
   if (seatedPlayer(party, playerId)) return party;
   if (party.status !== 'lobby') throw new ForestFullError();
@@ -125,6 +126,7 @@ export function joinSeat(
     profileAgility,
     savedSkillLevels,
     savedSkillPoints,
+    profileMaxMp,
   );
   return { ...party, seats, hostId: party.hostId ?? playerId, updatedAt: now() };
 }
@@ -278,7 +280,7 @@ export function startExpedition(party: ForestParty): ForestParty {
   if (partySize(party) < 2) throw new Error('최소 2 명이 필요합니다.');
   if (!allSeatsReady(party)) throw new Error('모든 인원이 준비를 완료해야 합니다.');
   const seats = party.seats.map((s) =>
-    s ? { ...s, hp: s.maxHp, mp: maxMpFor(s.intelligence), statusEffects: [], shield: 0, buffs: emptyBuffs(), downed: false, ready: false } : s,
+    s ? { ...s, hp: s.maxHp, mp: s.maxMp, statusEffects: [], shield: 0, buffs: emptyBuffs(), downed: false, ready: false } : s,
   ) as ForestParty['seats'];
   let next: ForestParty = {
     ...party,
@@ -481,11 +483,7 @@ function applyPlainEffect(party: ForestParty, eff: ForestEvent['effect']): Fores
   if (eff.spellPower) next = applyToAllSeats(next, (p) => ({ ...p, spellPower: Math.max(1, p.spellPower + eff.spellPower!) }));
   if (eff.agility) next = applyToAllSeats(next, (p) => ({ ...p, agility: Math.max(0, p.agility + eff.agility!) }));
   if (eff.intelligence) {
-    next = applyToAllSeats(next, (p) => ({
-      ...p,
-      intelligence: Math.max(1, p.intelligence + eff.intelligence!),
-      mp: p.mp + eff.intelligence! * MP_PER_INTELLIGENCE,
-    }));
+    next = applyToAllSeats(next, (p) => ({ ...p, intelligence: Math.max(1, p.intelligence + eff.intelligence!) }));
   }
   if (eff.skillPoints) {
     next = applyToAllSeats(next, (p) => ({ ...p, skillPoints: p.skillPoints + eff.skillPoints! }));
@@ -745,7 +743,7 @@ function advanceToActionableTurn(party: ForestParty): ForestParty {
       let mpAcc = 0;
       const { effects, stunned } = tickStatusStart(player.statusEffects, (d) => (dmgAcc += d), (d) => (mpAcc += d));
       next = updatePlayer(next, player.id, (p) =>
-        clampHp({ ...p, statusEffects: effects, hp: p.hp + dmgAcc, mp: Math.min(maxMpFor(p.intelligence), p.mp + mpAcc) }),
+        clampHp({ ...p, statusEffects: effects, hp: p.hp + dmgAcc, mp: Math.min(p.maxMp, p.mp + mpAcc) }),
       );
       if (dmgAcc < 0) next = pushLog(next, `${player.nickname}이(가) 상태이상으로 ${-dmgAcc} 피해를 입었다.`);
       if (dmgAcc > 0) next = pushLog(next, `${player.nickname}이(가) 지속 효과로 HP ${dmgAcc} 회복했다.`);
@@ -1109,7 +1107,7 @@ function healPlayer(party: ForestParty, playerId: string, amount: number, revive
 }
 
 function healMp(party: ForestParty, playerId: string, amount: number): ForestParty {
-  return updatePlayer(party, playerId, (p) => ({ ...p, mp: Math.min(maxMpFor(p.intelligence), p.mp + amount) }));
+  return updatePlayer(party, playerId, (p) => ({ ...p, mp: Math.min(p.maxMp, p.mp + amount) }));
 }
 
 /** 종달새 Patronus proc: if the caster has an active followAttack buff, it strikes the same target again. */

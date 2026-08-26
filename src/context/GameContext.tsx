@@ -160,6 +160,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // the race to. Cleared right after skipping, so the *following* run (once state.stats has actually
   // updated to the adopted value) uploads normally.
   const pendingStatsAdoptionRef = useRef(false);
+  // False until the very first Firestore snapshot for the current playerId has been received. The
+  // "upload my own stats" effect below waits for this — otherwise, on every fresh page load, it would
+  // fire immediately with whatever (possibly stale) stats this device already has in localStorage,
+  // clobbering a fresher value another device just wrote before this device ever got a chance to see
+  // and adopt it. Reset whenever the player identity changes.
+  const [hasInitialStatsSync, setHasInitialStatsSync] = useState(false);
+  useEffect(() => {
+    setHasInitialStatsSync(false);
+  }, [state.playerId]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -179,6 +188,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!state.playerId) return;
     const unsubscribe = listenPlayer(state.playerId, (record) => {
+      setHasInitialStatsSync(true);
       if (!record) return;
       setState((prev) => (prev.patronus === record.patronus ? prev : { ...prev, patronus: record.patronus }));
 
@@ -218,12 +228,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // Mirrors this device's own stats up to Firestore so the admin panel — and this same account on any
   // other device — can see them. Fire-and-forget; harmless if it fails offline. Declared after the
-  // listener above and gated by pendingStatsAdoptionRef so it never re-uploads a stale pre-adoption
-  // snapshot in the same commit as an incoming override/other-device change (see the ref's own comment
-  // for why). Pre-marks its own timestamp as "seen" before writing so this device's own echoed write
-  // coming back through the listener above is recognized as already-applied and skipped, not re-adopted.
+  // listener above and gated on hasInitialStatsSync so a fresh page load never uploads this device's
+  // (possibly stale) local snapshot before the listener above has had a chance to receive and adopt
+  // whatever's already canonical. Also gated by pendingStatsAdoptionRef so it never re-uploads a stale
+  // pre-adoption snapshot in the same commit as an incoming override/other-device change (see the ref's
+  // own comment for why). Pre-marks its own timestamp as "seen" before writing so this device's own
+  // echoed write coming back through the listener above is recognized as already-applied and skipped,
+  // not re-adopted.
   useEffect(() => {
     if (!state.playerId) return;
+    if (!hasInitialStatsSync) return;
     if (pendingStatsAdoptionRef.current) {
       pendingStatsAdoptionRef.current = false;
       return;
@@ -232,7 +246,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const statsUpdatedAt = Date.now();
     localStorage.setItem(SEEN_STATS_OVERRIDE_PREFIX + playerId, String(statsUpdatedAt));
     syncOwnStats(playerId, state.stats, statsUpdatedAt).catch(() => {});
-  }, [state.playerId, state.stats]);
+  }, [state.playerId, state.stats, hasInitialStatsSync]);
 
   const stage: OnboardingStage = !state.playerId
     ? 'account'

@@ -108,13 +108,24 @@ export function joinSeat(
   profileSpellPower = 0,
   profileIntelligence = 0,
   profileAgility = 0,
+  savedSkillLevels: Record<SkillId, number> | null = null,
+  savedSkillPoints = 0,
 ): ForestParty {
   if (seatedPlayer(party, playerId)) return party;
   if (party.status !== 'lobby') throw new ForestFullError();
   const idx = party.seats.findIndex((s) => s === null);
   if (idx === -1) throw new ForestFullError();
   const seats = [...party.seats];
-  seats[idx] = createPlayer(playerId, nickname || '이름 없음', patronus, profileSpellPower, profileIntelligence, profileAgility);
+  seats[idx] = createPlayer(
+    playerId,
+    nickname || '이름 없음',
+    patronus,
+    profileSpellPower,
+    profileIntelligence,
+    profileAgility,
+    savedSkillLevels,
+    savedSkillPoints,
+  );
   return { ...party, seats, hostId: party.hostId ?? playerId, updatedAt: now() };
 }
 

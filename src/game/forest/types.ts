@@ -163,6 +163,8 @@ export function createPlayer(
   profileSpellPower = 0,
   profileIntelligence = 0,
   profileAgility = 0,
+  savedSkillLevels: Record<SkillId, number> | null = null,
+  savedSkillPoints = 0,
 ): Player {
   // In-combat intelligence/spellPower/agility mirror the player's real profile stats at join time —
   // a player who built up 지능 300 on their profile fights the forest with 지능 300, not a fresh
@@ -183,8 +185,11 @@ export function createPlayer(
     profileSpellPower,
     profileIntelligence,
     profileAgility,
-    skillPoints: 0,
-    skillLevels: emptySkillLevels(),
+    // Carried over from the player's profile so leveling a skill in one expedition keeps it leveled
+    // in the next — the party doc these live in gets wiped once everyone leaves, so the profile is
+    // the one place this survives (see syncForestSkills in firebase/players.ts).
+    skillPoints: savedSkillPoints,
+    skillLevels: savedSkillLevels ?? emptySkillLevels(),
     patronus,
     statusEffects: [],
     shield: 0,

@@ -57,7 +57,7 @@ service cloud.firestore {
       allow read: if true;
 
       allow create: if request.resource.data.keys().hasAll(
-          ['username', 'nickname', 'grade', 'testScores', 'computedHouse', 'assignedHouse', 'assignedAt', 'computedPatronus', 'patronus', 'pet', 'avatarDataUrl', 'createdAt', 'stats', 'statsUpdatedAt', 'statsSetBy']
+          ['username', 'nickname', 'grade', 'testScores', 'computedHouse', 'assignedHouse', 'assignedAt', 'computedPatronus', 'patronus', 'pet', 'avatarDataUrl', 'createdAt', 'stats', 'statsUpdatedAt', 'statsSetBy', 'forestSkillLevels', 'forestSkillPoints']
         )
         && request.resource.data.username is string
         && request.resource.data.username.size() > 0
@@ -74,7 +74,9 @@ service cloud.firestore {
         && request.resource.data.avatarDataUrl == null
         && request.resource.data.stats == null
         && request.resource.data.statsUpdatedAt == null
-        && request.resource.data.statsSetBy == null;
+        && request.resource.data.statsSetBy == null
+        && request.resource.data.forestSkillLevels == null
+        && request.resource.data.forestSkillPoints == null;
 
       allow update: if
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['testScores', 'computedHouse'])
@@ -109,7 +111,12 @@ service cloud.firestore {
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stats', 'statsUpdatedAt', 'statsSetBy'])
           && request.resource.data.stats is map
           && request.resource.data.statsUpdatedAt is number
-          && request.resource.data.statsSetBy in ['device', 'admin']);
+          && request.resource.data.statsSetBy in ['device', 'admin'])
+        // 금지된 숲 스킬 투자(레벨/포인트)가 다음 탐사에도 이어지도록, 파티(방)에서 나올 때마다
+        // 기기가 자기 것을 프로필에 올려둡니다.
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['forestSkillLevels', 'forestSkillPoints'])
+          && request.resource.data.forestSkillLevels is map
+          && request.resource.data.forestSkillPoints is number);
 
       // 관리자 페이지의 "가입 데이터 초기화" 버튼이 지워야 하므로 삭제를
       // 허용합니다. 이 프로젝트엔 Firebase Auth 기반 신원 검증이 없어 이 허용은

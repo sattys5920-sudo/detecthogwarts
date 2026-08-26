@@ -20,6 +20,7 @@ import {
   subscribeParty,
   upgradeSkill,
 } from '../firebase/forest';
+import { getPlayerOnce, syncForestSkills } from '../firebase/players';
 import { allSeatsReady, CATEGORY_LABEL, currentActingPlayerId, EVENT_TONE, MAX_SEATS, TOTAL_STAGES, VOTE_DURATION_MS } from '../game/forest/engine';
 import { eventById } from '../game/forest/events';
 import { patronusById } from '../game/forest/patronus';
@@ -325,10 +326,42 @@ export default function ForestPage() {
 
   useEffect(() => {
     if (!game.playerId || !VALID_ROOMS.includes(roomId) || game.isAdmin) return;
-    joinParty(roomId, game.playerId, game.nickname, game.patronus, game.stats.spellPower, game.stats.intelligence, game.stats.agility).catch((e) => {
-      setJoinError(e instanceof ForestFullError ? e.message : '입장에 실패했습니다. 다시 시도해 주세요.');
+    const playerId = game.playerId;
+    let cancelled = false;
+    (async () => {
+      // Reads the skill investment saved from a previous expedition (if any) so joining a fresh
+      // party (joinSeat is a no-op if we're already seated) starts from where the player left off
+      // instead of a blank slate — see syncForestSkills below for the write side.
+      const record = await getPlayerOnce(playerId).catch(() => null);
+      if (cancelled) return;
+      await joinParty(
+        roomId,
+        playerId,
+        game.nickname,
+        game.patronus,
+        game.stats.spellPower,
+        game.stats.intelligence,
+        game.stats.agility,
+        record?.forestSkillLevels ?? null,
+        record?.forestSkillPoints ?? 0,
+      );
+    })().catch((e) => {
+      if (!cancelled) setJoinError(e instanceof ForestFullError ? e.message : '입장에 실패했습니다. 다시 시도해 주세요.');
     });
+    return () => {
+      cancelled = true;
+    };
   }, [roomId, game.playerId, game.nickname, game.patronus, game.isAdmin, game.stats.spellPower, game.stats.intelligence, game.stats.agility]);
+
+  // Mirrors this device's current skill investment up to the player's profile on every party update
+  // while seated, so it survives once the party doc resets (see the join effect above for the read
+  // side). Fire-and-forget; harmless if it fails offline.
+  useEffect(() => {
+    if (!party || !game.playerId) return;
+    const mySeat = party.seats.find((p) => p?.id === game.playerId);
+    if (!mySeat) return;
+    syncForestSkills(game.playerId, mySeat.skillLevels, mySeat.skillPoints).catch(() => {});
+  }, [party, game.playerId]);
 
   useEffect(() => {
     if (!party || party.status !== 'cleared' || !party.seats.some((p) => p?.id === game.playerId)) return;

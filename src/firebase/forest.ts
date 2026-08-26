@@ -84,9 +84,21 @@ export async function joinParty(
   profileSpellPower = 0,
   profileIntelligence = 0,
   profileAgility = 0,
+  savedSkillLevels: Record<SkillId, number> | null = null,
+  savedSkillPoints = 0,
 ): Promise<void> {
   await transact(roomId, (current) =>
-    joinSeat(current, playerId, nickname || '이름 없음', patronus, profileSpellPower, profileIntelligence, profileAgility),
+    joinSeat(
+      current,
+      playerId,
+      nickname || '이름 없음',
+      patronus,
+      profileSpellPower,
+      profileIntelligence,
+      profileAgility,
+      savedSkillLevels,
+      savedSkillPoints,
+    ),
   );
 }
 

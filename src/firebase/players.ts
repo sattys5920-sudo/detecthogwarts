@@ -1,7 +1,7 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import type { PlayerStats } from '../context/GameContext';
 import type { HouseId } from '../data/sortingTest';
-import type { PatronusId } from '../game/forest/types';
+import type { PatronusId, SkillId } from '../game/forest/types';
 import { db, isFirebaseConfigured } from './config';
 
 export interface PlayerRecord {
@@ -27,6 +27,9 @@ export interface PlayerRecord {
   statsUpdatedAt: number | null;
   /** Distinguishes the device's own routine upload from an admin override, so the device knows whether to adopt an incoming value. */
   statsSetBy: 'device' | 'admin' | null;
+  /** 금지된 숲 skill investment, mirrored here so it carries over into the player's next expedition — the party doc it lives in resets once everyone leaves. Null until their first expedition. */
+  forestSkillLevels: Record<SkillId, number> | null;
+  forestSkillPoints: number | null;
 }
 
 const COLLECTION_NAME = 'players';
@@ -86,6 +89,8 @@ function fromFirestoreDoc(id: string, data: Record<string, unknown>): PlayerReco
     stats: (data.stats as PlayerStats | null) ?? null,
     statsUpdatedAt: (data.statsUpdatedAt as number | null) ?? null,
     statsSetBy: (data.statsSetBy as 'device' | 'admin' | null) ?? null,
+    forestSkillLevels: (data.forestSkillLevels as Record<SkillId, number> | null) ?? null,
+    forestSkillPoints: (data.forestSkillPoints as number | null) ?? null,
   };
 }
 
@@ -108,6 +113,8 @@ export async function createPlayerRecord(id: string, username: string): Promise<
       stats: null,
       statsUpdatedAt: null,
       statsSetBy: null,
+      forestSkillLevels: null,
+      forestSkillPoints: null,
     });
     return;
   }
@@ -130,6 +137,8 @@ export async function createPlayerRecord(id: string, username: string): Promise<
     stats: null,
     statsUpdatedAt: null,
     statsSetBy: null,
+    forestSkillLevels: null,
+    forestSkillPoints: null,
   });
   writeDemoPlayers(players);
 }
@@ -282,6 +291,20 @@ export async function overridePlayerStats(id: string, stats: PlayerStats): Promi
   const idx = players.findIndex((p) => p.id === id);
   if (idx >= 0) {
     players[idx] = { ...players[idx], stats, statsUpdatedAt: Date.now(), statsSetBy: 'admin' };
+    writeDemoPlayers(players);
+  }
+}
+
+/** Mirrors this device's current 금지된 숲 skill investment up to the player's profile, so their next expedition (in this room or any other) starts from where they left off instead of a fresh 0. */
+export async function syncForestSkills(id: string, skillLevels: Record<SkillId, number>, skillPoints: number): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, COLLECTION_NAME, id), { forestSkillLevels: skillLevels, forestSkillPoints: skillPoints });
+    return;
+  }
+  const players = readDemoPlayers();
+  const idx = players.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    players[idx] = { ...players[idx], forestSkillLevels: skillLevels, forestSkillPoints: skillPoints };
     writeDemoPlayers(players);
   }
 }

@@ -10,7 +10,8 @@ import { useBackgroundAudio } from '../context/BackgroundAudioContext';
 import { MAX_STAT_VALUE, useGame } from '../context/GameContext';
 import { PATRONUS_ICONS } from '../data/patronusIcons';
 import { HOUSES, SCHOOL_NAME } from '../data/school';
-import { listenHouseCupScores, type HouseCupScores } from '../firebase/houseCup';
+import type { HouseId } from '../data/sortingTest';
+import { awardHouseCupPoints, listenHouseCupScores, type HouseCupScores } from '../firebase/houseCup';
 import { DEFAULT_PREFS, setPref, subscribePrefs, type NotificationPrefs } from '../firebase/notificationPrefs';
 import { patronusById } from '../game/forest/patronus';
 import gryffindorCrest from '../assets/crests/gryffindor.png';
@@ -69,6 +70,8 @@ export default function ProfilePage() {
   const [gradeDraft, setGradeDraft] = useState(game.grade ?? 10);
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
   const [houseCupScores, setHouseCupScores] = useState<HouseCupScores>({ flame: 0, moonlight: 0, earth: 0, wind: 0 });
+  const [scoreDeltas, setScoreDeltas] = useState<Record<HouseId, string>>({ flame: '', moonlight: '', earth: '', wind: '' });
+  const [applyingScores, setApplyingScores] = useState(false);
 
   useEffect(() => {
     if (!game.playerId) return;
@@ -76,6 +79,19 @@ export default function ProfilePage() {
   }, [game.playerId]);
 
   useEffect(() => listenHouseCupScores(setHouseCupScores), []);
+
+  async function applyScoreDeltas() {
+    setApplyingScores(true);
+    try {
+      for (const h of HOUSES) {
+        const n = Number(scoreDeltas[h.id as HouseId]);
+        if (Number.isFinite(n) && n !== 0) await awardHouseCupPoints(h.id as HouseId, n);
+      }
+      setScoreDeltas({ flame: '', moonlight: '', earth: '', wind: '' });
+    } finally {
+      setApplyingScores(false);
+    }
+  }
 
   function updatePref(key: keyof NotificationPrefs, value: boolean) {
     if (!game.playerId) return;
@@ -293,6 +309,30 @@ export default function ProfilePage() {
               </div>
             ))}
         </Card>
+
+        {game.isAdmin && (
+          <Card className="mt-2 flex flex-col gap-2">
+            <p className="text-[11px] font-bold text-ink-700/70">점수 직접 조정 (+/- 가능, 즉시 누적)</p>
+            <div className="grid grid-cols-2 gap-2">
+              {HOUSES.map((h) => (
+                <label key={h.id} className="flex items-center gap-1.5 text-xs">
+                  <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ backgroundColor: h.color }} />
+                  <span className="w-3 flex-none font-bold text-ink-900">{h.name}</span>
+                  <input
+                    type="number"
+                    value={scoreDeltas[h.id as HouseId]}
+                    onChange={(e) => setScoreDeltas((prev) => ({ ...prev, [h.id as HouseId]: e.target.value }))}
+                    placeholder="0"
+                    className="w-full min-w-0 rounded-sm border border-ink-700/20 bg-paper-100/60 px-2 py-1 text-right font-mono text-ink-900 outline-none focus:border-seal-500"
+                  />
+                </label>
+              ))}
+            </div>
+            <Button onClick={applyScoreDeltas} disabled={applyingScores} className="self-end px-3 py-1.5 text-xs">
+              {applyingScores ? '적용 중…' : '적용'}
+            </Button>
+          </Card>
+        )}
       </div>
 
       {game.assignedHouse ? (

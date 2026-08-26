@@ -628,7 +628,7 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
           ) : (
             <>
               <p className="text-center text-[11px] text-ink-500/60">
-                제출 기회 {attempts} / {PUZZLE_MAX_ATTEMPTS}
+                남은 제출 기회 {PUZZLE_MAX_ATTEMPTS - attempts} / {PUZZLE_MAX_ATTEMPTS}
               </p>
               <button
                 type="button"

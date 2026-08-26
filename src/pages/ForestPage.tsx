@@ -587,7 +587,7 @@ export default function ForestPage() {
           </Card>
           {me && <SkillPanel player={me} onUpgrade={(skillId) => guard(() => upgradeSkill(roomId, game.playerId!, skillId))} />}
           {me ? (
-            <Button onClick={() => guard(async () => { await leaveExpedition(roomId); navigate('/recess'); })}>
+            <Button onClick={() => guard(async () => { await leaveExpedition(roomId, game.playerId!); navigate('/recess'); })}>
               {cleared ? '계속 탐사' : '탐사 종료'}
             </Button>
           ) : (

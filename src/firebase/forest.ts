@@ -1,4 +1,4 @@
-import { doc, onSnapshot, runTransaction, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, runTransaction } from 'firebase/firestore';
 import {
   castVote as engineCastVote,
   confirmEvent as engineConfirmEvent,
@@ -6,9 +6,9 @@ import {
   ForestFullError,
   forceResolveVoteTimeout as engineForceResolveVoteTimeout,
   joinSeat,
+  leaveClearedOrFailed,
   leaveSeat,
   playerCombatAction as engineCombatAction,
-  resetParty,
   resolveTie as engineResolveTie,
   setReady as engineSetReady,
   startExpedition as engineStartExpedition,
@@ -126,10 +126,6 @@ export async function upgradeSkill(roomId: string, playerId: string, skillId: Sk
   await transact(roomId, (current) => engineUpgradeSkill(current, playerId, skillId));
 }
 
-export async function leaveExpedition(roomId: string): Promise<void> {
-  if (isFirebaseConfigured && db) {
-    await setDoc(doc(db, COLLECTION, roomId), resetParty());
-    return;
-  }
-  writeDemoParty(roomId, resetParty());
+export async function leaveExpedition(roomId: string, playerId: string): Promise<void> {
+  await transact(roomId, (current) => leaveClearedOrFailed(current, playerId));
 }

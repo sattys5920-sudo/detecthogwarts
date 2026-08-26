@@ -139,6 +139,21 @@ export function resetParty(): ForestParty {
   return createParty();
 }
 
+/**
+ * A player leaving from the cleared/failed screen only removes their own seat, so teammates who
+ * haven't clicked through yet keep seeing the result screen (and can still spend skill points) — a
+ * previous version overwrote the whole shared party doc here, which instantly booted every other
+ * seated player back to a fresh lobby the moment any one of them clicked "계속 탐사"/"탐사 종료".
+ * Only once the last seated player leaves does the room actually reset, so it's ready for a new group.
+ */
+export function leaveClearedOrFailed(party: ForestParty, playerId: string): ForestParty {
+  if (party.status !== 'cleared' && party.status !== 'failed') return party;
+  const seats = party.seats.map((s) => (s?.id === playerId ? null : s)) as ForestParty['seats'];
+  if (seats.every((s) => s === null)) return resetParty();
+  const stillHost = seats.some((s) => s?.id === party.hostId);
+  return { ...party, seats, hostId: stillHost ? party.hostId : (seats.find((s) => s)?.id ?? null), updatedAt: now() };
+}
+
 // ---------- path / event generation ----------
 
 const PATH_FLAVORS = [

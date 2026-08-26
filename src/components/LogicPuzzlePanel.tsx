@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DAILY_PUZZLES,
   emptyPuzzleAnswer,
@@ -506,11 +506,23 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
   const [answer, setAnswer] = useState<PuzzleAnswerValue>(() => emptyPuzzleAnswer(puzzle));
   const [wrongFlash, setWrongFlash] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
+  // The draft is shared per-house, so multiple housemates can be filling in the same grid at once.
+  // Without this, an older remote snapshot arriving after a newer local keystroke (a normal race when
+  // several people type around the same time) would silently revert cells the player just filled in —
+  // looking like "the grid is full but submit does nothing." Only adopt a remote update that's at
+  // least as new as our own last local edit.
+  const localEditAtRef = useRef(0);
 
-  useEffect(() => setAnswer(emptyPuzzleAnswer(puzzle)), [puzzle.id]);
+  useEffect(() => {
+    setAnswer(emptyPuzzleAnswer(puzzle));
+    localEditAtRef.current = 0;
+  }, [puzzle.id]);
   useEffect(() => listenHouseAnswer(puzzle.id, houseId, setRemote), [puzzle.id, houseId]);
   useEffect(() => {
-    if (remote && remote.puzzleId === puzzle.id) setAnswer(remote.answer);
+    if (remote && remote.puzzleId === puzzle.id && (remote.updatedAt ?? 0) >= localEditAtRef.current) {
+      setAnswer(remote.answer);
+    }
   }, [remote, puzzle.id]);
 
   const rankPoints = puzzle.rankPoints ?? PUZZLE_RANK_POINTS;
@@ -523,6 +535,7 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
   function commit(next: PuzzleAnswerValue) {
     setAnswer(next);
     setWrongFlash(false);
+    localEditAtRef.current = Date.now();
     saveDraftAnswer(puzzle.id, houseId, next);
   }
 
@@ -543,9 +556,13 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
   async function handleSubmit() {
     if (submitting || locked || !filled || outOfAttempts) return;
     setSubmitting(true);
+    setSubmitError(false);
     try {
       const result = await submitPuzzleAnswer(puzzle.id, houseId, answer);
       setWrongFlash(!result.correct);
+    } catch {
+      // Otherwise a failed submit (e.g. a network hiccup) looks identical to "nothing happened."
+      setSubmitError(true);
     } finally {
       setSubmitting(false);
     }
@@ -620,6 +637,9 @@ function PuzzleCard({ puzzle, houseId, state }: { puzzle: DailyPuzzle; houseId: 
           )}
           {wrongFlash && !outOfAttempts && (
             <p className="text-center text-xs font-bold text-seal-600">아직 정답이 아니에요. 다시 확인해 보세요.</p>
+          )}
+          {submitError && (
+            <p className="text-center text-xs font-bold text-seal-600">제출에 실패했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.</p>
           )}
           {outOfAttempts ? (
             <p className="rounded-lg border border-ink-700/20 bg-ink-700/5 px-3 py-2 text-center text-sm font-bold text-ink-700/70">

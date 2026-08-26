@@ -57,7 +57,7 @@ service cloud.firestore {
       allow read: if true;
 
       allow create: if request.resource.data.keys().hasAll(
-          ['username', 'nickname', 'grade', 'testScores', 'computedHouse', 'assignedHouse', 'assignedAt', 'computedPatronus', 'patronus', 'pet', 'avatarDataUrl', 'createdAt']
+          ['username', 'nickname', 'grade', 'testScores', 'computedHouse', 'assignedHouse', 'assignedAt', 'computedPatronus', 'patronus', 'pet', 'avatarDataUrl', 'createdAt', 'stats', 'statsUpdatedAt', 'statsSetBy']
         )
         && request.resource.data.username is string
         && request.resource.data.username.size() > 0
@@ -71,7 +71,10 @@ service cloud.firestore {
         && request.resource.data.computedPatronus == null
         && request.resource.data.patronus == null
         && request.resource.data.pet == null
-        && request.resource.data.avatarDataUrl == null;
+        && request.resource.data.avatarDataUrl == null
+        && request.resource.data.stats == null
+        && request.resource.data.statsUpdatedAt == null
+        && request.resource.data.statsSetBy == null;
 
       allow update: if
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['testScores', 'computedHouse'])
@@ -100,7 +103,13 @@ service cloud.firestore {
           && request.resource.data.computedPatronus in ['snake', 'tiger', 'squirrel', 'panther', 'lark', 'cat', 'fox', 'snail', 'gecko', 'giraffe', 'pony', 'otter'])
         // 금지된 숲의 패트로누스 스킬에 쓰일 종을 관리자가 언제든 지정/재지정할 수 있습니다.
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['patronus'])
-          && request.resource.data.patronus in ['snake', 'tiger', 'squirrel', 'panther', 'lark', 'cat', 'fox', 'snail', 'gecko', 'giraffe', 'pony', 'otter']);
+          && request.resource.data.patronus in ['snake', 'tiger', 'squirrel', 'panther', 'lark', 'cat', 'fox', 'snail', 'gecko', 'giraffe', 'pony', 'otter'])
+        // 플레이어 기기가 자기 스탯을 주기적으로 올리거나(statsSetBy='device'), 관리자가 학생
+        // 목록에서 직접 스탯을 덮어쓸 때(statsSetBy='admin') 쓰입니다.
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stats', 'statsUpdatedAt', 'statsSetBy'])
+          && request.resource.data.stats is map
+          && request.resource.data.statsUpdatedAt is number
+          && request.resource.data.statsSetBy in ['device', 'admin']);
 
       // 관리자 페이지의 "가입 데이터 초기화" 버튼이 지워야 하므로 삭제를
       // 허용합니다. 이 프로젝트엔 Firebase Auth 기반 신원 검증이 없어 이 허용은

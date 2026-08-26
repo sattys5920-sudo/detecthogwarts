@@ -1,4 +1,5 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import type { PlayerStats } from '../context/GameContext';
 import type { HouseId } from '../data/sortingTest';
 import type { PatronusId } from '../game/forest/types';
 import { db, isFirebaseConfigured } from './config';
@@ -21,6 +22,11 @@ export interface PlayerRecord {
   /** Synced from the player's own device so other players can see it in the student list. */
   avatarDataUrl: string | null;
   createdAt: number;
+  /** Mirrored from the player's own device (see GameContext) so the admin panel can view/override it — never used for gameplay logic itself. */
+  stats: PlayerStats | null;
+  statsUpdatedAt: number | null;
+  /** Distinguishes the device's own routine upload from an admin override, so the device knows whether to adopt an incoming value. */
+  statsSetBy: 'device' | 'admin' | null;
 }
 
 const COLLECTION_NAME = 'players';
@@ -77,6 +83,9 @@ function fromFirestoreDoc(id: string, data: Record<string, unknown>): PlayerReco
     pet: (data.pet as string | null) ?? null,
     avatarDataUrl: (data.avatarDataUrl as string | null) ?? null,
     createdAt: createdAt?.toMillis?.() ?? 0,
+    stats: (data.stats as PlayerStats | null) ?? null,
+    statsUpdatedAt: (data.statsUpdatedAt as number | null) ?? null,
+    statsSetBy: (data.statsSetBy as 'device' | 'admin' | null) ?? null,
   };
 }
 
@@ -96,6 +105,9 @@ export async function createPlayerRecord(id: string, username: string): Promise<
       pet: null,
       avatarDataUrl: null,
       createdAt: serverTimestamp(),
+      stats: null,
+      statsUpdatedAt: null,
+      statsSetBy: null,
     });
     return;
   }
@@ -115,6 +127,9 @@ export async function createPlayerRecord(id: string, username: string): Promise<
     pet: null,
     avatarDataUrl: null,
     createdAt: Date.now(),
+    stats: null,
+    statsUpdatedAt: null,
+    statsSetBy: null,
   });
   writeDemoPlayers(players);
 }
@@ -239,6 +254,34 @@ export async function assignPatronus(id: string, patronus: PatronusId): Promise<
   const idx = players.findIndex((p) => p.id === id);
   if (idx >= 0) {
     players[idx] = { ...players[idx], patronus };
+    writeDemoPlayers(players);
+  }
+}
+
+/** Called by the player's own device whenever its local stats change, so the admin panel can see a roughly-current snapshot. Never read back by anything except the admin UI and the device's own admin-override check. */
+export async function syncOwnStats(id: string, stats: PlayerStats): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, COLLECTION_NAME, id), { stats, statsUpdatedAt: Date.now(), statsSetBy: 'device' });
+    return;
+  }
+  const players = readDemoPlayers();
+  const idx = players.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    players[idx] = { ...players[idx], stats, statsUpdatedAt: Date.now(), statsSetBy: 'device' };
+    writeDemoPlayers(players);
+  }
+}
+
+/** Admin-only: overrides a player's stats — the player's own device adopts this the next time it syncs (see GameContext). */
+export async function overridePlayerStats(id: string, stats: PlayerStats): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await updateDoc(doc(db, COLLECTION_NAME, id), { stats, statsUpdatedAt: Date.now(), statsSetBy: 'admin' });
+    return;
+  }
+  const players = readDemoPlayers();
+  const idx = players.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    players[idx] = { ...players[idx], stats, statsUpdatedAt: Date.now(), statsSetBy: 'admin' };
     writeDemoPlayers(players);
   }
 }

@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import Letterhead from '../components/Letterhead';
+import PlayerStatsModal from '../components/PlayerStatsModal';
 import { usePageBack } from '../context/BackContext';
+import { useGame } from '../context/GameContext';
 import { HOUSES, SCHOOL_NAME } from '../data/school';
 import { listenAllPlayers, type PlayerRecord } from '../firebase/players';
 
@@ -12,7 +14,7 @@ function houseName(id: string | null) {
   return HOUSES.find((h) => h.id === id)?.name ?? null;
 }
 
-function StudentRow({ player }: { player: PlayerRecord }) {
+function StudentRow({ player, isAdmin, onViewStats }: { player: PlayerRecord; isAdmin: boolean; onViewStats: () => void }) {
   const house = houseName(player.assignedHouse);
   const initial = player.nickname ? player.nickname[0] : '?';
 
@@ -38,17 +40,30 @@ function StudentRow({ player }: { player: PlayerRecord }) {
           )}
         </div>
       </div>
+      {isAdmin && (
+        <button
+          type="button"
+          onClick={onViewStats}
+          className="flex-none rounded-sm border border-ink-700/20 px-2 py-1 font-mono text-[10px] font-bold text-ink-700/70 hover:border-seal-500/50 hover:text-seal-600"
+        >
+          스탯 보기
+        </button>
+      )}
     </Card>
   );
 }
 
 export default function StudentsPage() {
   const navigate = useNavigate();
+  const game = useGame();
   const [players, setPlayers] = useState<PlayerRecord[]>([]);
+  const [statsTargetId, setStatsTargetId] = useState<string | null>(null);
 
   usePageBack(useCallback(() => navigate(-1), [navigate]));
 
   useEffect(() => listenAllPlayers(setPlayers), []);
+
+  const statsTarget = players.find((p) => p.id === statsTargetId) ?? null;
 
   const students = players
     .filter((p) => p.username !== ADMIN_USERNAME && p.nickname)
@@ -63,9 +78,19 @@ export default function StudentsPage() {
       ) : (
         <div className="flex flex-col gap-2.5">
           {students.map((p) => (
-            <StudentRow key={p.id} player={p} />
+            <StudentRow key={p.id} player={p} isAdmin={game.isAdmin} onViewStats={() => setStatsTargetId(p.id)} />
           ))}
         </div>
+      )}
+
+      {statsTarget && (
+        <PlayerStatsModal
+          playerId={statsTarget.id}
+          nickname={statsTarget.nickname}
+          stats={statsTarget.stats}
+          statsUpdatedAt={statsTarget.statsUpdatedAt}
+          onClose={() => setStatsTargetId(null)}
+        />
       )}
     </div>
   );

@@ -9,6 +9,7 @@ import {
   submitPatronusTestResult,
   submitProfile,
   submitTestResult,
+  syncOwnStats,
   updateAvatar,
   updateGrade,
   updateNickname,
@@ -58,6 +59,7 @@ interface PlayerState {
 const STORAGE_KEY = 'arcanum-player';
 const SEEN_ASSIGNMENT_PREFIX = 'arcanum-assignment-seen-';
 const SEEN_PATRONUS_PREFIX = 'arcanum-patronus-seen-';
+const SEEN_STATS_OVERRIDE_PREFIX = 'arcanum-stats-override-seen-';
 const ADMIN_KEY = 'arcanum-admin-unlocked';
 const ADMIN_USERNAME = 'admin';
 const ADMIN_NICKNAME = '호그와트';
@@ -152,6 +154,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem(ADMIN_KEY) === 'true');
   const playerIdRef = useRef(state.playerId);
   playerIdRef.current = state.playerId;
+  // Set (synchronously) the moment an admin stats override is adopted below, so the very next
+  // "upload my own stats" effect run skips once — otherwise it would fire in the same commit with
+  // the pre-adoption stats still in its closure and immediately overwrite the override it just lost
+  // the race to. Cleared right after skipping, so the *following* run (once state.stats has actually
+  // updated to the adopted value) uploads normally.
+  const pendingStatsAdoptionRef = useRef(false);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -189,9 +197,36 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (localStorage.getItem(seenKey) !== record.assignedHouse) {
         setJustAssigned(true);
       }
+
+      // Admin can override this player's stats from the student list — adopt it once, the first
+      // time we see this particular override (tracked by its timestamp so we don't reprocess it on
+      // every snapshot, and so our own routine upload right after adopting doesn't loop back).
+      if (record.statsSetBy === 'admin' && record.stats && record.statsUpdatedAt) {
+        const statsSeenKey = SEEN_STATS_OVERRIDE_PREFIX + record.id;
+        if (localStorage.getItem(statsSeenKey) !== String(record.statsUpdatedAt)) {
+          localStorage.setItem(statsSeenKey, String(record.statsUpdatedAt));
+          pendingStatsAdoptionRef.current = true;
+          const overriddenStats = record.stats;
+          setState((prev) => ({ ...prev, stats: { ...prev.stats, ...overriddenStats } }));
+        }
+      }
     });
     return unsubscribe;
   }, [state.playerId]);
+
+  // Mirrors this device's own stats up to Firestore so the admin panel can view (and override) them
+  // — stats are otherwise entirely device-local. Fire-and-forget; harmless if it fails offline.
+  // Declared after the listener above and gated by pendingStatsAdoptionRef so it never re-uploads a
+  // stale pre-adoption snapshot in the same commit as an incoming admin override (see the ref's own
+  // comment for why).
+  useEffect(() => {
+    if (!state.playerId) return;
+    if (pendingStatsAdoptionRef.current) {
+      pendingStatsAdoptionRef.current = false;
+      return;
+    }
+    syncOwnStats(state.playerId, state.stats).catch(() => {});
+  }, [state.playerId, state.stats]);
 
   const stage: OnboardingStage = !state.playerId
     ? 'account'

@@ -1,4 +1,4 @@
-import { doc, onSnapshot, runTransaction, setDoc } from 'firebase/firestore';
+import { doc, getDoc, increment, onSnapshot, runTransaction, setDoc } from 'firebase/firestore';
 import { isPuzzleAnswerCorrect, PUZZLE_RANK_POINTS, puzzleById, type PuzzleAnswerValue } from '../data/logicPuzzles';
 import type { HouseId } from '../data/sortingTest';
 import { awardHouseCupPoints } from './houseCup';
@@ -144,13 +144,13 @@ export async function submitPuzzleAnswer(
   const correct = puzzle ? isPuzzleAnswerCorrect(puzzle, answer) : false;
 
   if (isFirebaseConfigured && db) {
-    const attempts = await runTransaction(db, async (tx) => {
-      const snap = await tx.get(answerRef(puzzleId, houseId));
-      const prevAttempts = snap.exists() ? ((snap.data() as PuzzleAnswerDoc).attempts ?? 0) : 0;
-      const nextAttempts = prevAttempts + 1;
-      tx.set(answerRef(puzzleId, houseId), { puzzleId, houseId, answer, correct, attempts: nextAttempts, updatedAt: Date.now() });
-      return nextAttempts;
-    });
+    // A plain increment (no read-modify-write transaction) — the answer doc is shared per-house and
+    // gets a draft write on every keystroke from anyone in the house, so a transaction here can end up
+    // repeatedly aborted by that traffic and, on a flaky connection, exhaust its retries and throw.
+    // increment() needs no prior read and can't conflict the same way.
+    await setDoc(answerRef(puzzleId, houseId), { puzzleId, houseId, answer, correct, attempts: increment(1), updatedAt: Date.now() }, { merge: true });
+    const attemptsSnap = await getDoc(answerRef(puzzleId, houseId));
+    const attempts = attemptsSnap.exists() ? ((attemptsSnap.data() as PuzzleAnswerDoc).attempts ?? 1) : 1;
     if (!correct) return { correct: false, rank: null, attempts };
     const { rank, isNew } = await runTransaction(db, async (tx) => {
       const snap = await tx.get(stateRef());

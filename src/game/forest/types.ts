@@ -1,3 +1,5 @@
+import { maxMpFor } from './skills';
+
 export type StatusType =
   | 'burn'
   | 'bleed'
@@ -137,7 +139,7 @@ export interface Player {
   spellPower: number;
   /** Drives evasion against enemy attacks and the effectiveness of defense skills. */
   agility: number;
-  /** The player's real (non-forest) profile spell power at the moment they joined — later stages scale monster strength up when the seated party's average is high. Not used for anything in-combat. */
+  /** The player's real (non-forest) profile spell power at the moment they joined — later stages scale monster strength up when the seated party's average is high, on top of the same value already seeding spellPower above. */
   profileSpellPower: number;
   skillPoints: number;
   skillLevels: Record<SkillId, number>;
@@ -150,16 +152,30 @@ export interface Player {
   ready: boolean;
 }
 
-export function createPlayer(id: string, nickname: string, patronus: PatronusId | null = null, profileSpellPower = 0): Player {
+export function createPlayer(
+  id: string,
+  nickname: string,
+  patronus: PatronusId | null = null,
+  profileSpellPower = 0,
+  profileIntelligence = 0,
+  profileAgility = 0,
+): Player {
+  // In-combat intelligence/spellPower/agility mirror the player's real profile stats at join time —
+  // a player who built up 지능 300 on their profile fights the forest with 지능 300, not a fresh
+  // baseline. Floored at 5 so a brand-new profile (or a device that hasn't synced stats yet) doesn't
+  // start combat at 0.
+  const intelligence = Math.max(5, profileIntelligence);
+  const spellPower = Math.max(5, profileSpellPower);
+  const agility = Math.max(5, profileAgility);
   return {
     id,
     nickname,
     hp: 100,
     maxHp: 100,
-    mp: 30, // baseline intelligence(5) via maxMpFor() in skills.ts — refilled properly once the expedition starts
-    intelligence: 5,
-    spellPower: 5,
-    agility: 5,
+    mp: maxMpFor(intelligence),
+    intelligence,
+    spellPower,
+    agility,
     profileSpellPower,
     skillPoints: 0,
     skillLevels: emptySkillLevels(),

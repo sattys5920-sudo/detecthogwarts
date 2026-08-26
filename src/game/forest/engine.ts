@@ -106,13 +106,15 @@ export function joinSeat(
   nickname: string,
   patronus: PatronusId | null = null,
   profileSpellPower = 0,
+  profileIntelligence = 0,
+  profileAgility = 0,
 ): ForestParty {
   if (seatedPlayer(party, playerId)) return party;
   if (party.status !== 'lobby') throw new ForestFullError();
   const idx = party.seats.findIndex((s) => s === null);
   if (idx === -1) throw new ForestFullError();
   const seats = [...party.seats];
-  seats[idx] = createPlayer(playerId, nickname || '이름 없음', patronus, profileSpellPower);
+  seats[idx] = createPlayer(playerId, nickname || '이름 없음', patronus, profileSpellPower, profileIntelligence, profileAgility);
   return { ...party, seats, hostId: party.hostId ?? playerId, updatedAt: now() };
 }
 

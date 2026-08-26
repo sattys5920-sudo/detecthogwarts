@@ -325,10 +325,10 @@ export default function ForestPage() {
 
   useEffect(() => {
     if (!game.playerId || !VALID_ROOMS.includes(roomId) || game.isAdmin) return;
-    joinParty(roomId, game.playerId, game.nickname, game.patronus, game.stats.spellPower).catch((e) => {
+    joinParty(roomId, game.playerId, game.nickname, game.patronus, game.stats.spellPower, game.stats.intelligence, game.stats.agility).catch((e) => {
       setJoinError(e instanceof ForestFullError ? e.message : '입장에 실패했습니다. 다시 시도해 주세요.');
     });
-  }, [roomId, game.playerId, game.nickname, game.patronus, game.isAdmin, game.stats.spellPower]);
+  }, [roomId, game.playerId, game.nickname, game.patronus, game.isAdmin, game.stats.spellPower, game.stats.intelligence, game.stats.agility]);
 
   useEffect(() => {
     if (!party || party.status !== 'cleared' || !party.seats.some((p) => p?.id === game.playerId)) return;

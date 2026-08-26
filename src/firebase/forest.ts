@@ -82,8 +82,12 @@ export async function joinParty(
   nickname: string,
   patronus: PatronusId | null = null,
   profileSpellPower = 0,
+  profileIntelligence = 0,
+  profileAgility = 0,
 ): Promise<void> {
-  await transact(roomId, (current) => joinSeat(current, playerId, nickname || '이름 없음', patronus, profileSpellPower));
+  await transact(roomId, (current) =>
+    joinSeat(current, playerId, nickname || '이름 없음', patronus, profileSpellPower, profileIntelligence, profileAgility),
+  );
 }
 
 export async function leaveParty(roomId: string, playerId: string): Promise<void> {

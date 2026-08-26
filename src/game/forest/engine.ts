@@ -532,16 +532,19 @@ function pickEnemyCount(size: number): number {
 
 /**
  * From stage 6 onward, monsters scale up further based on the seated party's average real
- * (non-forest) profile spell power — a strong party attracts tougher opposition later in the
- * expedition. 50 profileSpellPower (the default starting value) is the neutral baseline; every
- * point above it adds up to +50% at the 500 stat ceiling. Earlier stages are unaffected so a
- * fresh party never feels punished for having strong players.
+ * (non-forest) profile power — a strong party attracts tougher opposition later in the expedition.
+ * All three combat stats count (intelligence, spellPower, agility), not spellPower alone, since all
+ * three now directly seed the party's actual in-combat power (see createPlayer). 50 per stat (the
+ * default starting value) is the neutral baseline; every point above it adds up to +50% at the 500
+ * stat ceiling. Earlier stages are unaffected so a fresh party never feels punished for having strong
+ * players.
  */
-function profileSpellPowerScale(party: ForestParty): number {
+function profilePowerScale(party: ForestParty): number {
   if (party.stage < 6) return 1;
   const seated = party.seats.filter((p): p is Player => !!p);
   if (seated.length === 0) return 1;
-  const avg = seated.reduce((sum, p) => sum + (p.profileSpellPower ?? 0), 0) / seated.length;
+  const avgPerPlayer = seated.map((p) => ((p.profileIntelligence ?? 0) + (p.profileSpellPower ?? 0) + (p.profileAgility ?? 0)) / 3);
+  const avg = avgPerPlayer.reduce((sum, v) => sum + v, 0) / seated.length;
   const boost = Math.max(0, Math.min(1, (avg - 50) / 450)) * 0.5;
   return 1 + boost;
 }
@@ -551,7 +554,7 @@ function beginCombat(party: ForestParty, templates: MonsterTemplate[], isBoss: b
   const partyHpScale = size === 2 ? 1 : size === 3 ? 1.35 : 1.7;
   const partyAtkScale = size === 2 ? 1 : size === 3 ? 1.15 : 1.3;
   const countShare = ENEMY_COUNT_POWER_SHARE[Math.min(4, Math.max(1, templates.length))] ?? 1;
-  const spScale = profileSpellPowerScale(party);
+  const spScale = profilePowerScale(party);
   const hpScale = partyHpScale * countShare * spScale;
   const atkScale = partyAtkScale * countShare * spScale;
   const monsters = templates.map((t, i) => {
@@ -590,7 +593,7 @@ function beginBoss(party: ForestParty): ForestParty {
   const pool = unused.length > 0 ? unused : BOSS_TEMPLATES;
   const template = pool[Math.floor(Math.random() * pool.length)];
   const size = partySize(party);
-  const boss = spawnBoss(template, size, profileSpellPowerScale(party));
+  const boss = spawnBoss(template, size, profilePowerScale(party));
 
   const alivePlayers = party.seats.filter((p): p is Player => !!p && !p.downed);
   const order: { key: string; init: number }[] = [];

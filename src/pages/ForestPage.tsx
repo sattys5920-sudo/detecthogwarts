@@ -84,7 +84,7 @@ function eventEffectLines(effect: EventEffect): string[] {
   if (effect.maxHp) lines.push(`파티 전원 최대 HP ${signed(effect.maxHp)}`);
   if (effect.spellPower) lines.push(`파티 전원 주문력 ${signed(effect.spellPower)}`);
   if (effect.agility) lines.push(`파티 전원 민첩 ${signed(effect.agility)}`);
-  if (effect.intelligence) lines.push(`파티 전원 지능 ${signed(effect.intelligence)} (MP 최대치도 함께 증가)`);
+  if (effect.intelligence) lines.push(`파티 전원 지능 ${signed(effect.intelligence)}`);
   if (effect.skillPoints) lines.push(`파티 전원 스킬 포인트 ${signed(effect.skillPoints)}`);
   if (effect.status) lines.push(`${STATUS_LABEL[effect.status.type] ?? effect.status.type} ${effect.status.turns} 턴 부여`);
   if (effect.hint) lines.push('다음 갈림길의 정보가 미리 공개됨');

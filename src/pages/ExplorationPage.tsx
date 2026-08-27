@@ -10,7 +10,7 @@ import Letterhead from '../components/Letterhead';
 import { useGame } from '../context/GameContext';
 import { DAYS } from '../data/investigation/days';
 import type { ClueDef } from '../data/investigation/types';
-import { listenDayLock, setDayLock } from '../firebase/locks';
+import { listenDayLock, listenDayOpen, setDayLock, setDayOpen } from '../firebase/locks';
 import { useNotebook } from '../hooks/useNotebook';
 
 export default function ExplorationPage() {
@@ -18,10 +18,22 @@ export default function ExplorationPage() {
   const { entries, register } = useNotebook();
   const [selectedDay, setSelectedDay] = useState(game.currentDay);
   const [locked, setLocked] = useState(false);
+  // Day 1 is always open; Day 2-5 stay closed to non-admins until the admin opens them below —
+  // this is a shared Firestore flag (unlike game.currentDay, which is per-player local state and
+  // never actually reaches other players, the bug that kept everyone but the admin stuck on Day 1).
+  const [openDays, setOpenDays] = useState<Record<number, boolean>>({ 1: true });
 
   const day = DAYS.find((d) => d.day === selectedDay) ?? DAYS[0];
+  const dayOpenNow = selectedDay === 1 || (openDays[selectedDay] ?? false);
 
   useEffect(() => listenDayLock(selectedDay, setLocked), [selectedDay]);
+
+  useEffect(() => {
+    const unsubs = DAYS.filter((d) => d.day !== 1).map((d) =>
+      listenDayOpen(d.day, (open) => setOpenDays((prev) => ({ ...prev, [d.day]: open }))),
+    );
+    return () => unsubs.forEach((u) => u());
+  }, []);
 
   function handleRegister(sourceId: string, clue: ClueDef) {
     register({ ...clue, sourceId });
@@ -32,23 +44,46 @@ export default function ExplorationPage() {
       <Letterhead label={`Day ${day.day} / 5`} meta="탐사 활동" />
 
       {game.isAdmin && (
-        <div className="flex items-center justify-between gap-2 rounded-sm bg-ink-black px-2.5 py-1.5">
-          <p className="font-mono text-[11px] font-bold text-paper-50">관리자 모드</p>
-          <button
-            type="button"
-            onClick={() => setDayLock(selectedDay, !locked)}
-            className={`rounded-full px-2.5 py-1 font-mono text-[11px] font-bold ${
-              locked ? 'bg-seal-600 text-paper-50' : 'bg-paper-100 text-ink-900'
-            }`}
-          >
-            {locked ? '잠김 — 열기' : '열림 — 잠그기'}
-          </button>
+        <div className="flex flex-col gap-1.5 rounded-sm bg-ink-black px-2.5 py-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-mono text-[11px] font-bold text-paper-50">관리자 모드 — 이 날 채팅 노출</p>
+            <button
+              type="button"
+              onClick={() => setDayLock(selectedDay, !locked)}
+              className={`rounded-full px-2.5 py-1 font-mono text-[11px] font-bold ${
+                locked ? 'bg-seal-600 text-paper-50' : 'bg-paper-100 text-ink-900'
+              }`}
+            >
+              {locked ? '잠김 — 열기' : '열림 — 잠그기'}
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-mono text-[11px] font-bold text-paper-50">Day 탭 공개</p>
+            <div className="flex items-center gap-1">
+              {DAYS.filter((d) => d.day !== 1).map((d) => {
+                const open = openDays[d.day] ?? false;
+                return (
+                  <button
+                    key={d.day}
+                    type="button"
+                    onClick={() => setDayOpen(d.day, !open)}
+                    className={`rounded-full px-2 py-1 font-mono text-[10px] font-bold ${
+                      open ? 'bg-seal-600 text-paper-50' : 'bg-paper-100 text-ink-900'
+                    }`}
+                  >
+                    Day {d.day} {open ? '열림' : '닫힘'}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
       <div className="grid grid-cols-5 gap-1">
         {DAYS.map((d) => {
-          const dayLocked = !game.isAdmin && d.day > game.currentDay;
+          const open = d.day === 1 || (openDays[d.day] ?? false);
+          const dayLocked = !game.isAdmin && !open;
           const active = d.day === selectedDay;
           return (
             <button
@@ -67,7 +102,12 @@ export default function ExplorationPage() {
         })}
       </div>
 
-      {locked && !game.isAdmin ? (
+      {!game.isAdmin && !dayOpenNow ? (
+        <div className="rounded-sm border border-ink-700/15 bg-paper-100/60 py-10 text-center">
+          <p className="text-sm font-bold text-ink-700/70">아직 이 날짜가 공개되지 않았습니다.</p>
+          <p className="mt-1 text-xs text-ink-500/60">관리자가 Day {day.day}을(를) 열어야 볼 수 있어요.</p>
+        </div>
+      ) : locked && !game.isAdmin ? (
         <div className="rounded-sm border border-ink-700/15 bg-paper-100/60 py-10 text-center">
           <p className="text-sm font-bold text-ink-700/70">아직 조사창이 잠겨 있습니다.</p>
           <p className="mt-1 text-xs text-ink-500/60">관리자가 열어야 이 날의 조사실 채팅을 볼 수 있어요.</p>
@@ -105,6 +145,7 @@ export default function ExplorationPage() {
           onClick={() => {
             const next = day.day + 1;
             game.advanceDay();
+            setDayOpen(next, true);
             setSelectedDay(next);
           }}
           className="tablet-btn tablet-btn-dark self-center px-5 py-2.5 text-sm font-bold"

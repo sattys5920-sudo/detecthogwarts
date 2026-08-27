@@ -37,12 +37,15 @@ export default function ChatLog({
   messages,
   onRegister,
   registeredIds,
+  onDelete,
 }: {
   sysline?: string;
   messages: ChatMessage[];
   /** When provided, non-me messages get a ⋯ button to save that line to the 조사 수첩 (clue notebook). */
   onRegister?: (m: ChatMessage) => void;
   registeredIds?: Set<string>;
+  /** Admin-only: when provided, every message gets a 삭제 button that removes it for everyone. */
+  onDelete?: (m: ChatMessage) => void;
 }) {
   return (
     <div className="flex flex-col gap-2.5">
@@ -71,18 +74,29 @@ export default function ChatLog({
             >
               {m.text}
             </p>
-            {!m.me && onRegister && (
-              <button
-                type="button"
-                onClick={() => onRegister(m)}
-                aria-label="단서로 등록"
-                className={`mt-0.5 rounded-full px-1.5 py-0.5 text-xs font-bold leading-none hover:bg-paper-200 hover:text-seal-600 ${
-                  registeredIds?.has(m.id) ? 'text-seal-600/60' : 'text-ink-500/40'
-                }`}
-              >
-                ⋯
-              </button>
-            )}
+            <div className="mt-0.5 flex items-center gap-1">
+              {!m.me && onRegister && (
+                <button
+                  type="button"
+                  onClick={() => onRegister(m)}
+                  aria-label="단서로 등록"
+                  className={`rounded-full px-1.5 py-0.5 text-xs font-bold leading-none hover:bg-paper-200 hover:text-seal-600 ${
+                    registeredIds?.has(m.id) ? 'text-seal-600/60' : 'text-ink-500/40'
+                  }`}
+                >
+                  ⋯
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={() => onDelete(m)}
+                  className="rounded-full px-1.5 py-0.5 font-mono text-[10px] font-bold leading-none text-ink-500/40 hover:bg-seal-600/10 hover:text-seal-600"
+                >
+                  삭제
+                </button>
+              )}
+            </div>
           </div>
         </div>
       ))}

@@ -1,4 +1,4 @@
-import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './config';
 
 export interface DormMessage {
@@ -76,4 +76,13 @@ export async function sendDormMessage(houseId: string, input: Omit<DormMessage, 
   const messages = readDemo(houseId);
   messages.push({ ...input, id: crypto.randomUUID(), createdAt: Date.now() });
   writeDemo(houseId, messages);
+}
+
+/** Admin-only: removes one message — every listener (every housemate's chat window) drops it live via the onSnapshot in listenDormMessages. */
+export async function deleteDormMessage(houseId: string, messageId: string): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await deleteDoc(doc(db, 'dormChats', houseId, 'messages', messageId));
+    return;
+  }
+  writeDemo(houseId, readDemo(houseId).filter((m) => m.id !== messageId));
 }

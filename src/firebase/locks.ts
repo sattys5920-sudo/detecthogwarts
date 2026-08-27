@@ -21,24 +21,24 @@ function writeDemoLock(key: string, locked: boolean) {
   }
 }
 
-function listenLock(collectionName: string, key: string, callback: (locked: boolean) => void): () => void {
+function listenLock(collectionName: string, key: string, callback: (value: boolean) => void, field = 'locked'): () => void {
   if (isFirebaseConfigured && db) {
     return onSnapshot(doc(db, collectionName, key), (snap) => {
-      callback(snap.exists() ? Boolean(snap.data().locked) : false);
+      callback(snap.exists() ? Boolean(snap.data()[field]) : false);
     });
   }
-  const read = () => callback(readDemoLock(`${collectionName}-${key}`));
+  const read = () => callback(readDemoLock(`${collectionName}-${key}-${field}`));
   read();
   window.addEventListener(DEMO_EVENT, read);
   return () => window.removeEventListener(DEMO_EVENT, read);
 }
 
-async function setLock(collectionName: string, key: string, locked: boolean): Promise<void> {
+async function setLock(collectionName: string, key: string, value: boolean, field = 'locked'): Promise<void> {
   if (isFirebaseConfigured && db) {
-    await setDoc(doc(db, collectionName, key), { locked });
+    await setDoc(doc(db, collectionName, key), { [field]: value });
     return;
   }
-  writeDemoLock(`${collectionName}-${key}`, locked);
+  writeDemoLock(`${collectionName}-${key}-${field}`, value);
 }
 
 export function listenDayLock(day: number, callback: (locked: boolean) => void): () => void {
@@ -47,6 +47,20 @@ export function listenDayLock(day: number, callback: (locked: boolean) => void):
 
 export function setDayLock(day: number, locked: boolean): Promise<void> {
   return setLock('sessions', `day${day}`, locked);
+}
+
+/**
+ * Whether Day N's tab is open to non-admin players at all — separate from listenDayLock/setDayLock
+ * above, which only pauses/hides a day's chat content once it's already open. Stored in its own
+ * collection (default false = closed when no doc exists yet) so days 2-5 start closed until the
+ * admin explicitly opens them; Day 1 is always open and never consults this.
+ */
+export function listenDayOpen(day: number, callback: (open: boolean) => void): () => void {
+  return listenLock('dayOpen', String(day), callback, 'open');
+}
+
+export function setDayOpen(day: number, open: boolean): Promise<void> {
+  return setLock('dayOpen', String(day), open, 'open');
 }
 
 export function listenRoomLock(roomId: string, callback: (locked: boolean) => void): () => void {

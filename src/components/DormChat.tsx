@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDeclareActiveView } from '../context/ActiveViewContext';
 import { useGame } from '../context/GameContext';
-import { type DormMessage, listenDormMessages, sendDormMessage } from '../firebase/dormChat';
+import { deleteDormMessage, type DormMessage, listenDormMessages, sendDormMessage } from '../firebase/dormChat';
 import { usePlayerAvatars } from '../hooks/usePlayerAvatars';
 import ChatLog, { type ChatMessage } from './ChatLog';
 import Composer from './Composer';
@@ -52,7 +52,10 @@ export default function DormChat({ houseId, readOnly }: { houseId: string; readO
         {chatMessages.length === 0 && (
           <p className="py-6 text-center text-xs text-ink-500/50">아직 대화가 없습니다. 첫 메시지를 남겨 보세요.</p>
         )}
-        <ChatLog messages={chatMessages} />
+        <ChatLog
+          messages={chatMessages}
+          onDelete={game.isAdmin ? (m) => deleteDormMessage(houseId, m.id) : undefined}
+        />
       </div>
       {!readOnly && <Composer onSubmit={handleSend} placeholder="메시지를 입력하세요" submitLabel="전송" />}
     </div>

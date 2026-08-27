@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from 'firebase/firestore';
 import type { ClueDef } from '../data/investigation/types';
 import { db, isFirebaseConfigured } from './config';
 
@@ -133,6 +133,16 @@ export async function sendChatMessage(day: number, nickname: string, text: strin
   }
   const messages = readAdlibDemo(day);
   messages.push({ ...payload, id: crypto.randomUUID(), at: Date.now() });
+  writeAdlibDemo(day, messages);
+}
+
+/** Admin-only: removes one message — every listener (every player's chat window) drops it live via the onSnapshot in listenAdlibs. */
+export async function deleteAdlib(day: number, messageId: string): Promise<void> {
+  if (isFirebaseConfigured && db) {
+    await deleteDoc(doc(db, 'sessions', `day${day}`, 'adlibs', messageId));
+    return;
+  }
+  const messages = readAdlibDemo(day).filter((m) => m.id !== messageId);
   writeAdlibDemo(day, messages);
 }
 

@@ -3,7 +3,7 @@ import ClueRegisterModal from './ClueRegisterModal';
 import Composer from './Composer';
 import { CHARACTERS } from '../data/investigation/characters';
 import { useGame } from '../context/GameContext';
-import { type AdlibMessage, closeOptionsVoting, listenAdlibs, presentEvidence, sendChatMessage, voteOptions } from '../firebase/session';
+import { type AdlibMessage, closeOptionsVoting, deleteAdlib, listenAdlibs, presentEvidence, sendChatMessage, voteOptions } from '../firebase/session';
 import { usePlayerAvatars } from '../hooks/usePlayerAvatars';
 import type { NotebookEntry } from '../hooks/useNotebook';
 
@@ -35,13 +35,28 @@ function RegisterDots({ onClick }: { onClick: () => void }) {
   );
 }
 
+/** Admin-only: removes this message from Firestore, so it drops out of every player's chat window live. */
+function DeleteButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex-none rounded-full px-1.5 py-0.5 font-mono text-[10px] font-bold leading-none text-ink-500/40 hover:bg-seal-600/10 hover:text-seal-600"
+    >
+      삭제
+    </button>
+  );
+}
+
 interface NarrationBubbleProps {
   m: AdlibMessage;
   onRegister: (m: AdlibMessage) => void;
+  isAdmin: boolean;
+  onDelete: (messageId: string) => void;
 }
 
 /** Any admin-sent narration line (suspect dialogue or plain situation text) — tap the ⋯ to register it as a clue. */
-function NarrationBubble({ m, onRegister }: NarrationBubbleProps) {
+function NarrationBubble({ m, onRegister, isAdmin, onDelete }: NarrationBubbleProps) {
   const avatarSrc = m.speaker ? avatarFor(m.speaker) : undefined;
 
   if (!m.speaker) {
@@ -51,6 +66,7 @@ function NarrationBubble({ m, onRegister }: NarrationBubbleProps) {
         <div className="flex items-center gap-1">
           <span className="font-mono text-[10px] text-ink-500/40">{formatTime(m.at)}</span>
           <RegisterDots onClick={() => onRegister(m)} />
+          {isAdmin && <DeleteButton onClick={() => onDelete(m.id)} />}
         </div>
       </div>
     );
@@ -73,6 +89,7 @@ function NarrationBubble({ m, onRegister }: NarrationBubbleProps) {
         <div className="flex items-center gap-1">
           <span className="font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
           <RegisterDots onClick={() => onRegister(m)} />
+          {isAdmin && <DeleteButton onClick={() => onDelete(m.id)} />}
         </div>
       </div>
     </div>
@@ -86,10 +103,11 @@ interface OptionsBubbleProps {
   onRegister: (m: AdlibMessage) => void;
   onVote: (messageId: string, optionIndex: number) => void;
   onClose: (messageId: string) => void;
+  onDelete: (messageId: string) => void;
 }
 
 /** A poll-style options message — players pick to vote, and everyone sees a live per-option count instead of the pick posting a chat reply. The admin can close it to lock in the final tally. */
-function OptionsBubble({ m, playerId, isAdmin, onRegister, onVote, onClose }: OptionsBubbleProps) {
+function OptionsBubble({ m, playerId, isAdmin, onRegister, onVote, onClose, onDelete }: OptionsBubbleProps) {
   const avatarSrc = m.speaker ? avatarFor(m.speaker) : undefined;
   const votes = m.votes ?? {};
   const myVote = votes[playerId];
@@ -149,6 +167,7 @@ function OptionsBubble({ m, playerId, isAdmin, onRegister, onVote, onClose }: Op
             )
           )}
           <RegisterDots onClick={() => onRegister(m)} />
+          {isAdmin && <DeleteButton onClick={() => onDelete(m.id)} />}
         </div>
       </div>
     </div>
@@ -203,6 +222,10 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
     closeOptionsVoting(day, messageId);
   }
 
+  function handleDelete(messageId: string) {
+    deleteAdlib(day, messageId);
+  }
+
   function confirmRegister(title: string) {
     if (!registerTarget) return;
     onRegisterClue(registerTarget.id, { title, desc: registerTarget.text, ink: 'black', status: '확인됨' });
@@ -223,6 +246,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
                   <b>{m.speaker}</b>이(가) {m.text}
                 </span>
                 <span className="flex-none font-mono text-[10px] text-seal-600/60">{formatTime(m.at)}</span>
+                {game.isAdmin && <DeleteButton onClick={() => handleDelete(m.id)} />}
               </div>
             );
           }
@@ -237,6 +261,7 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
                 onRegister={setRegisterTarget}
                 onVote={handleVote}
                 onClose={handleClose}
+                onDelete={handleDelete}
               />
             );
           }
@@ -264,13 +289,14 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
                       {m.text}
                     </p>
                     <span className="flex-none font-mono text-[10px] text-ink-500/50">{formatTime(m.at)}</span>
+                    {game.isAdmin && <DeleteButton onClick={() => handleDelete(m.id)} />}
                   </div>
                 </div>
               </div>
             );
           }
 
-          return <NarrationBubble key={m.id} m={m} onRegister={setRegisterTarget} />;
+          return <NarrationBubble key={m.id} m={m} onRegister={setRegisterTarget} isAdmin={game.isAdmin} onDelete={handleDelete} />;
         })}
       </div>
 

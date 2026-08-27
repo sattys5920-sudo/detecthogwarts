@@ -63,7 +63,8 @@ function NarrationBubble({ m, onRegister, isAdmin, onDelete }: NarrationBubblePr
   if (!m.speaker) {
     return (
       <div className="flex flex-col items-center gap-0.5">
-        <p className="text-center font-serif-kr text-xs italic leading-relaxed text-ink-900">{m.text}</p>
+        {m.image && <img src={m.image} alt="" className="max-h-56 max-w-[75%] rounded-lg border border-ink-700/20 object-contain" />}
+        {m.text && <p className="text-center font-serif-kr text-xs italic leading-relaxed text-ink-900">{m.text}</p>}
         <div className="flex items-center gap-1">
           <span className="font-mono text-[10px] text-ink-500/40">{formatTime(m.at)}</span>
           <RegisterDots onClick={() => onRegister(m)} />
@@ -83,6 +84,7 @@ function NarrationBubble({ m, onRegister, isAdmin, onDelete }: NarrationBubblePr
         </span>
       )}
       <div className="flex flex-col items-start gap-1 rounded-lg border border-seal-500/30 bg-paper-100/60 px-3 py-1.5 text-xs text-ink-900">
+        {m.image && <img src={m.image} alt="" className="max-h-56 max-w-full rounded-lg object-contain" />}
         <span>
           <span className="mr-1 font-bold text-seal-600">{m.speaker}</span>
           {m.text}

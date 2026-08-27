@@ -184,6 +184,8 @@ service cloud.firestore {
 
       // 관리자의 즉흥 대사/상황 설명(Roll20 스타일 애드립)과 플레이어의 증거
       // 제시 로그입니다. 채팅 로그와 마찬가지로 추가만 가능하고 수정/삭제는 막습니다.
+      // image는 관리자가 첨부하는 사진(압축된 JPEG data URL) — 텍스트 없이 사진만
+      // 보낼 수도 있어 text가 비어 있어도 image가 있으면 허용합니다.
       match /adlibs/{adlibId} {
         allow read: if true;
 
@@ -193,7 +195,9 @@ service cloud.firestore {
           && request.resource.data.speaker.size() <= 30
           && request.resource.data.text is string
           && request.resource.data.text.size() <= 1000
-          && (request.resource.data.kind == 'options' || request.resource.data.text.size() > 0)
+          && (request.resource.data.kind == 'options' || request.resource.data.text.size() > 0 || 'image' in request.resource.data)
+          && (!('image' in request.resource.data)
+            || (request.resource.data.image is string && request.resource.data.image.size() <= 700000))
           && (request.resource.data.kind != 'options'
             || (request.resource.data.options is list
               && request.resource.data.options.size() >= 1

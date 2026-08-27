@@ -1,10 +1,40 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { CHARACTERS } from '../data/investigation/characters';
 import { sendAdlib, sendOptionsMessage } from '../firebase/session';
 
 const NARRATOR = { id: 'narrator', name: '상황 설명' };
 const CUSTOM = { id: 'custom', name: '직접 입력' };
 const MAX_OPTIONS = 5;
+/** Longest side after resize — keeps the JPEG data URL well under the 700,000-char Firestore rule cap. */
+const MAX_IMAGE_DIM = 900;
+
+/** Scales the picked photo down to fit MAX_IMAGE_DIM (preserving aspect ratio) and re-encodes it as a compact JPEG data URL. */
+function resizeImageToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, MAX_IMAGE_DIM / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      URL.revokeObjectURL(img.src);
+      if (!ctx) {
+        reject(new Error('canvas context unavailable'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.72));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error('image load failed'));
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
 
 export default function AdminGmConsole({ day }: { day: number }) {
   const [speakerId, setSpeakerId] = useState(NARRATOR.id);
@@ -13,6 +43,9 @@ export default function AdminGmConsole({ day }: { day: number }) {
   const [sending, setSending] = useState(false);
   const [optionsMode, setOptionsMode] = useState(false);
   const [options, setOptions] = useState(['', '']);
+  const [image, setImage] = useState<string | null>(null);
+  const [resizingImage, setResizingImage] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   function resolveSpeaker() {
     if (speakerId === NARRATOR.id) return '';
@@ -35,7 +68,21 @@ export default function AdminGmConsole({ day }: { day: number }) {
   const trimmedOptions = options.map((o) => o.trim()).filter(Boolean);
   const canSend = optionsMode
     ? trimmedOptions.length > 0 && !sending
-    : message.trim().length > 0 && !sending;
+    : (message.trim().length > 0 || !!image) && !sending && !resizingImage;
+
+  async function handlePickImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setResizingImage(true);
+    try {
+      setImage(await resizeImageToDataUrl(file));
+    } catch {
+      // 이미지 처리 실패 — 조용히 무시하고 텍스트만 보낼 수 있게 둔다.
+    } finally {
+      setResizingImage(false);
+    }
+  }
 
   async function send() {
     const speaker = resolveSpeaker();
@@ -45,7 +92,8 @@ export default function AdminGmConsole({ day }: { day: number }) {
         await sendOptionsMessage(day, speaker, message.trim(), trimmedOptions);
         setOptions(['', '']);
       } else {
-        await sendAdlib(day, speaker, message.trim());
+        await sendAdlib(day, speaker, message.trim(), image ?? undefined);
+        setImage(null);
       }
       setMessage('');
     } finally {
@@ -85,6 +133,19 @@ export default function AdminGmConsole({ day }: { day: number }) {
           />
         )}
 
+        {!optionsMode && image && (
+          <div className="flex items-center gap-2 rounded-lg border border-ink-700/20 bg-paper-50 p-1.5">
+            <img src={image} alt="첨부한 사진 미리보기" className="h-14 w-14 rounded object-cover" />
+            <button
+              type="button"
+              onClick={() => setImage(null)}
+              className="text-xs font-bold text-ink-500/60 hover:text-seal-600"
+            >
+              사진 취소
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           <input
             value={message}
@@ -93,6 +154,19 @@ export default function AdminGmConsole({ day }: { day: number }) {
             placeholder={optionsMode ? '선택지 위에 표시할 질문 (선택 사항)' : '대사나 상황 설명을 입력하세요'}
             className="min-w-0 flex-1 rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-sm text-ink-900 outline-none placeholder:text-ink-500/40 focus:border-seal-500"
           />
+          {!optionsMode && (
+            <>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handlePickImage} className="hidden" />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={resizingImage}
+                className="flex-none rounded-lg border border-ink-700/20 bg-paper-50 px-2.5 py-1.5 text-xs font-bold text-ink-700/70 disabled:opacity-40"
+              >
+                {resizingImage ? '처리 중…' : '📷 사진'}
+              </button>
+            </>
+          )}
           <button
             type="button"
             onClick={send}

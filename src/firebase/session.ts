@@ -14,6 +14,8 @@ export interface AdlibMessage {
   /** For kind 'options': once the admin closes voting, players can no longer change/cast a pick. */
   closed?: boolean;
   authorAvatar?: string | null;
+  /** Admin-only: an optional photo attached to a narration line (see AdminGmConsole), as a compact JPEG data URL. */
+  image?: string;
   at: number;
 }
 
@@ -63,6 +65,7 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
             votes: data.votes ?? {},
             closed: data.closed ?? false,
             authorAvatar: data.authorAvatar ?? null,
+            image: data.image,
             at: data.at?.toMillis?.() ?? 0,
           } satisfies AdlibMessage;
         }),
@@ -75,8 +78,9 @@ export function listenAdlibs(day: number, callback: (messages: AdlibMessage[]) =
   return () => window.removeEventListener(DEMO_ADLIB_EVENT, read);
 }
 
-export async function sendAdlib(day: number, speaker: string, text: string): Promise<void> {
-  const payload = { kind: 'narration' as const, speaker, text };
+/** Admin-only: image is an optional compact JPEG data URL (see AdminGmConsole) so a narration line can carry a photo instead of/alongside text. */
+export async function sendAdlib(day: number, speaker: string, text: string, image?: string): Promise<void> {
+  const payload = { kind: 'narration' as const, speaker, text, ...(image ? { image } : {}) };
   if (isFirebaseConfigured && db) {
     await addDoc(adlibCollectionRef(day), { ...payload, at: serverTimestamp() });
     return;

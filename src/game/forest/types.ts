@@ -133,13 +133,13 @@ export interface Player {
   mp: number;
   /** Its own resource, decoupled from any stat — starts at the profile's real maxMp (base 100) and only grows from forest-clear rewards, same as maxHp/maxStamina. */
   maxMp: number;
-  /** Drives skill accuracy (vs. the target's evasion/defense DC) — see skills.ts. */
+  /** Spell success chance: casting rolls 1~800 and succeeds if the roll is at most this value (see engine.ts's rollStatCheck). */
   intelligence: number;
-  /** Drives skill damage/heal/support magnitude. */
+  /** Heal/defense skill magnitude and a few non-basic formulas (patronus, follow-attack). A successful attack skill's own magnitude no longer reads this — see rollSpellPower in engine.ts. */
   spellPower: number;
-  /** Drives evasion against enemy attacks and the effectiveness of defense skills. */
+  /** Evasion chance against enemy attacks: rolls 1~800 and evades if the roll is at most this value. Also drives defense-skill shield magnitude. */
   agility: number;
-  /** The player's real (non-forest) profile spell power at the moment they joined — a stable snapshot (never touched by in-run buffs/debuffs, unlike spellPower above) used together with profileIntelligence/profileAgility to scale monster strength in later stages. */
+  /** The player's real (non-forest) profile spell power at the moment they joined — a stable snapshot never touched by in-run buffs/debuffs. Currently unused by combat math (monster scaling is party-size-based only); kept for potential future balancing/display. */
   profileSpellPower: number;
   /** Same idea as profileSpellPower, but for intelligence. */
   profileIntelligence: number;
@@ -216,8 +216,6 @@ export interface MonsterTemplate {
   tier: 1 | 2 | 3 | 'elite';
   hpMin: number;
   hpMax: number;
-  defenseDcMin: number;
-  defenseDcMax: number;
   attackMin: number;
   attackMax: number;
   abilities: MonsterAbility[];
@@ -228,7 +226,6 @@ export interface Monster {
   name: string;
   hp: number;
   maxHp: number;
-  defenseDC: number;
   attackMin: number;
   attackMax: number;
   abilities: MonsterAbility[];

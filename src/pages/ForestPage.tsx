@@ -150,8 +150,8 @@ function PlayerCard({ player, isActing, targetable, onTarget }: { player: Player
   return content;
 }
 
-function MonsterCard({ name, hp, maxHp, defenseDC, statusEffects, shield, targetable, onTarget }: {
-  name: string; hp: number; maxHp: number; defenseDC: number; statusEffects: { type: string }[]; shield: number; targetable: boolean; onTarget?: () => void;
+function MonsterCard({ name, hp, maxHp, statusEffects, shield, targetable, onTarget }: {
+  name: string; hp: number; maxHp: number; statusEffects: { type: string }[]; shield: number; targetable: boolean; onTarget?: () => void;
 }) {
   if (hp <= 0) return null;
   const content = (
@@ -159,7 +159,7 @@ function MonsterCard({ name, hp, maxHp, defenseDC, statusEffects, shield, target
       <p className="font-gothic text-base text-ink-black">{name}</p>
       <HpBar hp={hp} maxHp={maxHp} colorClass="bg-ink-indigo" />
       <p className="font-mono text-[10px] text-ink-500/70">
-        HP {hp}/{maxHp} · 방어 DC {defenseDC} {shield > 0 && <span className="text-ink-indigo">🛡{shield}</span>}
+        HP {hp}/{maxHp} {shield > 0 && <span className="text-ink-indigo">🛡{shield}</span>}
       </p>
       <div className="flex flex-wrap gap-1">
         {statusEffects.map((s, i) => (
@@ -933,7 +933,6 @@ export default function ForestPage() {
                   name={m.name}
                   hp={m.hp}
                   maxHp={m.maxHp}
-                  defenseDC={m.defenseDC}
                   statusEffects={m.statusEffects}
                   shield={m.shield}
                   targetable={isMyTurn && targetKind === 'enemy'}

@@ -107,31 +107,22 @@ export const BOSS_TEMPLATES: BossTemplate[] = [
   },
 ];
 
-const SCALE_BY_SIZE: Record<number, { hp: number; dc: number; atkMin: number; atkMax: number }> = {
-  2: { hp: 500, dc: 18, atkMin: 35, atkMax: 50 },
-  3: { hp: 700, dc: 19, atkMin: 40, atkMax: 55 },
-  4: { hp: 900, dc: 20, atkMin: 45, atkMax: 60 },
+const SCALE_BY_SIZE: Record<number, { hp: number; atkMin: number; atkMax: number }> = {
+  2: { hp: 500, atkMin: 35, atkMax: 50 },
+  3: { hp: 700, atkMin: 40, atkMax: 55 },
+  4: { hp: 900, atkMin: 45, atkMax: 60 },
 };
 
-/**
- * hpScale/atkScale boost the boss beyond the party-size baseline according to the party's real combat
- * power (see engine.ts's combatPowerScale) — attack is deliberately scaled less than hp (a dampened
- * factor from the caller) so a strong party faces a long, dangerous fight rather than either trivial
- * damage or an instant party wipe. avgCheckStat replaces the old fixed defenseDC (18-20, tuned for a
- * 5-point baseline stat) with that same margin applied on top of the party's actual average intelligence
- * /agility, so a boss keeps its intended hit/evade odds regardless of how high real stats climb.
- */
-export function spawnBoss(template: BossTemplate, partySize: number, hpScale = 1, atkScale = 1, avgCheckStat = 5): Monster {
+/** Scales purely with party size — there's no monster-side defense stat any more (see creatures.ts's spawnMonster). */
+export function spawnBoss(template: BossTemplate, partySize: number): Monster {
   const scale = SCALE_BY_SIZE[Math.min(4, Math.max(2, partySize))];
-  const hp = Math.round(scale.hp * hpScale);
   return {
     templateId: template.id,
     name: template.name,
-    hp,
-    maxHp: hp,
-    defenseDC: Math.round(avgCheckStat) + (scale.dc - 5),
-    attackMin: Math.round(scale.atkMin * atkScale),
-    attackMax: Math.round(scale.atkMax * atkScale),
+    hp: scale.hp,
+    maxHp: scale.hp,
+    attackMin: scale.atkMin,
+    attackMax: scale.atkMax,
     abilities: template.phases[0].abilities,
     statusEffects: [],
     shield: 0,

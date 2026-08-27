@@ -52,11 +52,11 @@ const ROWS: Row[] = [
   { id: 'C030', name: '고대 마법 생물', tier: 'elite', abilities: [shieldSelf(40), aoe(16), healSelf(25)] },
 ];
 
-const TIER_RANGES: Record<MonsterTemplate['tier'], { hp: [number, number]; dc: [number, number]; atk: [number, number] }> = {
-  1: { hp: [40, 70], dc: [9, 12], atk: [8, 15] },
-  2: { hp: [70, 110], dc: [12, 15], atk: [12, 22] },
-  3: { hp: [110, 180], dc: [15, 18], atk: [18, 30] },
-  elite: { hp: [180, 260], dc: [18, 21], atk: [25, 40] },
+const TIER_RANGES: Record<MonsterTemplate['tier'], { hp: [number, number]; atk: [number, number] }> = {
+  1: { hp: [40, 70], atk: [8, 15] },
+  2: { hp: [70, 110], atk: [12, 22] },
+  3: { hp: [110, 180], atk: [18, 30] },
+  elite: { hp: [180, 260], atk: [25, 40] },
 };
 
 export const MONSTER_TEMPLATES: MonsterTemplate[] = ROWS.map((r) => {
@@ -67,8 +67,6 @@ export const MONSTER_TEMPLATES: MonsterTemplate[] = ROWS.map((r) => {
     tier: r.tier,
     hpMin: range.hp[0],
     hpMax: range.hp[1],
-    defenseDcMin: range.dc[0],
-    defenseDcMax: range.dc[1],
     attackMin: range.atk[0],
     attackMax: Math.round((range.atk[0] + range.atk[1]) / 2),
     abilities: r.abilities,
@@ -90,21 +88,17 @@ function randRange(seed: number, min: number, max: number): number {
 /**
  * hpScale and atkScale are separate (unlike the old single sizeScale, which silently applied to both
  * and then got multiplied again by the caller's own atk scale) — see engine.ts's beginCombat for why.
- * avgCheckStat replaces the template's small fixed defenseDC range (originally tuned for a 5-point
- * baseline intelligence/agility) with that same margin applied on top of the party's actual average —
- * otherwise a real stat value in the hundreds always beats a DC of 9-21 outright, making every attack
- * (and every evasion roll) an automatic success regardless of the d20.
+ * There's no monster-side defense stat any more: whether a player's attack lands depends only on the
+ * player's own intelligence (see engine.ts's rollStatCheck), never on anything about the monster.
  */
-export function spawnMonster(template: MonsterTemplate, hpScale: number, atkScale: number, instanceSalt = 0, avgCheckStat = 5): Monster {
+export function spawnMonster(template: MonsterTemplate, hpScale: number, atkScale: number, instanceSalt = 0): Monster {
   const seed = seedFor(`${template.id}:${instanceSalt}:${Date.now() % 100000}:${Math.random()}`);
   const hp = Math.round(randRange(seed, template.hpMin, template.hpMax) * hpScale);
-  const dcMargin = randRange(seed + 1, template.defenseDcMin - 5, template.defenseDcMax - 5);
   return {
     templateId: template.id,
     name: template.name,
     hp,
     maxHp: hp,
-    defenseDC: Math.round(avgCheckStat) + dcMargin,
     attackMin: Math.round(template.attackMin * atkScale),
     attackMax: Math.round(template.attackMax * atkScale),
     abilities: template.abilities,

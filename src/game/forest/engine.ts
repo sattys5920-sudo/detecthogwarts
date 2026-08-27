@@ -61,6 +61,41 @@ export function check(bonus: number, dc: number, advantage = false, critThreshol
   return { roll, total, dc, success: total >= dc || roll >= critAt, crit: roll >= critAt, fumble: roll === 1 };
 }
 
+// ---------- combat dice (spell success / spell power / evasion) ----------
+// 지능 이하 굴리면 주문 성공, 민첩 이하 굴리면 회피 성공 (1~800), 주문 성공 시 1~500을 굴려 그 결과가
+// 곧 그 주문의 최종 위력이 된다 — 실제 지능/주문력/민첩 스탯 값이 500까지 자라도(GameContext의
+// MAX_STAT_VALUE) 성공/회피 확률이 800분의 500(62.5%)을 넘지 못하고, 위력은 스탯 크기와 무관하게
+// 매번 1~500 사이에서만 나오므로 스탯이 커질수록 전투가 자동 승리/영원한 회피로 무너지던 문제가
+// 근본적으로 사라진다.
+export const SUCCESS_DIE_MAX = 800;
+export const SPELL_POWER_DIE_MAX = 500;
+
+function rollUpTo(max: number): number {
+  return 1 + Math.floor(Math.random() * max);
+}
+
+export interface StatCheckResult {
+  roll: number;
+  success: boolean;
+}
+
+/** Success (spell hit, or evasion) if a 1~800 roll comes in at or under the given stat. Advantage rolls twice and keeps the lower (more favorable) result. */
+function rollStatCheck(stat: number, advantage = false): StatCheckResult {
+  const r1 = rollUpTo(SUCCESS_DIE_MAX);
+  const roll = advantage ? Math.min(r1, rollUpTo(SUCCESS_DIE_MAX)) : r1;
+  return { roll, success: roll <= stat };
+}
+
+/** On a successful spell, this 1~500 roll — not the caster's spellPower stat — is directly the spell's final power. */
+function rollSpellPower(): number {
+  return rollUpTo(SPELL_POWER_DIE_MAX);
+}
+
+/** Independent crit chance (not tied to the stat-check roll any more): 5% baseline, +5% per crit-buff unit. */
+function rollIsCrit(critThresholdBonus: number): boolean {
+  return Math.random() < 0.05 + critThresholdBonus * 0.05;
+}
+
 // ---------- party / lobby ----------
 
 export function createParty(): ForestParty {
@@ -482,11 +517,10 @@ function applyPlainEffect(party: ForestParty, eff: ForestEvent['effect']): Fores
   if (eff.maxHp) {
     next = applyToAllSeats(next, (p) => ({ ...p, maxHp: p.maxHp + eff.maxHp!, hp: p.hp + eff.maxHp! }));
   }
-  // Capped at 500 to match the profile's own stat ceiling (see GameContext's MAX_STAT_VALUE) — without
-  // this, a long expedition full of "stat up" events has no upper bound, and since these same fields
-  // directly drive damage/hit-chance math (see castSkill), an uncapped value can spiral into fights
-  // that never resolve (e.g. permanent 100% evasion vs. a monster whose DC was set from a much lower
-  // party average earlier in the fight).
+  // Capped at 500 to match the profile's own stat ceiling (see GameContext's MAX_STAT_VALUE) and to
+  // keep the spell-success/evasion roll (1~800, see rollStatCheck) from ever reaching a guaranteed
+  // 100% — an uncapped intelligence/agility from a long expedition full of "stat up" events could
+  // otherwise climb past 800 and make every cast or evasion automatic.
   if (eff.spellPower) next = applyToAllSeats(next, (p) => ({ ...p, spellPower: Math.max(1, Math.min(500, p.spellPower + eff.spellPower!)) }));
   if (eff.agility) next = applyToAllSeats(next, (p) => ({ ...p, agility: Math.max(0, Math.min(500, p.agility + eff.agility!)) }));
   if (eff.intelligence) {
@@ -547,49 +581,20 @@ function pickEnemyCount(size: number): number {
 }
 
 /**
- * Monsters scale from stage 1 onward based on the seated party's average real combat power
- * (intelligence + spellPower + agility, averaged — see createPlayer, which now seeds these directly
- * from the profile). This isn't optional cosmetic scaling: skill damage adds spellPower to the base
- * skill value directly (see castSkill), so a party well above the old hardcoded baseline (5) one-shots
- * everything unless monster HP grows to match. 40 is that old baseline's typical hit (skill base
- * ~20-50 + spellPower 5); scale grows linearly from there so "hits needed to kill" stays roughly
- * constant as real stats climb toward the 500 cap, instead of collapsing to 1.
+ * Monster HP/attack scale with party size only — how strong a real player's own stats are no longer
+ * matters here, because a spell's magnitude on hit is now a flat 1~500 roll (see rollSpellPower)
+ * completely decoupled from the caster's actual intelligence/spellPower/agility values. Difficulty
+ * still climbs across the expedition via randomTemplateForStage picking tougher monster tiers at
+ * later stages, not via inflating these numbers against a party's profile stats.
  */
-function combatPowerScale(party: ForestParty): number {
-  const seated = party.seats.filter((p): p is Player => !!p);
-  if (seated.length === 0) return 1;
-  const avgPerPlayer = seated.map((p) => (p.intelligence + p.spellPower + p.agility) / 3);
-  const avg = avgPerPlayer.reduce((sum, v) => sum + v, 0) / seated.length;
-  return Math.max(1, (35 + avg) / 40);
-}
-
-/**
- * The party's average intelligence/agility, used as the new baseline for monster defenseDC (see
- * spawnMonster/spawnBoss) — that field gates both whether a player's attack lands (checked against
- * intelligence) and whether a player evades a monster's attack (checked against agility), so a
- * meaningful DC has to track whichever of those a real party actually has, not a small fixed number
- * tuned for the old 5-point baseline.
- */
-function avgCombatCheckStat(party: ForestParty): number {
-  const seated = party.seats.filter((p): p is Player => !!p);
-  if (seated.length === 0) return 50;
-  const avgPerPlayer = seated.map((p) => (p.intelligence + p.agility) / 2);
-  return avgPerPlayer.reduce((sum, v) => sum + v, 0) / seated.length;
-}
-
 function beginCombat(party: ForestParty, templates: MonsterTemplate[], isBoss: boolean, bossId?: string): ForestParty {
   const size = partySize(party);
   const partyHpScale = size === 2 ? 1 : size === 3 ? 1.35 : 1.7;
   const partyAtkScale = size === 2 ? 1 : size === 3 ? 1.15 : 1.3;
   const countShare = ENEMY_COUNT_POWER_SHARE[Math.min(4, Math.max(1, templates.length))] ?? 1;
-  const powerScale = combatPowerScale(party);
-  // Attack is dampened (sqrt) relative to hp — full linear scaling on both would let a strong party's
-  // own stat growth wipe itself out via one-shot monster hits, instead of the long, genuinely risky
-  // fight the balance pass is meant to produce.
-  const hpScale = partyHpScale * countShare * powerScale;
-  const atkScale = partyAtkScale * countShare * Math.sqrt(powerScale);
-  const checkStat = avgCombatCheckStat(party);
-  const monsters = templates.map((t, i) => spawnMonster(t, hpScale, atkScale, i, checkStat));
+  const hpScale = partyHpScale * countShare;
+  const atkScale = partyAtkScale * countShare;
+  const monsters = templates.map((t, i) => spawnMonster(t, hpScale, atkScale, i));
 
   const alivePlayers = party.seats.filter((p): p is Player => !!p && !p.downed);
   const order: { key: string; init: number }[] = [];
@@ -622,8 +627,7 @@ function beginBoss(party: ForestParty): ForestParty {
   const pool = unused.length > 0 ? unused : BOSS_TEMPLATES;
   const template = pool[Math.floor(Math.random() * pool.length)];
   const size = partySize(party);
-  const powerScale = combatPowerScale(party);
-  const boss = spawnBoss(template, size, powerScale, Math.sqrt(powerScale), avgCombatCheckStat(party));
+  const boss = spawnBoss(template, size);
 
   const alivePlayers = party.seats.filter((p): p is Player => !!p && !p.downed);
   const order: { key: string; init: number }[] = [];
@@ -693,14 +697,18 @@ function statusValueSum(effects: { type: StatusType; value: number }[], type: St
   return effects.filter((e) => e.type === type).reduce((sum, e) => sum + e.value, 0);
 }
 
-/** Intelligence effective for the current combat, including active buffs (e.g. 다람쥐 Patronus). */
+/**
+ * Intelligence effective for the current combat, including active buffs (e.g. 다람쥐 Patronus).
+ * Capped at the same 500 ceiling as the base stat (see applyPlainEffect) so a temporary in-combat
+ * buff can't push the spell-success roll (1~800, see rollStatCheck) toward a guaranteed 100%.
+ */
 function effectiveIntelligence(p: Player): number {
-  return p.intelligence + statusValueSum(p.statusEffects, 'intBoost');
+  return Math.min(500, p.intelligence + statusValueSum(p.statusEffects, 'intBoost'));
 }
 
-/** Agility effective for the current combat, including active buffs/debuffs (e.g. 흑표범/달팽이 Patronus). */
+/** Agility effective for the current combat, including active buffs/debuffs (e.g. 흑표범/달팽이 Patronus). Capped like effectiveIntelligence above, for the same reason. */
 function effectiveAgility(p: Player): number {
-  return Math.max(0, p.agility + statusValueSum(p.statusEffects, 'agiBoost') - statusValueSum(p.statusEffects, 'agiDown'));
+  return Math.min(500, Math.max(0, p.agility + statusValueSum(p.statusEffects, 'agiBoost') - statusValueSum(p.statusEffects, 'agiDown')));
 }
 
 /** Crit threshold bonus effective for the current combat, including active buffs (e.g. 게코 Patronus). Every 5% crit chance ≈ +1 to the d20 crit threshold. */
@@ -906,20 +914,22 @@ export interface CombatAction {
   targetPlayerId?: string;
 }
 
-/** Rolls the target's evasion (agility vs. the attacker's DC) before applying damage — a miss deals nothing. */
 /**
+ * Rolls the target's own evasion (1~800 vs. their agility, see rollStatCheck) before applying
+ * damage — a miss deals nothing. No monster stat is involved: only the defending player's agility.
+ *
  * hitLabel is the "attacker did N damage" line, logged only if the attack actually connects — a
  * previous version had every caller append that line unconditionally right after calling this
  * function, so a successfully evaded attack still showed a misleading "hit for N damage" line
  * immediately below its own "evaded!" line.
  */
-function monsterDamageToPlayer(party: ForestParty, playerId: string, rawDmg: number, sourceDC: number, hitLabel = ''): ForestParty {
+function monsterDamageToPlayer(party: ForestParty, playerId: string, rawDmg: number, hitLabel = ''): ForestParty {
   const player = party.seats.find((p) => p?.id === playerId);
   if (!player) return party;
   const agi = effectiveAgility(player);
-  const evasion = check(agi, sourceDC);
+  const evasion = rollStatCheck(agi);
   if (evasion.success) {
-    return pushLog(party, `${player.nickname}이(가) 공격을 회피했다! (D20 ${evasion.roll} + 민첩 ${agi} / DC ${sourceDC})`);
+    return pushLog(party, `${player.nickname}이(가) 공격을 회피했다! (주사위 ${evasion.roll} ≤ 민첩 ${agi})`);
   }
   const statusMult = dmgModifierFromStatus(player.statusEffects, 'taken');
   const buffMult = 1 - player.buffs.combatDamageReductionPct / 100;
@@ -996,7 +1006,7 @@ function resolveMonsterTurn(party: ForestParty, index: number): ForestParty {
     return next;
   }
   const target = pickMonsterTarget(alivePlayers);
-  next = monsterDamageToPlayer(next, target.id, dmg, liveMonster.defenseDC, `${monster.name}이(가) ${target.nickname}을(를) 공격했다! (${dmg} 피해)`);
+  next = monsterDamageToPlayer(next, target.id, dmg, `${monster.name}이(가) ${target.nickname}을(를) 공격했다! (${dmg} 피해)`);
   return next;
 }
 
@@ -1014,7 +1024,7 @@ function applyMonsterAbility(party: ForestParty, index: number, ability: Monster
     case 'extraDamage': {
       const target = pickMonsterTarget(alivePlayers);
       const dmg = monster.attackMin + ability.value;
-      next = monsterDamageToPlayer(next, target.id, dmg, monster.defenseDC, `${monster.name}의 ${ability.label}! ${target.nickname}에게 ${dmg} 피해.`);
+      next = monsterDamageToPlayer(next, target.id, dmg, `${monster.name}의 ${ability.label}! ${target.nickname}에게 ${dmg} 피해.`);
       break;
     }
     case 'poison': {
@@ -1044,12 +1054,12 @@ function applyMonsterAbility(party: ForestParty, index: number, ability: Monster
       // Each target's own evasion/hit result gets its own log line from monsterDamageToPlayer — this
       // just announces the attempt, without claiming every target actually took the damage.
       next = pushLog(next, `${monster.name}의 ${ability.label}! 파티 전체를 노렸다. (최대 ${ability.value} 피해)`);
-      for (const p of alivePlayers) next = monsterDamageToPlayer(next, p.id, ability.value, monster.defenseDC);
+      for (const p of alivePlayers) next = monsterDamageToPlayer(next, p.id, ability.value);
       break;
     }
     case 'drainHp': {
       const target = pickMonsterTarget(alivePlayers);
-      next = monsterDamageToPlayer(next, target.id, ability.value, monster.defenseDC, `${monster.name}의 ${ability.label}! ${target.nickname}의 생명력을 흡수했다.`);
+      next = monsterDamageToPlayer(next, target.id, ability.value, `${monster.name}의 ${ability.label}! ${target.nickname}의 생명력을 흡수했다.`);
       const targetAfter = next.seats.find((p) => p?.id === target.id)!;
       if (targetAfter.hp < target.hp) {
         // Only heal the monster if the drain actually connected (evaded attacks steal nothing).
@@ -1074,14 +1084,7 @@ function applyMonsterAbility(party: ForestParty, index: number, ability: Monster
     }
     case 'summon': {
       const template = randomTemplateForStage(1, false);
-      const summonPowerScale = combatPowerScale(next);
-      const spawn = spawnMonster(
-        template,
-        0.5 * summonPowerScale,
-        0.5 * Math.sqrt(summonPowerScale),
-        next.combat!.monsters.length,
-        avgCombatCheckStat(next),
-      );
+      const spawn = spawnMonster(template, 0.5, 0.5, next.combat!.monsters.length);
       const monsters = [...next.combat!.monsters, spawn];
       const turnOrder = [...next.combat!.turnOrder, combatantKey('monster', monsters.length - 1)];
       next = { ...next, combat: { ...next.combat!, monsters, turnOrder } };
@@ -1161,10 +1164,12 @@ function damageMonster(party: ForestParty, index: number, dmg: number): ForestPa
 }
 
 /**
- * Resolves one of the 8 fixed skills. Attack skills roll the caster's (effective) intelligence
- * against the target's defenseDC — a miss deals nothing. Defense/heal/MP-heal skills always
- * land; their magnitude scales with spellPower (agility for defense skills instead, per the
- * design spec — agility drives evasion and defense-skill efficiency, not raw damage).
+ * Resolves one of the 8 fixed skills. Attack skills roll 1~800 against the caster's own (effective)
+ * intelligence — success if the roll comes in at or under it, no monster-side stat involved. On a hit,
+ * a separate 1~500 roll (rollSpellPower) is the spell's final power, replacing the caster's own
+ * spellPower stat for this magnitude — see rollStatCheck/rollSpellPower above. Defense/heal/MP-heal
+ * skills always land; their magnitude still scales with spellPower (agility for defense skills
+ * instead, per the design spec — agility drives evasion and defense-skill efficiency, not raw damage).
  */
 function castSkill(party: ForestParty, playerId: string, skillId: SkillId, action: CombatAction): ForestParty {
   let next = party;
@@ -1182,9 +1187,11 @@ function castSkill(party: ForestParty, playerId: string, skillId: SkillId, actio
   next = updatePlayer(next, playerId, (p) => ({ ...p, mp: p.mp - mpCost }));
 
   if (skill.effectType === 'damage') {
-    const intel = effectiveIntelligence(player);
-    const dcReduction = player.buffs.nextDcReduction;
+    // nextDcReduction predates the 1~800 dice system (it used to shave points off the target's DC) —
+    // kept as a small temporary boost to this one cast's effective intelligence instead.
+    const intel = effectiveIntelligence(player) + player.buffs.nextDcReduction;
     const critBonus = effectiveCritThresholdBonus(player);
+    const advantage = player.buffs.nextAdvantage;
     let dmgBoost = player.buffs.nextAttackBoost ? 1.5 : 1;
     dmgBoost *= 1 + player.buffs.combatDamageBonusPct / 100;
     next = updatePlayer(next, playerId, (p) => ({ ...p, buffs: { ...p.buffs, nextDcReduction: 0, nextAdvantage: false, nextAttackBoost: false, nextAttackHitsAll: false, combatDamageBonusPct: 0 } }));
@@ -1193,9 +1200,9 @@ function castSkill(party: ForestParty, playerId: string, skillId: SkillId, actio
       let hitAny = false;
       next.combat!.monsters.forEach((m, i) => {
         if (m.hp <= 0) return;
-        const res = check(intel, Math.max(5, m.defenseDC - dcReduction), player.buffs.nextAdvantage, critBonus);
+        const res = rollStatCheck(intel, advantage);
         if (!res.success) {
-          next = pushLog(next, `${player.nickname}의 ${skill.name}이(가) ${m.name}에게 빗나갔다.`);
+          next = pushLog(next, `${player.nickname}의 ${skill.name}이(가) ${m.name}에게 빗나갔다. (주사위 ${res.roll} > 지능 ${intel})`);
           return;
         }
         hitAny = true;
@@ -1203,7 +1210,8 @@ function castSkill(party: ForestParty, playerId: string, skillId: SkillId, actio
           next = pushLog(next, `${m.name}이(가) 공격을 회피했다!`);
           return;
         }
-        const dmg = Math.round((base + spellPower) * (res.crit ? 1.5 : 1) * dmgBoost);
+        const crit = rollIsCrit(critBonus);
+        const dmg = Math.round((base + rollSpellPower()) * (crit ? 1.5 : 1) * dmgBoost);
         next = damageMonster(next, i, dmg);
         next = triggerFollowAttack(next, player, i, m.name);
       });
@@ -1214,18 +1222,19 @@ function castSkill(party: ForestParty, playerId: string, skillId: SkillId, actio
     const idx = action.targetMonsterIndex ?? next.combat!.monsters.findIndex((m) => m.hp > 0);
     const m = next.combat!.monsters[idx];
     if (!m || m.hp <= 0) return next;
-    const res = check(intel, Math.max(5, m.defenseDC - dcReduction), player.buffs.nextAdvantage, critBonus);
+    const res = rollStatCheck(intel, advantage);
     if (!res.success) {
-      next = pushLog(next, `${player.nickname}의 ${skill.name} 빗나감... (D20 ${res.roll} + 지능 ${intel} / DC ${res.dc}, MP -${mpCost})`);
+      next = pushLog(next, `${player.nickname}의 ${skill.name} 빗나감... (주사위 ${res.roll} > 지능 ${intel}, MP -${mpCost})`);
       return next;
     }
     if (evadeCheck(m)) {
       next = pushLog(next, `${m.name}이(가) ${player.nickname}의 공격을 회피했다!`);
       return next;
     }
-    const dmg = Math.round((base + spellPower) * (res.crit ? 1.5 : 1) * dmgBoost);
+    const crit = rollIsCrit(critBonus);
+    const dmg = Math.round((base + rollSpellPower()) * (crit ? 1.5 : 1) * dmgBoost);
     next = damageMonster(next, idx, dmg);
-    next = pushLog(next, `${player.nickname}의 ${skill.name}! ${m.name}에게 ${dmg} 피해.${res.crit ? ' 대성공!' : ''} (MP -${mpCost})`);
+    next = pushLog(next, `${player.nickname}의 ${skill.name}! ${m.name}에게 ${dmg} 피해.${crit ? ' 대성공!' : ''} (MP -${mpCost})`);
     next = triggerFollowAttack(next, player, idx, m.name);
     return next;
   }
@@ -1317,7 +1326,7 @@ function castPatronus(party: ForestParty, playerId: string, action: CombatAction
     const idx = action.targetMonsterIndex ?? next.combat!.monsters.findIndex((m) => m.hp > 0);
     const m = next.combat!.monsters[idx];
     if (!m || m.hp <= 0) return next;
-    const res = check(effectiveIntelligence(player), m.defenseDC);
+    const res = rollStatCheck(effectiveIntelligence(player));
     if (!res.success) {
       return pushLog(next, `${player.nickname}의 익스펙토 패트로눔(${patronus.name})이(가) ${m.name}에게 빗나갔다. (MP -${patronus.baseMpCost})`);
     }
@@ -1364,8 +1373,7 @@ function castPatronus(party: ForestParty, playerId: string, action: CombatAction
     const liveIndexes = next.combat!.monsters.map((_, i) => i).filter((i) => next.combat!.monsters[i].hp > 0);
     let anyHit = false;
     for (const idx of liveIndexes) {
-      const m = next.combat!.monsters[idx];
-      const res = check(effectiveIntelligence(player), m.defenseDC);
+      const res = rollStatCheck(effectiveIntelligence(player));
       if (!res.success) continue;
       anyHit = true;
       if (magnitude > 0) next = damageMonster(next, idx, magnitude);

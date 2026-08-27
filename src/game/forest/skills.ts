@@ -2,8 +2,10 @@ import type { SkillDef, SkillId } from './types';
 
 // MP is its own resource, decoupled from intelligence — it starts at the profile's real maxMp (base
 // 100, grown only by forest-clear rewards, same as maxHp/maxStamina) and never scales with a stat.
-// Intelligence instead drives magic accuracy (see castSkill's check() call in engine.ts), spellPower
-// drives damage, and agility drives evasion.
+// Intelligence drives a damage skill's success chance (1~800 roll vs. intelligence — see engine.ts's
+// rollStatCheck), and on a hit its magnitude comes from a separate 1~500 roll (rollSpellPower), not
+// the caster's own spellPower stat. spellPower still drives heal/MP-heal magnitude, and agility drives
+// evasion (same 1~800-roll mechanic) plus defense-skill (shield) magnitude.
 
 // ---------- skill leveling ----------
 export const SKILL_MAX_LEVEL = 5;

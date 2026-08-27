@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDeclareActiveView } from '../context/ActiveViewContext';
 import { useGame } from '../context/GameContext';
 import { deleteDormMessage, type DormMessage, listenDormMessages, sendDormMessage } from '../firebase/dormChat';
 import { usePlayerAvatars } from '../hooks/usePlayerAvatars';
+import { useStickyScroll } from '../hooks/useStickyScroll';
 import ChatLog, { type ChatMessage } from './ChatLog';
 import Composer from './Composer';
 
@@ -18,14 +19,10 @@ export default function DormChat({ houseId, readOnly }: { houseId: string; readO
   const game = useGame();
   const [messages, setMessages] = useState<DormMessage[]>([]);
   const { byId: avatars } = usePlayerAvatars();
-  const listRef = useRef<HTMLDivElement>(null);
+  const listRef = useStickyScroll<HTMLDivElement>(messages.length);
 
   useDeclareActiveView(`dorm:${houseId}`);
   useEffect(() => listenDormMessages(houseId, setMessages), [houseId]);
-
-  useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [messages.length]);
 
   function handleSend(text: string) {
     sendDormMessage(houseId, {

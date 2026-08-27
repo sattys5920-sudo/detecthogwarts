@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Composer from '../components/Composer';
 import CornerFlourish from '../components/CornerFlourish';
 import Letterhead from '../components/Letterhead';
@@ -21,6 +21,7 @@ import {
   updatePost,
 } from '../firebase/posts';
 import { usePlayerAvatars } from '../hooks/usePlayerAvatars';
+import { useStickyScroll } from '../hooks/useStickyScroll';
 
 function formatTime(ms: number) {
   if (!ms) return '방금 전';
@@ -105,14 +106,10 @@ function PostDetail({ post, avatars, onBack, onEdit, onDelete }: {
   const [titleDraft, setTitleDraft] = useState(post.title);
   const [draft, setDraft] = useState(post.content);
   const [secretDraft, setSecretDraft] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
+  const listRef = useStickyScroll<HTMLDivElement>(comments.length);
   const isMine = post.authorPlayerId === game.playerId;
 
   useEffect(() => listenComments(post.id, setComments), [post.id]);
-
-  useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [comments.length]);
 
   function handleSubmitComment(text: string) {
     createComment(post.id, {

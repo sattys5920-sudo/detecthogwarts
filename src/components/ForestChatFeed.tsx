@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Composer from './Composer';
 import { listenForestChat, sendForestChatMessage, type ForestChatMessage } from '../firebase/forestChat';
 import { usePlayerAvatars } from '../hooks/usePlayerAvatars';
+import { useStickyScroll } from '../hooks/useStickyScroll';
 import type { LogEntry } from '../game/forest/types';
 
 interface FeedItem {
@@ -30,7 +31,6 @@ interface ForestChatFeedProps {
 export default function ForestChatFeed({ roomId, log, myId, myNickname, maxHeightClass = 'max-h-56' }: ForestChatFeedProps) {
   const [messages, setMessages] = useState<ForestChatMessage[]>([]);
   const { byId: avatars } = usePlayerAvatars();
-  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => listenForestChat(roomId, setMessages), [roomId]);
 
@@ -46,9 +46,7 @@ export default function ForestChatFeed({ roomId, log, myId, myNickname, maxHeigh
     })),
   ].sort((a, b) => a.at - b.at);
 
-  useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [items.length]);
+  const listRef = useStickyScroll<HTMLDivElement>(items.length);
 
   function handleSend(text: string) {
     sendForestChatMessage(roomId, myId, myNickname, text);

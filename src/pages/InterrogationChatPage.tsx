@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Card from '../components/Card';
 import ChatLog, { type ChatMessage } from '../components/ChatLog';
@@ -10,6 +10,7 @@ import { useGame } from '../context/GameContext';
 import { markThreadRead, sendQuestion, subscribeThreadMessages, type InterrogationMessage } from '../firebase/interrogation';
 import { npcById } from '../game/interrogation/npcs';
 import { useNotebook } from '../hooks/useNotebook';
+import { useStickyScroll } from '../hooks/useStickyScroll';
 
 export default function InterrogationChatPage() {
   const { npcId } = useParams<{ npcId: string }>();
@@ -17,7 +18,7 @@ export default function InterrogationChatPage() {
   const game = useGame();
   const npc = npcId ? npcById(npcId) : null;
   const [messages, setMessages] = useState<InterrogationMessage[]>([]);
-  const listRef = useRef<HTMLDivElement>(null);
+  const listRef = useStickyScroll<HTMLDivElement>(messages.length);
   const { entries: notebookEntries, register } = useNotebook();
   const [registerTarget, setRegisterTarget] = useState<ChatMessage | null>(null);
 
@@ -32,10 +33,6 @@ export default function InterrogationChatPage() {
     if (!game.playerId || !npcId || messages.length === 0) return;
     markThreadRead(game.playerId, npcId);
   }, [game.playerId, npcId, messages.length]);
-
-  useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [messages.length]);
 
   if (!npc || !npcId) {
     return (

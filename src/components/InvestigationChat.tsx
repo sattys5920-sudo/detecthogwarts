@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import ClueRegisterModal from './ClueRegisterModal';
 import Composer from './Composer';
 import { CHARACTERS } from '../data/investigation/characters';
@@ -6,6 +6,7 @@ import { useGame } from '../context/GameContext';
 import { type AdlibMessage, closeOptionsVoting, deleteAdlib, listenAdlibs, presentEvidence, sendChatMessage, voteOptions } from '../firebase/session';
 import { usePlayerAvatars } from '../hooks/usePlayerAvatars';
 import type { NotebookEntry } from '../hooks/useNotebook';
+import { useStickyScroll } from '../hooks/useStickyScroll';
 
 function avatarFor(speaker: string) {
   return CHARACTERS.find((c) => c.name === speaker)?.avatar;
@@ -190,13 +191,9 @@ export default function InvestigationChat({ day, notebookEntries, nickname, avat
   const [pickerOpen, setPickerOpen] = useState(false);
   const [presenting, setPresenting] = useState(false);
   const [registerTarget, setRegisterTarget] = useState<AdlibMessage | null>(null);
-  const listRef = useRef<HTMLDivElement>(null);
+  const listRef = useStickyScroll<HTMLDivElement>(adlibs.length);
 
   useEffect(() => listenAdlibs(day, setAdlibs), [day]);
-
-  useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [adlibs.length]);
 
   const registeredIds = new Set(notebookEntries.map((e) => e.sourceId).filter(Boolean));
 

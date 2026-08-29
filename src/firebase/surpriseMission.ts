@@ -157,7 +157,7 @@ export function listenMissionAnswer(missionId: string, houseId: string, callback
 
 /**
  * Grades a house's guess and counts it as one of their MISSION_MAX_ATTEMPTS tries. If correct and
- * this house hasn't already solved it, records their rank and credits 100/80/60/40 house-cup points.
+ * this house hasn't already solved it, records their rank and credits PUZZLE_RANK_POINTS house-cup points.
  */
 export async function submitMissionAnswer(
   missionId: string,

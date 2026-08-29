@@ -28,6 +28,11 @@ function formatTime(ms: number) {
   return new Date(ms).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+/** Nicknames tagged with @ in a comment's text (as inserted by Composer's @mention autocomplete). */
+function extractMentionedNicknames(text: string): string[] {
+  return [...text.matchAll(/@(\S+)/g)].map((m) => m[1]);
+}
+
 function Avatar({ src, name, size = 8 }: { src: string | null; name: string; size?: number }) {
   const px = size * 4;
   return src ? (
@@ -53,7 +58,11 @@ function CommentRow({ comment, postAuthorId, avatars, onEdit, onDelete }: {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.content);
   const isMine = comment.authorPlayerId === game.playerId;
-  const canSeeSecret = !comment.secret || isMine || game.playerId === postAuthorId;
+  // A secret comment is normally only visible to its author and the post's author — but tagging
+  // someone with @닉네임 (via Composer's mention autocomplete) also reveals it to that specific
+  // person, so a secret comment can be used to privately address one particular player.
+  const mentioned = comment.secret ? extractMentionedNicknames(comment.content) : [];
+  const canSeeSecret = !comment.secret || isMine || game.playerId === postAuthorId || mentioned.includes(game.nickname);
 
   return (
     <div className="flex items-start gap-2">

@@ -133,7 +133,7 @@ export default function ExplorationPage() {
       )}
 
       {day.finalDay && !game.isAdmin && game.playerId && (
-        <FinalSurveyAnswerBoard playerId={game.playerId} nickname={game.nickname} />
+        <FinalSurveyAnswerBoard day={day.day} playerId={game.playerId} nickname={game.nickname} avatar={game.avatarDataUrl} />
       )}
 
       {game.isAdmin && !day.finalDay && selectedDay === game.currentDay && game.currentDay < 5 && (

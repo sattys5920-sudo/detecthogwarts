@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import AdminFinalSurvey from '../components/AdminFinalSurvey';
 import AdminFinalSurveyGrading from '../components/AdminFinalSurveyGrading';
 import AdminGmConsole from '../components/AdminGmConsole';
 import AdminScriptReference from '../components/AdminScriptReference';
@@ -127,9 +126,8 @@ export default function ExplorationPage() {
       {game.isAdmin && (
         <>
           <AdminGmConsole key={`console-${day.day}`} day={day.day} />
-          {day.finalDay && <AdminFinalSurvey key={`survey-${day.day}`} day={day.day} />}
-          {day.finalDay && <AdminFinalSurveyGrading key={`grading-${day.day}`} />}
           {day.finalDay && <FinalDeduction key={`deduction-${day.day}`} day={day.day} />}
+          {day.finalDay && <AdminFinalSurveyGrading key={`grading-${day.day}`} />}
           <AdminScriptReference key={`ref-${day.day}`} day={day} />
         </>
       )}

@@ -1,7 +1,7 @@
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './config';
 
-/** The name FinalDeduction's accuse button shows — the story's actual killer, but admin-editable via AdminFinalSurvey's Q5 field instead of hardcoded, in case the cast ever changes. */
+/** The name FinalDeduction's accuse button shows — the story's actual killer, but admin-editable via a field in that same panel instead of hardcoded, in case the cast ever changes. */
 export const DEFAULT_KILLER_NAME = '파울';
 
 const COLLECTION = 'finalDeduction';

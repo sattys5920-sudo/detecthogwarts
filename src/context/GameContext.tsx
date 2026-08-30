@@ -53,7 +53,6 @@ interface PlayerState {
   pet: string | null;
   stats: PlayerStats;
   currentDay: number;
-  deductionSolved: boolean;
 }
 
 const STORAGE_KEY = 'arcanum-player';
@@ -94,7 +93,6 @@ const emptyState: PlayerState = {
   pet: null,
   stats: defaultStats,
   currentDay: 1,
-  deductionSolved: false,
 };
 
 function loadState(): PlayerState {
@@ -140,7 +138,6 @@ interface GameContextValue extends PlayerState {
   growMaxStat: (key: MaxStatKey, delta: number) => void;
   setStatRatio: (key: ResourceStatKey, ratio: number) => void;
   advanceDay: () => void;
-  setDeductionSolved: (solved: boolean) => void;
   resetPlayer: () => void;
 }
 
@@ -408,10 +405,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, currentDay: Math.min(5, prev.currentDay + 1) }));
   }, []);
 
-  const setDeductionSolved = useCallback((solved: boolean) => {
-    setState((prev) => ({ ...prev, deductionSolved: solved }));
-  }, []);
-
   const unlockAdmin = useCallback(() => {
     localStorage.setItem(ADMIN_KEY, 'true');
     setIsAdmin(true);
@@ -467,7 +460,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setStatRatio,
     growMaxStat,
     advanceDay,
-    setDeductionSolved,
     resetPlayer,
   };
 

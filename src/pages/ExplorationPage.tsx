@@ -129,6 +129,7 @@ export default function ExplorationPage() {
           <AdminGmConsole key={`console-${day.day}`} day={day.day} />
           {day.finalDay && <AdminFinalSurvey key={`survey-${day.day}`} day={day.day} />}
           {day.finalDay && <AdminFinalSurveyGrading key={`grading-${day.day}`} />}
+          {day.finalDay && <FinalDeduction key={`deduction-${day.day}`} day={day.day} />}
           <AdminScriptReference key={`ref-${day.day}`} day={day} />
         </>
       )}
@@ -136,8 +137,6 @@ export default function ExplorationPage() {
       {day.finalDay && !game.isAdmin && game.playerId && (
         <FinalSurveyAnswerBoard playerId={game.playerId} nickname={game.nickname} />
       )}
-
-      {day.finalDay && <FinalDeduction notebookEntries={entries} onSolved={() => game.setDeductionSolved(true)} />}
 
       {game.isAdmin && !day.finalDay && selectedDay === game.currentDay && game.currentDay < 5 && (
         <button

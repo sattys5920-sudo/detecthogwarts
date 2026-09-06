@@ -1,0 +1,13 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 460, "h": 560, "title": "파일 관리자" },
+    { "file": "Paint.dc.html", "x": 540, "y": 0, "w": 460, "h": 560, "title": "그림판" },
+    { "file": "Calculator.dc.html", "x": 1080, "y": 0, "w": 460, "h": 560, "title": "계산기" },
+    { "file": "Terminal.dc.html", "x": 1620, "y": 0, "w": 460, "h": 560, "title": "BBS 통신" },
+    { "file": "MediaPlayer.dc.html", "x": 2160, "y": 0, "w": 460, "h": 560, "title": "미디어 재생기" }
+  ],
+  "annotations": [
+    { "id": "brief-title", "x": 0, "y": -110, "w": 620, "text": "1989년식 CRT 모니터 앱 시안 5종\n파일 관리자 · 그림판 · 계산기 · BBS 통신 · 미디어 재생기" }
+  ],
+  "launch": { "view": "canvas" }
+}

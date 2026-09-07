@@ -1,13 +1,14 @@
 # Windows '89 모니터 앱 시안
 
-1989년식 CRT 모니터로 보는 것 같은 느낌의 앱 화면 시안 5개.
+1989년식 CRT 모니터로 보는 것 같은 느낌의 앱 화면 시안.
 
 - `Main.dc.html` — 파일 관리자
 - `Paint.dc.html` — 그림판
 - `Calculator.dc.html` — 계산기
 - `Terminal.dc.html` — BBS 통신 (모노크롬 그린 스크린)
 - `MediaPlayer.dc.html` — 미디어 재생기
-- `canvas.json` — 캔버스에서 5개 시안을 한 줄로 배치하는 레이아웃
+- `Desktop.dc.html` — 바탕화면 아이콘 (프로필 · 채팅 · 검색 · 내 폴더 · 인터넷, 하단에 시작 표시줄)
+- `canvas.json` — 캔버스에서 6개 시안을 한 줄로 배치하는 레이아웃
 
 Claude Design 캔버스로 발행한 시안: https://claude.ai/code/artifact/7cfb09ab-052e-4039-a923-6d5232c78d5d
 

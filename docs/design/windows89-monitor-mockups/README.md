@@ -7,7 +7,7 @@
 - `Calculator.dc.html` — 계산기
 - `Terminal.dc.html` — BBS 통신 (모노크롬 그린 스크린)
 - `MediaPlayer.dc.html` — 미디어 재생기
-- `Desktop.dc.html` — 바탕화면 아이콘 (프로필 · 채팅 · 검색 · 내 폴더 · 인터넷, 하단에 시작 표시줄)
+- `Desktop.dc.html` — 바탕화면 아이콘 (프로필 · 채팅 · 검색 · 내 폴더 · 인터넷, 하단에 시작 표시줄). **클릭 가능한 프로토타입**: 아이콘을 누르면 해당 화면이 열리고, 타이틀바의 ✕를 누르면 바탕화면으로 돌아갑니다.
 - `canvas.json` — 캔버스에서 6개 시안을 한 줄로 배치하는 레이아웃
 
 Claude Design 캔버스로 발행한 시안: https://claude.ai/code/artifact/7cfb09ab-052e-4039-a923-6d5232c78d5d

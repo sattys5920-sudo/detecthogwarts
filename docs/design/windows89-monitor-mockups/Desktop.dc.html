@@ -11,48 +11,216 @@
     *{box-sizing:border-box;}
     body{margin:0;}
     a{color:#1a4fd6;} a:hover{color:#0d2f8f;}
-    .icontile{display:flex;flex-direction:column;align-items:center;gap:5px;width:78px;}
+
+    .icontile{display:flex;flex-direction:column;align-items:center;gap:5px;width:78px;cursor:pointer;}
     .iconlabel{font-family:Tahoma,Verdana,sans-serif;font-size:11px;font-weight:700;color:#fff;text-align:center;line-height:1.2;text-shadow:1px 1px 1px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.5);}
-    .taskbar{background:#c0c0c0;border-top:1px solid #fff;box-shadow:0 -1px 0 #808080 inset;display:flex;align-items:center;justify-content:space-between;padding:0 6px;font-family:Tahoma,Verdana,sans-serif;}
-    .startbtn{display:flex;align-items:center;gap:5px;height:22px;padding:0 8px;background:#c0c0c0;border-top:1px solid #fff;border-left:1px solid #fff;border-right:1px solid #6b6b6b;border-bottom:1px solid #6b6b6b;font-size:12px;font-weight:700;color:#000;}
-    .clock{height:20px;display:flex;align-items:center;padding:0 8px;background:#c0c0c0;border-top:1px solid #808080;border-left:1px solid #808080;border-right:1px solid #fff;border-bottom:1px solid #fff;font-size:11px;color:#000;}
+
+    .taskbar{background:#c0c0c0;border-top:1px solid #fff;box-shadow:0 -1px 0 #808080 inset;display:flex;align-items:center;padding:0 6px;gap:6px;font-family:Tahoma,Verdana,sans-serif;}
+    .startbtn{flex:none;display:flex;align-items:center;gap:5px;height:22px;padding:0 8px;background:#c0c0c0;border-top:1px solid #fff;border-left:1px solid #fff;border-right:1px solid #6b6b6b;border-bottom:1px solid #6b6b6b;font-size:12px;font-weight:700;color:#000;}
+    .taskapp{height:22px;padding:0 10px;background:#a9a9a9;border-top:1px solid #6b6b6b;border-left:1px solid #6b6b6b;border-right:1px solid #eee;border-bottom:1px solid #eee;font-size:11px;font-weight:700;color:#000;display:flex;align-items:center;}
+    .clock{flex:none;height:20px;display:flex;align-items:center;padding:0 8px;background:#c0c0c0;border-top:1px solid #808080;border-left:1px solid #808080;border-right:1px solid #fff;border-bottom:1px solid #fff;font-size:11px;color:#000;}
+
+    .win{background:#c0c0c0;height:100%;display:flex;flex-direction:column;border-top:2px solid #fff;border-left:2px solid #fff;border-right:2px solid #1c1c1c;border-bottom:2px solid #1c1c1c;font-family:Tahoma,Verdana,sans-serif;}
+    .titlebar{background:#000080;color:#fff;font-weight:700;font-size:13px;padding:4px 6px;display:flex;align-items:center;justify-content:space-between;flex:none;}
+    .tbtns{display:flex;gap:3px;}
+    .tbtn{width:15px;height:13px;background:#c0c0c0;border-top:1px solid #fff;border-left:1px solid #fff;border-right:1px solid #1c1c1c;border-bottom:1px solid #1c1c1c;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#000;line-height:1;cursor:pointer;}
+    .sunken{border-top:2px solid #808080;border-left:2px solid #808080;border-right:2px solid #fff;border-bottom:2px solid #fff;background:#fff;}
+    .fieldrow{display:flex;justify-content:space-between;padding:6px 4px;font-size:12px;color:#000;border-bottom:1px solid #c8c8c8;}
+    .fileicon{display:flex;flex-direction:column;align-items:center;gap:3px;width:74px;padding:6px 2px;font-size:11px;color:#000;text-align:center;}
+
+    .bubble-row{display:flex;}
+    .bubble-in{background:#e9e9e9;color:#000;border:1px solid #b8b8b8;border-radius:9px 9px 9px 2px;padding:6px 9px;font-size:12px;max-width:74%;}
+    .bubble-out{background:#3b6fa8;color:#fff;border-radius:9px 9px 2px 9px;padding:6px 9px;font-size:12px;max-width:74%;margin-left:auto;}
+
+    .result-title{color:#1a4fd6;font-weight:700;font-size:12.5px;text-decoration:underline;}
+    .result-url{color:#3f6b4a;font-size:10.5px;}
+    .result-snip{color:#000;font-size:11.5px;line-height:1.4;}
+
+    .toolbtn{width:24px;height:22px;background:#c0c0c0;border-top:1px solid #fff;border-left:1px solid #fff;border-right:1px solid #808080;border-bottom:1px solid #808080;display:flex;align-items:center;justify-content:center;}
   </style>
 </helmet>
+
 <div style="width:460px;height:560px;background:#d9d4c6;border-radius:14px 14px 30px 30px;box-shadow:inset 0 2px 0 rgba(255,255,255,.55),inset 0 -8px 14px rgba(0,0,0,.16),0 22px 40px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;padding:20px 26px 16px;font-family:Tahoma,Verdana,sans-serif;">
   <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;">
     <span style="font-size:11px;font-weight:700;letter-spacing:2.5px;color:#726b5a;">PC-89</span>
     <div style="width:7px;height:7px;border-radius:50%;background:#3ddc5a;box-shadow:0 0 5px #3ddc5a;"></div>
   </div>
+
   <div style="flex:1;width:100%;background:#0c0d0a;border-radius:6px;box-shadow:inset 0 0 0 3px #16170f,inset 0 0 34px rgba(0,0,0,.85),0 1px 0 rgba(255,255,255,.35);padding:13px;position:relative;overflow:hidden;">
     <div style="position:absolute;inset:13px;background:#008080;overflow:hidden;">
 
-      <div style="position:absolute;inset:0;padding:16px 0 30px 14px;display:flex;flex-direction:column;gap:16px;">
-        <div class="icontile">
-          <svg width="34" height="34" viewBox="0 0 34 34"><rect x="1" y="1" width="32" height="32" rx="4" fill="#dbe6f5" stroke="#33465c" stroke-width="1.2"/><circle cx="17" cy="13" r="6" fill="#f2c48a" stroke="#8a5a2a" stroke-width="1"/><path d="M6 29c1.5-7 8-9 11-9s9.5 2 11 9" fill="#3b6fa8" stroke="#20456e" stroke-width="1"/></svg>
-          <span class="iconlabel">프로필</span>
-        </div>
-        <div class="icontile">
-          <svg width="34" height="34" viewBox="0 0 34 34"><path d="M3 6h28v16H14l-6 6v-6H3z" fill="#ffd23f" stroke="#8a6a12" stroke-width="1.2"/><circle cx="10" cy="14" r="1.6" fill="#5a4408"/><circle cx="17" cy="14" r="1.6" fill="#5a4408"/><circle cx="24" cy="14" r="1.6" fill="#5a4408"/></svg>
-          <span class="iconlabel">채팅</span>
-        </div>
-        <div class="icontile">
-          <svg width="34" height="34" viewBox="0 0 34 34"><circle cx="14" cy="14" r="9" fill="#eaf4ff" stroke="#2a4a6b" stroke-width="2.4"/><line x1="21" y1="21" x2="30" y2="30" stroke="#2a4a6b" stroke-width="3.4" stroke-linecap="round"/></svg>
-          <span class="iconlabel">검색</span>
-        </div>
-        <div class="icontile">
-          <svg width="34" height="30" viewBox="0 0 16 14"><path d="M1 3h5l1.5 2H15a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="#eec95a" stroke="#8a6a12" stroke-width="0.6"/></svg>
-          <span class="iconlabel">내 폴더</span>
-        </div>
-        <div class="icontile">
-          <svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="14" fill="#3b7dd8" stroke="#1c3f6e" stroke-width="1.4"/><ellipse cx="17" cy="17" rx="14" ry="6" fill="none" stroke="#cfe4ff" stroke-width="1"/><ellipse cx="17" cy="17" rx="6" ry="14" fill="none" stroke="#cfe4ff" stroke-width="1"/><line x1="3" y1="17" x2="31" y2="17" stroke="#cfe4ff" stroke-width="1"/></svg>
-          <span class="iconlabel">인터넷</span>
-        </div>
+      <div style="position:absolute;inset:0 0 28px 0;overflow:hidden;">
+
+        <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+          <div style="position:absolute;inset:0;padding:16px 0 0 14px;display:flex;flex-direction:column;gap:16px;">
+            <div class="icontile" onClick="{{openProfile}}">
+              <svg width="34" height="34" viewBox="0 0 34 34"><rect x="1" y="1" width="32" height="32" rx="4" fill="#dbe6f5" stroke="#33465c" stroke-width="1.2"/><circle cx="17" cy="13" r="6" fill="#f2c48a" stroke="#8a5a2a" stroke-width="1"/><path d="M6 29c1.5-7 8-9 11-9s9.5 2 11 9" fill="#3b6fa8" stroke="#20456e" stroke-width="1"/></svg>
+              <span class="iconlabel">프로필</span>
+            </div>
+            <div class="icontile" onClick="{{openChat}}">
+              <svg width="34" height="34" viewBox="0 0 34 34"><path d="M3 6h28v16H14l-6 6v-6H3z" fill="#ffd23f" stroke="#8a6a12" stroke-width="1.2"/><circle cx="10" cy="14" r="1.6" fill="#5a4408"/><circle cx="17" cy="14" r="1.6" fill="#5a4408"/><circle cx="24" cy="14" r="1.6" fill="#5a4408"/></svg>
+              <span class="iconlabel">채팅</span>
+            </div>
+            <div class="icontile" onClick="{{openSearch}}">
+              <svg width="34" height="34" viewBox="0 0 34 34"><circle cx="14" cy="14" r="9" fill="#eaf4ff" stroke="#2a4a6b" stroke-width="2.4"/><line x1="21" y1="21" x2="30" y2="30" stroke="#2a4a6b" stroke-width="3.4" stroke-linecap="round"/></svg>
+              <span class="iconlabel">검색</span>
+            </div>
+            <div class="icontile" onClick="{{openFolder}}">
+              <svg width="34" height="30" viewBox="0 0 16 14"><path d="M1 3h5l1.5 2H15a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="#eec95a" stroke="#8a6a12" stroke-width="0.6"/></svg>
+              <span class="iconlabel">내 폴더</span>
+            </div>
+            <div class="icontile" onClick="{{openInternet}}">
+              <svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="14" fill="#3b7dd8" stroke="#1c3f6e" stroke-width="1.4"/><ellipse cx="17" cy="17" rx="14" ry="6" fill="none" stroke="#cfe4ff" stroke-width="1"/><ellipse cx="17" cy="17" rx="6" ry="14" fill="none" stroke="#cfe4ff" stroke-width="1"/><line x1="3" y1="17" x2="31" y2="17" stroke="#cfe4ff" stroke-width="1"/></svg>
+              <span class="iconlabel">인터넷</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isProfile}}" hint-placeholder-val="{{false}}">
+          <div class="win" style="position:absolute;inset:0;">
+            <div class="titlebar">
+              <span>내 프로필</span>
+              <div class="tbtns"><div class="tbtn">▲</div><div class="tbtn" onClick="{{closeWindow}}">✕</div></div>
+            </div>
+            <div style="padding:14px;display:flex;flex-direction:column;gap:12px;flex:1;">
+              <div style="display:flex;justify-content:center;">
+                <svg width="64" height="64" viewBox="0 0 34 34"><rect x="1" y="1" width="32" height="32" rx="6" fill="#dbe6f5" stroke="#33465c" stroke-width="1.2"/><circle cx="17" cy="13" r="6" fill="#f2c48a" stroke="#8a5a2a" stroke-width="1"/><path d="M6 29c1.5-7 8-9 11-9s9.5 2 11 9" fill="#3b6fa8" stroke="#20456e" stroke-width="1"/></svg>
+              </div>
+              <div class="sunken">
+                <div class="fieldrow"><span>이름</span><strong>사용자01</strong></div>
+                <div class="fieldrow"><span>직업</span><strong>시스템 관리자</strong></div>
+                <div class="fieldrow"><span>가입일</span><strong>1989.09.07</strong></div>
+                <div class="fieldrow" style="border-bottom:none;"><span>상태</span><strong style="color:#0a7d2c;">온라인</strong></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isChat}}" hint-placeholder-val="{{false}}">
+          <div class="win" style="position:absolute;inset:0;">
+            <div class="titlebar">
+              <span>채팅 - GUEST01</span>
+              <div class="tbtns"><div class="tbtn">▲</div><div class="tbtn" onClick="{{closeWindow}}">✕</div></div>
+            </div>
+            <div class="sunken" style="flex:1;margin:8px;display:flex;flex-direction:column;gap:8px;padding:10px;overflow:hidden;">
+              <div class="bubble-row"><div class="bubble-in">안녕하세요! 접속하신 걸 환영합니다 :)</div></div>
+              <div class="bubble-row"><div class="bubble-out">네, 반가워요~</div></div>
+              <div class="bubble-row"><div class="bubble-in">오늘 대화방에 새로운 소식이 올라왔어요.</div></div>
+            </div>
+            <div style="display:flex;gap:6px;padding:8px;">
+              <div class="sunken" style="flex:1;padding:6px 8px;font-size:12px;color:#888;">메시지를 입력하세요...</div>
+              <div class="toolbtn" style="width:52px;font-size:11px;font-weight:700;">보내기</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isSearch}}" hint-placeholder-val="{{false}}">
+          <div class="win" style="position:absolute;inset:0;">
+            <div class="titlebar">
+              <span>검색</span>
+              <div class="tbtns"><div class="tbtn">▲</div><div class="tbtn" onClick="{{closeWindow}}">✕</div></div>
+            </div>
+            <div style="display:flex;gap:6px;padding:10px;">
+              <div class="sunken" style="flex:1;padding:6px 8px;font-size:12px;color:#888;">pc-89 소식</div>
+              <div class="toolbtn" style="width:34px;">
+                <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="6" cy="6" r="4.4" fill="none" stroke="#333" stroke-width="1.6"/><line x1="9.2" y1="9.2" x2="13" y2="13" stroke="#333" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+            <div class="sunken" style="flex:1;margin:0 10px 10px;padding:10px;display:flex;flex-direction:column;gap:12px;overflow:hidden;">
+              <div>
+                <div class="result-title">PC-89 사용자 모임 - 최신 소식과 팁</div>
+                <div class="result-url">www.pc89-club.net</div>
+                <div class="result-snip">우리 모임에 오신 걸 환영합니다. 최신 소프트웨어 소식을 확인하세요.</div>
+              </div>
+              <div>
+                <div class="result-title">오늘의 날씨 정보</div>
+                <div class="result-url">weather.pc89.net</div>
+                <div class="result-snip">전국 날씨와 기온 정보를 안내합니다.</div>
+              </div>
+              <div>
+                <div class="result-title">레트로 게임 다운로드 자료실</div>
+                <div class="result-url">games.pc89.net</div>
+                <div class="result-snip">고전 PC 게임을 무료로 내려받을 수 있는 자료실입니다.</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isFolder}}" hint-placeholder-val="{{false}}">
+          <div class="win" style="position:absolute;inset:0;">
+            <div class="titlebar">
+              <span>내 폴더 - C:\MYDOCS</span>
+              <div class="tbtns"><div class="tbtn">▲</div><div class="tbtn" onClick="{{closeWindow}}">✕</div></div>
+            </div>
+            <div class="sunken" style="flex:1;margin:8px;padding:8px;display:flex;flex-wrap:wrap;align-content:flex-start;overflow:hidden;">
+              <div class="fileicon">
+                <svg width="16" height="18" viewBox="0 0 12 14"><path d="M1 0h6l4 4v9a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V1a1 1 0 0 1 1-1z" fill="#fff" stroke="#555"/><path d="M7 0v4h4" fill="none" stroke="#555"/></svg>
+                일기.txt
+              </div>
+              <div class="fileicon">
+                <svg width="16" height="18" viewBox="0 0 12 14"><path d="M1 0h6l4 4v9a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V1a1 1 0 0 1 1-1z" fill="#fff" stroke="#555"/><path d="M7 0v4h4" fill="none" stroke="#555"/></svg>
+                메모.txt
+              </div>
+              <div class="fileicon">
+                <svg width="16" height="18" viewBox="0 0 12 14"><rect x="0" y="0" width="12" height="14" rx="1" fill="#bfe4f5" stroke="#2a6a8a"/><circle cx="4" cy="5" r="1.4" fill="#ffd23f"/><path d="M0 11l4-4 3 3 3-4 2 2v3z" fill="#7bbf6a"/></svg>
+                사진.jpg
+              </div>
+              <div class="fileicon">
+                <svg width="14" height="12" viewBox="0 0 16 14"><path d="M1 3h5l1.5 2H15a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="#eec95a" stroke="#8a6a12" stroke-width=".6"/></svg>
+                다운로드
+              </div>
+              <div class="fileicon">
+                <svg width="16" height="18" viewBox="0 0 12 14"><path d="M1 0h6l4 4v9a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V1a1 1 0 0 1 1-1z" fill="#fff" stroke="#555"/><path d="M7 0v4h4" fill="none" stroke="#555"/><circle cx="5" cy="9" r="2.4" fill="none" stroke="#555" stroke-width=".8"/></svg>
+                음악.mp3
+              </div>
+              <div class="fileicon">
+                <svg width="16" height="18" viewBox="0 0 12 14"><rect x="0" y="0" width="12" height="14" rx="1" fill="#f5d9c8" stroke="#8a5a2a"/></svg>
+                졸업사진.bmp
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isInternet}}" hint-placeholder-val="{{false}}">
+          <div class="win" style="position:absolute;inset:0;">
+            <div class="titlebar">
+              <span>인터넷 브라우저</span>
+              <div class="tbtns"><div class="tbtn">▲</div><div class="tbtn" onClick="{{closeWindow}}">✕</div></div>
+            </div>
+            <div style="display:flex;gap:3px;padding:6px 6px 4px;">
+              <div class="toolbtn"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M8 1 2 6l6 5z" fill="#000"/></svg></div>
+              <div class="toolbtn"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M4 1l6 5-6 5z" fill="#000"/></svg></div>
+              <div class="toolbtn"><svg width="13" height="13" viewBox="0 0 13 13"><path d="M2 6.5A4.5 4.5 0 1 1 4 10" fill="none" stroke="#000" stroke-width="1.4"/><path d="M2 3v3.5h3.5" fill="none" stroke="#000" stroke-width="1.4"/></svg></div>
+              <div class="toolbtn"><svg width="13" height="12" viewBox="0 0 13 12"><path d="M6.5 1 12 6l-2 0v5H2.5V6h-2z" fill="#000"/></svg></div>
+              <div class="sunken" style="flex:1;padding:5px 8px;font-size:11px;color:#333;">http://www.pc89.net/home.htm</div>
+            </div>
+            <div class="sunken" style="flex:1;margin:0 8px 8px;padding:14px;overflow:hidden;">
+              <p style="margin:0;font-family:Georgia,serif;font-size:16px;font-weight:700;color:#000080;">PC-89 홈페이지에 오신 것을 환영합니다!</p>
+              <hr style="border:none;border-top:2px solid #808080;margin:8px 0;">
+              <ul style="margin:0;padding-left:18px;font-size:12px;color:#1a4fd6;line-height:2;">
+                <li><a href="#">소개</a></li>
+                <li><a href="#">게시판</a></li>
+                <li><a href="#">자료실</a></li>
+                <li><a href="#">방명록</a></li>
+              </ul>
+              <p style="margin-top:14px;font-size:10.5px;color:#555;">누적 방문자: 001234</p>
+            </div>
+          </div>
+        </sc-if>
+
       </div>
 
       <div class="taskbar" style="position:absolute;left:0;right:0;bottom:0;height:28px;">
         <div class="startbtn">
           <svg width="13" height="13" viewBox="0 0 13 13"><rect x="0" y="0" width="6" height="6" fill="#d94b3a"/><rect x="7" y="0" width="6" height="6" fill="#5aa93a"/><rect x="0" y="7" width="6" height="6" fill="#3a7ed9"/><rect x="7" y="7" width="6" height="6" fill="#e0b930"/></svg>
           시작
+        </div>
+        <div style="flex:1;display:flex;align-items:center;overflow:hidden;">
+          <sc-if value="{{isProfile}}" hint-placeholder-val="{{false}}"><div class="taskapp">내 프로필</div></sc-if>
+          <sc-if value="{{isChat}}" hint-placeholder-val="{{false}}"><div class="taskapp">채팅 - GUEST01</div></sc-if>
+          <sc-if value="{{isSearch}}" hint-placeholder-val="{{false}}"><div class="taskapp">검색</div></sc-if>
+          <sc-if value="{{isFolder}}" hint-placeholder-val="{{false}}"><div class="taskapp">내 폴더</div></sc-if>
+          <sc-if value="{{isInternet}}" hint-placeholder-val="{{false}}"><div class="taskapp">인터넷 브라우저</div></sc-if>
         </div>
         <div class="clock">오후 3:47</div>
       </div>
@@ -61,11 +229,39 @@
       <div style="position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 60px 22px rgba(0,0,0,.55);"></div>
     </div>
   </div>
+
   <div style="width:100%;display:flex;justify-content:center;align-items:center;gap:20px;margin-top:13px;">
     <div style="width:36px;height:9px;border-radius:5px;background:#c7c1b1;box-shadow:inset 0 1px 2px rgba(0,0,0,.35);"></div>
     <div style="width:13px;height:13px;border-radius:50%;background:#c7c1b1;box-shadow:inset 0 1px 2px rgba(0,0,0,.35);"></div>
   </div>
 </div>
+
+<script data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { screen: 'desktop' };
+  }
+  renderVals() {
+    const screen = this.state.screen;
+    const open = (s) => () => this.setState({ screen: s });
+    return {
+      isDesktop: screen === 'desktop',
+      isProfile: screen === 'profile',
+      isChat: screen === 'chat',
+      isSearch: screen === 'search',
+      isFolder: screen === 'folder',
+      isInternet: screen === 'internet',
+      openProfile: open('profile'),
+      openChat: open('chat'),
+      openSearch: open('search'),
+      openFolder: open('folder'),
+      openInternet: open('internet'),
+      closeWindow: open('desktop'),
+    };
+  }
+}
+</script>
 </x-dc>
 </body>
 </html>

@@ -5,7 +5,6 @@ import { useGame } from '../context/GameContext';
 import { useViewportHeight } from '../hooks/useViewportHeight';
 import AnnouncementPopup from './AnnouncementPopup';
 import AssignmentPopup from './AssignmentPopup';
-import BottomTabBar from './BottomTabBar';
 import PaperTexture from './PaperTexture';
 import ScreenFrame from './ScreenFrame';
 import SurpriseMissionPopup from './SurpriseMissionPopup';
@@ -13,7 +12,7 @@ import TopAppBar from './TopAppBar';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { hasEntered } = useGame();
-  const { height: viewportHeight, offsetTop, keyboardOpen } = useViewportHeight();
+  const { height: viewportHeight, offsetTop } = useViewportHeight();
   if (!hasEntered) return <Navigate to="/" replace />;
 
   return (
@@ -31,7 +30,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <main className="flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
           <div className="mx-auto max-w-md px-4 pt-4 pb-6">{children}</div>
         </main>
-        {!keyboardOpen && <BottomTabBar />}
       </div>
     </BackProvider>
   );

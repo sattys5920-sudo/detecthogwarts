@@ -10,6 +10,7 @@ import ExplorationPage from './pages/ExplorationPage';
 import ForestPage from './pages/ForestPage';
 import HallPage from './pages/HallPage';
 import HerbFarmPage from './pages/HerbFarmPage';
+import HomePage from './pages/HomePage';
 import InterrogationChatPage from './pages/InterrogationChatPage';
 import InterrogationPage from './pages/InterrogationPage';
 import LoadingPage from './pages/LoadingPage';
@@ -29,6 +30,14 @@ export default function App() {
           <NotificationWatcher />
           <Routes>
             <Route path="/" element={<LoadingPage />} />
+            <Route
+              path="/home"
+              element={
+                <AppShell>
+                  <HomePage />
+                </AppShell>
+              }
+            />
             <Route
               path="/hall"
               element={

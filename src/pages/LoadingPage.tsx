@@ -243,7 +243,7 @@ function ProfileStep() {
     setSubmitting(true);
     try {
       await game.completeProfile(trimmed, grade, pet);
-      navigate('/hall');
+      navigate('/home');
     } catch {
       setError('제출에 실패했습니다. 다시 시도해 주세요.');
       setSubmitting(false);
@@ -354,7 +354,7 @@ export default function LoadingPage() {
         await game.adminEnter();
       }
       game.unlockAdmin();
-      navigate('/hall');
+      navigate('/home');
     } catch {
       setAdminError('입장 처리에 실패했습니다. 다시 시도해 주세요.');
       setAdminSubmitting(false);
@@ -405,7 +405,7 @@ export default function LoadingPage() {
           <p className="font-serif-kr text-sm text-ink-700/80">
             다시 오셨군요, <span className="font-semibold text-seal-600">{game.nickname}</span>님.
           </p>
-          <Button className="mt-4 w-full" onClick={() => navigate('/hall')}>
+          <Button className="mt-4 w-full" onClick={() => navigate('/home')}>
             계속하기
           </Button>
           <button

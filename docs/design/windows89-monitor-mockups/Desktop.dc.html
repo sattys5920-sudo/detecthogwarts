@@ -28,9 +28,13 @@
     .fieldrow{display:flex;justify-content:space-between;padding:6px 4px;font-size:12px;color:#000;border-bottom:1px solid #c8c8c8;}
     .fileicon{display:flex;flex-direction:column;align-items:center;gap:3px;width:74px;padding:6px 2px;font-size:11px;color:#000;text-align:center;}
 
-    .bubble-row{display:flex;}
-    .bubble-in{background:#e9e9e9;color:#000;border:1px solid #b8b8b8;border-radius:9px 9px 9px 2px;padding:6px 9px;font-size:12px;max-width:74%;}
-    .bubble-out{background:#3b6fa8;color:#fff;border-radius:9px 9px 2px 9px;padding:6px 9px;font-size:12px;max-width:74%;margin-left:auto;}
+    .msgrow{display:flex;gap:6px;align-items:flex-end;}
+    .msgrow.mine{flex-direction:row-reverse;}
+    .avatar-other{flex:none;width:26px;height:26px;border-radius:50%;background:#dbe6f5;border:1px solid #33465c;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+    .avatar-me{flex:none;width:26px;height:26px;border-radius:50%;background:#3b6fa8;border:1px solid #20456e;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .bubble-in{background:#e9e9e9;color:#000;border:1px solid #b8b8b8;border-radius:9px 9px 9px 2px;padding:6px 9px;font-size:12px;max-width:70%;}
+    .bubble-out{background:#3b6fa8;color:#fff;border-radius:9px 9px 2px 9px;padding:6px 9px;font-size:12px;max-width:70%;}
+    .chatinput{flex:1;padding:6px 8px;font-size:12px;color:#000;background:#fff;border-top:2px solid #808080;border-left:2px solid #808080;border-right:2px solid #fff;border-bottom:2px solid #fff;outline:none;font-family:Tahoma,Verdana,sans-serif;}
 
     .result-title{color:#1a4fd6;font-weight:700;font-size:12.5px;text-decoration:underline;}
     .result-url{color:#3f6b4a;font-size:10.5px;}
@@ -59,7 +63,7 @@
             </div>
             <div class="icontile" onClick="{{openChat}}">
               <svg width="34" height="34" viewBox="0 0 34 34"><path d="M3 6h28v16H14l-6 6v-6H3z" fill="#ffd23f" stroke="#8a6a12" stroke-width="1.2"/><circle cx="10" cy="14" r="1.6" fill="#5a4408"/><circle cx="17" cy="14" r="1.6" fill="#5a4408"/><circle cx="24" cy="14" r="1.6" fill="#5a4408"/></svg>
-              <span class="iconlabel">채팅</span>
+              <span class="iconlabel">moi.net</span>
             </div>
             <div class="icontile" onClick="{{openSearch}}">
               <svg width="34" height="34" viewBox="0 0 34 34"><circle cx="14" cy="14" r="9" fill="#eaf4ff" stroke="#2a4a6b" stroke-width="2.4"/><line x1="21" y1="21" x2="30" y2="30" stroke="#2a4a6b" stroke-width="3.4" stroke-linecap="round"/></svg>
@@ -99,17 +103,27 @@
         <sc-if value="{{isChat}}" hint-placeholder-val="{{false}}">
           <div class="win" style="position:absolute;inset:0;">
             <div class="titlebar">
-              <span>채팅 - GUEST01</span>
+              <span>moi.net</span>
               <div class="tbtns"><div class="tbtn">▲</div><div class="tbtn" onClick="{{closeWindow}}">✕</div></div>
             </div>
-            <div class="sunken" style="flex:1;margin:8px;display:flex;flex-direction:column;gap:8px;padding:10px;overflow:hidden;">
-              <div class="bubble-row"><div class="bubble-in">안녕하세요! 접속하신 걸 환영합니다 :)</div></div>
-              <div class="bubble-row"><div class="bubble-out">네, 반가워요~</div></div>
-              <div class="bubble-row"><div class="bubble-in">오늘 대화방에 새로운 소식이 올라왔어요.</div></div>
+            <div class="sunken" style="flex:1;margin:8px;display:flex;flex-direction:column;gap:8px;padding:10px;overflow-y:auto;">
+              <sc-for list="{{messages}}" as="msg" hint-placeholder-count="3">
+                <div class="{{msg.rowClass}}">
+                  <sc-if value="{{msg.isOther}}" hint-placeholder-val="{{true}}">
+                    <div class="avatar-other">
+                      <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="6" r="3" fill="#f2c48a"/><path d="M2 15c1-4 4-5 6-5s5 1 6 5" fill="#3b6fa8"/></svg>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{msg.isMine}}" hint-placeholder-val="{{false}}">
+                    <div class="avatar-me">나</div>
+                  </sc-if>
+                  <div class="{{msg.bubbleClass}}">{{msg.text}}</div>
+                </div>
+              </sc-for>
             </div>
             <div style="display:flex;gap:6px;padding:8px;">
-              <div class="sunken" style="flex:1;padding:6px 8px;font-size:12px;color:#888;">메시지를 입력하세요...</div>
-              <div class="toolbtn" style="width:52px;font-size:11px;font-weight:700;">보내기</div>
+              <input class="chatinput" value="{{chatDraft}}" onChange="{{onDraftChange}}" onKeyDown="{{onDraftKeyDown}}" placeholder="메시지를 입력하세요...">
+              <div class="toolbtn" style="width:52px;font-size:11px;font-weight:700;cursor:pointer;" onClick="{{onSend}}">보내기</div>
             </div>
           </div>
         </sc-if>
@@ -217,7 +231,7 @@
         </div>
         <div style="flex:1;display:flex;align-items:center;overflow:hidden;">
           <sc-if value="{{isProfile}}" hint-placeholder-val="{{false}}"><div class="taskapp">내 프로필</div></sc-if>
-          <sc-if value="{{isChat}}" hint-placeholder-val="{{false}}"><div class="taskapp">채팅 - GUEST01</div></sc-if>
+          <sc-if value="{{isChat}}" hint-placeholder-val="{{false}}"><div class="taskapp">moi.net</div></sc-if>
           <sc-if value="{{isSearch}}" hint-placeholder-val="{{false}}"><div class="taskapp">검색</div></sc-if>
           <sc-if value="{{isFolder}}" hint-placeholder-val="{{false}}"><div class="taskapp">내 폴더</div></sc-if>
           <sc-if value="{{isInternet}}" hint-placeholder-val="{{false}}"><div class="taskapp">인터넷 브라우저</div></sc-if>
@@ -240,11 +254,40 @@
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { screen: 'desktop' };
+    this.state = {
+      screen: 'desktop',
+      chatDraft: '',
+      messages: [
+        { id: 1, from: 'other', text: '안녕하세요! moi.net에 접속하신 걸 환영합니다 :)' },
+        { id: 2, from: 'me', text: '네, 반가워요~' },
+        { id: 3, from: 'other', text: '오늘 대화방에 새로운 소식이 올라왔어요.' },
+      ],
+    };
   }
   renderVals() {
     const screen = this.state.screen;
     const open = (s) => () => this.setState({ screen: s });
+
+    const messages = this.state.messages.map((m) => ({
+      ...m,
+      isMine: m.from === 'me',
+      isOther: m.from === 'other',
+      rowClass: m.from === 'me' ? 'msgrow mine' : 'msgrow',
+      bubbleClass: m.from === 'me' ? 'bubble-out' : 'bubble-in',
+    }));
+    const onDraftChange = (e) => this.setState({ chatDraft: e.target.value });
+    const send = () => {
+      const text = this.state.chatDraft.trim();
+      if (!text) return;
+      this.setState({
+        chatDraft: '',
+        messages: [...this.state.messages, { id: Date.now(), from: 'me', text }],
+      });
+    };
+    const onDraftKeyDown = (e) => {
+      if (e.key === 'Enter') send();
+    };
+
     return {
       isDesktop: screen === 'desktop',
       isProfile: screen === 'profile',
@@ -258,6 +301,11 @@ class Component extends DCLogic {
       openFolder: open('folder'),
       openInternet: open('internet'),
       closeWindow: open('desktop'),
+      messages,
+      chatDraft: this.state.chatDraft,
+      onDraftChange,
+      onDraftKeyDown,
+      onSend: send,
     };
   }
 }

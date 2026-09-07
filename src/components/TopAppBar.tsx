@@ -18,7 +18,7 @@ export default function TopAppBar() {
 
   function handleBack() {
     if (handler) handler();
-    else navigate('/home');
+    else navigate(-1);
   }
 
   return (
@@ -30,7 +30,7 @@ export default function TopAppBar() {
         <button
           type="button"
           onClick={handleBack}
-          aria-label={handler ? '뒤로' : '바탕화면'}
+          aria-label={handler ? '뒤로' : '메뉴'}
           className="flex h-9 w-9 flex-none items-center justify-center text-ink-700/80 hover:text-ink-900"
         >
           {handler ? (
@@ -39,10 +39,7 @@ export default function TopAppBar() {
             </svg>
           ) : (
             <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-              <rect x="3.5" y="3.5" width="7" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="1.8" />
-              <rect x="13.5" y="3.5" width="7" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="1.8" />
-              <rect x="3.5" y="13.5" width="7" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="1.8" />
-              <rect x="13.5" y="13.5" width="7" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              <path fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           )}
         </button>

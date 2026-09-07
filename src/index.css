@@ -230,6 +230,13 @@ select {
   border-color: var(--color-seal-600);
 }
 
+/* bottom tab bar: a document footer band, set off by a thin double gold rule */
+.tab-bar-shell {
+  background: var(--color-paper-100);
+  border-top: 3px double var(--color-gold-500);
+  box-shadow: 0 -4px 12px rgba(23, 19, 15, 0.14);
+}
+
 .top-bar-shell {
   background: var(--color-paper-100);
   border-bottom: 3px double var(--color-gold-500);
